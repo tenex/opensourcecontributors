@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+import os
+import os.path
+import sys
+import json
+import gzip
+import glob
+import fileinput
+
+ARCHIVE_PATH = os.getenv("GITHUB_ARCHIVE") or os.path.expanduser('~/github-archive')
+RELEVANT_EVENTS = ('GollumEvent',
+                   'IssuesEvent',
+                   'PushEvent',
+                   'CommitCommentEvent',
+                   'ReleaseEvent',
+                   'PublicEvent',
+                   'MemberEvent',
+                   'IssuesCommentEvent',
+                   'CreateEvent')
+
+if __name__=='__main__':
+    archive_filenames = glob.iglob(os.path.join(ARCHIVE_PATH, '*.json.gz'))
+    archive_filenames=list(archive_filenames)[:1] #TEST
+    with fileinput.FileInput(files=archive_filenames,
+                             openhook=lambda f,m: gzip.open(f,'rt')) as f:
+        for line in f:
+            event=json.loads(line)
+            if event['type'] in RELEVANT_EVENTS:
+                print(line.strip())
+                #print(json.dumps(event, sort_keys=True, indent=4))
