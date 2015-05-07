@@ -9,47 +9,96 @@ import fileinput
 
 ARCHIVE_PATH = os.getenv("GITHUB_ARCHIVE") or os.path.expanduser('~/github-archive')
 
-def gollum_processor(event):
-    pass
-def issues_processor(event):
-    pass
-def push_processor(event):
-    pass
-def commit_processor(event):
-    pass
-def release_processor(event):
-    pass
-def public_processor(event):
-    pass
-def member_processor(event):
-    pass
-def issues_comment_processor(event):
-    fields=('url',)
+class Event(object):
+    types = dict()
+
+    def __init__(self, raw_event):
+        pass
+
+    @classmethod
+    def register_event(cls, event_cls):
+        cls.types[event_cls.__name__] = event_cls
+        return event_cls
+
+    @classmethod
+    def from_raw(cls, raw_event):
+        """
+        Factory method to create appropriate event instance from raw JSON data
+        """
+        subclass = cls.types.get(raw_event['type'], None)
+        if subclass is None:
+            return None
+        return subclass(raw_event)
+
+
+register_event = Event.register_event
+
+@register_event
+class GollumEvent(Event):
     pass
 
-EVENT_PROCESSORS = {
-    'GollumEvent': gollum_processor,
-    'IssuesEvent': issues_processor,
-    'PushEvent': push_processor,
-    'CommitCommentEvent': commit_processor,
-    'ReleaseEvent': release_processor,
-    'PublicEvent': public_processor,
-    'MemberEvent': member_processor,
-    'IssueCommentEvent': issue_comment_processor
-}
+@register_event
+class IssuesEvent(Event):
+    pass
 
-def process_event(event):
-    if event['type'] in EVENT_PROCESSORS.keys():
-        # Scratch
-        if event['type'] == 'IssuesEvent':
-            print(json.dumps(event, sort_keys=True, indent=4))
+@register_event
+class PushEvent(Event):
+    pass
+
+@register_event
+class CommitCommentEvent(Event):
+    pass
+
+@register_event
+class ReleaseEvent(Event):
+    pass
+
+@register_event
+class PublicEvent(Event):
+    pass
+
+@register_event
+class MemberEvent(Event):
+    pass
+
+@register_event
+class IssueCommentEvent(Event):
+    pass
+
+def jsonp(j):
+    print(json.dumps(j, sort_keys=True, indent=4))
+
+def make_user_event_filter(login):
+    """
+    Make a predicate closure for user filtering
+    """
+    def _filter(raw_event):
+        return raw_event['actor']['login'] == login
+    return _filter
+
+class EventProcessor(object):
+    def __init__(self):
+        self.count = 0
+
+    def process_event(self, raw_event, match=(lambda e: True)):
+        event = Event.from_raw(raw_event)
+        if event and match(raw_event):
+            self.count += 1
+            print(event)
+            print(self.count)
+            jsonp(raw_event)
             sys.exit(1)
 
 if __name__=='__main__':
+    processor = EventProcessor()
     archive_filenames = glob.iglob(os.path.join(ARCHIVE_PATH, '*.json.gz'))
-    archive_filenames=list(archive_filenames)[:1] #TEST
+    #archive_filenames = list(archive_filenames)[:1] #TEST
+    match = lambda x: True
+    if len(sys.argv) == 2:
+        print("Only matching user {}".format(sys.argv[1]))
+        match = make_user_event_filter(sys.argv[1])
     with fileinput.FileInput(files=archive_filenames,
                              openhook=lambda f,m: gzip.open(f,'rt')) as f:
         for line in f:
             event=json.loads(line)
-            process_event(event)
+            processor.process_event(event, match)
