@@ -8,6 +8,7 @@ import itertools
 import gzip
 import glob
 import fileinput
+from pprint import pprint
 
 ARCHIVE_PATH = os.getenv("GITHUB_ARCHIVE") or os.path.expanduser('~/github-archive')
 
@@ -15,7 +16,10 @@ class Event(object):
     types = dict()
 
     def __init__(self, raw_event):
-        pass
+        self.type = raw_event['type']
+
+    def make(self, raw_event):
+        """OVERRIDE ME!"""
 
     @classmethod
     def register_event(cls, event_cls):
@@ -37,7 +41,8 @@ register_event = Event.register_event
 
 @register_event
 class GollumEvent(Event):
-    pass
+    def make(self, raw_event):
+        pass
 
 @register_event
 class IssuesEvent(Event):
@@ -91,9 +96,10 @@ class EventProcessor(object):
         event = Event.from_raw(raw_event)
         if event:
             self.count += 1
-            print(event)
             print(self.count)
             jsonp(raw_event)
+            print(event)
+            print(event.__dict__)
             sys.exit(1)
 
 class EventSource(object):
@@ -117,14 +123,13 @@ class EventSource(object):
         archive_filenames = glob.iglob(archive_filenames)
 
         # Iterator for lines of these source files
-        # with fileinput.FileInput(files=archive_filenames,
-        #                          openhook=self._open_file) as f:
         lines = fileinput.FileInput(files=archive_filenames,
                                 openhook=self._open_file)
+        # TODO make sure them things get closed ^^
+
         events = (json.loads(line) for line in lines)
         return (event for event in events
                 if self.predicate(event))
-        #return filter(self.predicate, lines)
 
 
 if __name__=='__main__':
