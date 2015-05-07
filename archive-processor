@@ -16,7 +16,8 @@ class Event(object):
     types = dict()
 
     def __init__(self, raw_event):
-        self.type = raw_event['type']
+        self.__dict__ = raw_event
+        #self.type = raw_event['type']
 
     def make(self, raw_event):
         """OVERRIDE ME!"""
@@ -75,6 +76,9 @@ class IssueCommentEvent(Event):
 def jsonp(j):
     print(json.dumps(j, sort_keys=True, indent=4))
 
+def log(*args):
+    print(*args, file=sys.stderr)
+
 def make_user_event_filter(login):
     """
     Make a predicate closure for user filtering
@@ -96,11 +100,10 @@ class EventProcessor(object):
         event = Event.from_raw(raw_event)
         if event:
             self.count += 1
-            print(self.count)
-            jsonp(raw_event)
-            print(event)
-            print(event.__dict__)
-            sys.exit(1)
+            if self.count % 10000 == 0:
+                log("processed: {}".format(self.count))
+            # i know this is dumb, i should have saved the *really* raw_event(json)
+            print(json.dumps(raw_event).strip())
 
 class EventSource(object):
     """
@@ -112,7 +115,7 @@ class EventSource(object):
         self.predicate = predicate
 
     def _open_file(self, path, mode):
-        print('.',end='')
+        log('Processing {}'.format(path))
         sys.stdout.flush()
         return gzip.open(path,'rt')
 
@@ -136,8 +139,9 @@ if __name__=='__main__':
     predicate = None
     if len(sys.argv) == 2:
         predicate = make_user_event_filter(sys.argv[1])
-    predicate = make_event_type_filter('GollumEvent')
+    # predicate = make_event_type_filter('GollumEvent')
     processor = EventProcessor()
+    predicate = bool
     source = EventSource(ARCHIVE_PATH, predicate)
     for raw_event in source:
         processor.process_event(raw_event)
