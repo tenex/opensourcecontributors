@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+# Works only for archives from 2015-01-01 -> Present
 import os
 import os.path
 import sys
 import json
+import itertools
 import gzip
 import glob
 import fileinput
@@ -76,29 +78,61 @@ def make_user_event_filter(login):
         return raw_event['actor']['login'] == login
     return _filter
 
+def make_event_type_filter(event_type):
+    def _filter(raw_event):
+        return raw_event['type'] == event_type
+    return _filter
+
 class EventProcessor(object):
     def __init__(self):
         self.count = 0
 
-    def process_event(self, raw_event, match=(lambda e: True)):
+    def process_event(self, raw_event):
         event = Event.from_raw(raw_event)
-        if event and match(raw_event):
+        if event:
             self.count += 1
             print(event)
             print(self.count)
             jsonp(raw_event)
             sys.exit(1)
 
+class EventSource(object):
+    """
+    Iterate over every event
+    """
+
+    def __init__(self, path, predicate=bool):
+        self.path = path
+        self.predicate = predicate
+
+    def _open_file(self, path, mode):
+        print('.',end='')
+        sys.stdout.flush()
+        return gzip.open(path,'rt')
+
+
+    def __iter__(self):
+        # Iterator for source files:
+        archive_filenames = os.path.join(self.path, '*.json.gz')
+        archive_filenames = glob.iglob(archive_filenames)
+
+        # Iterator for lines of these source files
+        # with fileinput.FileInput(files=archive_filenames,
+        #                          openhook=self._open_file) as f:
+        lines = fileinput.FileInput(files=archive_filenames,
+                                openhook=self._open_file)
+        events = (json.loads(line) for line in lines)
+        return (event for event in events
+                if self.predicate(event))
+        #return filter(self.predicate, lines)
+
+
 if __name__=='__main__':
-    processor = EventProcessor()
-    archive_filenames = glob.iglob(os.path.join(ARCHIVE_PATH, '*.json.gz'))
-    #archive_filenames = list(archive_filenames)[:1] #TEST
-    match = lambda x: True
+    predicate = None
     if len(sys.argv) == 2:
-        print("Only matching user {}".format(sys.argv[1]))
-        match = make_user_event_filter(sys.argv[1])
-    with fileinput.FileInput(files=archive_filenames,
-                             openhook=lambda f,m: gzip.open(f,'rt')) as f:
-        for line in f:
-            event=json.loads(line)
-            processor.process_event(event, match)
+        predicate = make_user_event_filter(sys.argv[1])
+    predicate = make_event_type_filter('GollumEvent')
+    processor = EventProcessor()
+    source = EventSource(ARCHIVE_PATH, predicate)
+    for raw_event in source:
+        processor.process_event(raw_event)
