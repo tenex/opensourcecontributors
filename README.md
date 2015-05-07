@@ -15,13 +15,21 @@ SELECT
   -- common fields
   created_at, actor, repository_owner, repository_name, repository_organization, type, url,
   -- specific to type
-  payload_action,                                                                         -- for MemberEvent (added), IssuesEvent (open/closed)
-  payload_member_login,                                                                   -- MemberEvent
-  payload_commit_msg, payload_commit_email, payload_commit_id, payload_head, payload_ref, -- PushEvent
-  payload_comment_url, payload_comment_commit_id,                                         -- CommitCommentEvent
-  payload_comment_position, payload_comment_path, payload_comment_body,                   -- CommitCommentEvent (cont'd)
-  repository_size,                                                                        -- PublicEvent
-  payload_issue_id, payload_comment_id                                                    -- IssueCommentEvent
+  payload_action,            -- MemberEvent (added), IssuesEvent (open/closed)
+  payload_member_login,      -- MemberEvent
+  payload_commit_msg,        -- PushEvent
+  payload_commit_email,      -- PushEvent
+  payload_commit_id,         -- PushEvent
+  payload_head,              -- PushEvent
+  payload_ref,               -- PushEvent
+  payload_comment_url,       -- CommitCommentEvent
+  payload_comment_commit_id, -- CommitCommentEvent
+  payload_comment_position,  -- CommitCommentEvent
+  payload_comment_path,      -- CommitCommentEvent
+  payload_comment_body,      -- CommitCommentEvent
+  repository_size,           -- PublicEvent
+  payload_issue_id,          -- IssueCommentEvent
+  payload_comment_id         -- IssueCommentEvent
 FROM (
   TABLE_QUERY(githubarchive:year,'true') -- All the years!
 )
