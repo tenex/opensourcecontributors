@@ -8,15 +8,42 @@ import glob
 import fileinput
 
 ARCHIVE_PATH = os.getenv("GITHUB_ARCHIVE") or os.path.expanduser('~/github-archive')
-RELEVANT_EVENTS = ('GollumEvent',
-                   'IssuesEvent',
-                   'PushEvent',
-                   'CommitCommentEvent',
-                   'ReleaseEvent',
-                   'PublicEvent',
-                   'MemberEvent',
-                   'IssuesCommentEvent',
-                   'CreateEvent')
+
+def gollum_processor(event):
+    pass
+def issues_processor(event):
+    pass
+def push_processor(event):
+    pass
+def commit_processor(event):
+    pass
+def release_processor(event):
+    pass
+def public_processor(event):
+    pass
+def member_processor(event):
+    pass
+def issues_comment_processor(event):
+    fields=('url',)
+    pass
+
+EVENT_PROCESSORS = {
+    'GollumEvent': gollum_processor,
+    'IssuesEvent': issues_processor,
+    'PushEvent': push_processor,
+    'CommitCommentEvent': commit_processor,
+    'ReleaseEvent': release_processor,
+    'PublicEvent': public_processor,
+    'MemberEvent': member_processor,
+    'IssueCommentEvent': issue_comment_processor
+}
+
+def process_event(event):
+    if event['type'] in EVENT_PROCESSORS.keys():
+        # Scratch
+        if event['type'] == 'IssuesEvent':
+            print(json.dumps(event, sort_keys=True, indent=4))
+            sys.exit(1)
 
 if __name__=='__main__':
     archive_filenames = glob.iglob(os.path.join(ARCHIVE_PATH, '*.json.gz'))
@@ -25,6 +52,4 @@ if __name__=='__main__':
                              openhook=lambda f,m: gzip.open(f,'rt')) as f:
         for line in f:
             event=json.loads(line)
-            if event['type'] in RELEVANT_EVENTS:
-                print(line.strip())
-                #print(json.dumps(event, sort_keys=True, indent=4))
+            process_event(event)
