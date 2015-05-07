@@ -46,6 +46,4 @@ WHERE type IN (
 
 ```
 
-## Issues
-
-* GollumEvent (the Wiki event) has no real data surrounding *what* was done to the page. Fix by supplementing with API?
+If you actually want to use this data, there's no need to run that query; just ask me for the CSVs. When gzipped, they are about 19GB.
