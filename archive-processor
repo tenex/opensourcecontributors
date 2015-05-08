@@ -15,14 +15,22 @@ ARCHIVE_PATH = os.getenv("GITHUB_ARCHIVE") or os.path.expanduser('~/github-archi
 class Event(object):
     types = dict()
 
-    def __init__(self, raw_event):
-        #self.__dict__ = raw_event
-        # Common to all events
+    def __init__(self, raw_event, source_fmt):
+        makers = {
+            'event': (self.make_common_from_event, self.make_from_event),
+            'timeline': (self.make_common_from_timeline, self.make_from_timeline)
+        }
+        maker = makers.get(source_fmt, None)
+        if maker is None:
+            raise "source_fmt should either be 'event' (json) or 'timeline' (csv)"
+        for m in maker:
+            m(raw_event)
+
+    def make_common_from_event(self, raw_event):
         self.type = raw_event['type']
         self.id = raw_event['id']
         self.created_at = raw_event['created_at']
 
-        # Frequent on events
         if 'actor' in raw_event:
             self.user = raw_event['actor']['login']
             self._user_lower = self.user.lower()
@@ -33,12 +41,19 @@ class Event(object):
             self.org = raw_event['org']['login']
             self._org_lower = self.org.lower()
 
-
-        self.make(raw_event)
-
-
-    def make(self, raw_event):
+    def make_common_from_timeline(self, raw_event):
         pass
+
+
+    def make_from_event(self, raw_event):
+        """
+        From new API, natively JSON (on/after 2015-01-01)
+        """
+
+    def make_from_timeline(self, row):
+        """
+        From old API (before 2015-01-01)
+        """
 
     @classmethod
     def register_event(cls, event_cls):
@@ -46,26 +61,26 @@ class Event(object):
         return event_cls
 
     @classmethod
-    def from_raw(cls, raw_event):
+    def from_raw(cls, raw_event, source_fmt):
         """
         Factory method to create appropriate event instance from raw JSON data
         """
         subclass = cls.types.get(raw_event['type'], None)
         if subclass is None:
             return None
-        return subclass(raw_event)
+        return subclass(raw_event, source_fmt)
 
 
 register_event = Event.register_event
 
 @register_event
 class GollumEvent(Event):
-    def make(self, raw_event):
+    def make_from_event(self, raw_event):
         self.pages = raw_event['payload']['pages']
 
 @register_event
 class IssuesEvent(Event):
-    def make(self, raw_event):
+    def make_from_event(self, raw_event):
         self.repo_name = raw_event['repo']['name']
         self.action = raw_event['payload']['action']
         issue = raw_event['payload']['issue']
@@ -74,12 +89,12 @@ class IssuesEvent(Event):
 
 @register_event
 class PushEvent(Event):
-    def make(self, raw_event):
+    def make_from_event(self, raw_event):
         self.payload = raw_event['payload']
 
 @register_event
 class CommitCommentEvent(Event):
-    def make(self, raw_event):
+    def make_from_event(self, raw_event):
         comment = raw_event['payload']['comment']
         self.path = comment['path'] # to file, if applicable
         self.html_url = comment['html_url']
@@ -90,7 +105,7 @@ class CommitCommentEvent(Event):
 
 @register_event
 class ReleaseEvent(Event):
-    def make(self, raw_event):
+    def make_from_event(self, raw_event):
         self.action = raw_event['payload']['action']
         r = raw_event['payload']['release']
         self.tag_name = r['tag_name']
@@ -98,18 +113,23 @@ class ReleaseEvent(Event):
 
 @register_event
 class PublicEvent(Event):
-    pass
+    def make_from_event(self, raw_event):
+        pass
+
+    def __str__(self):
+        "{}: {}".format()
+        pass
 
 @register_event
 class MemberEvent(Event):
-    def make(self, raw_event):
+    def make_from_event(self, raw_event):
         p = raw_event['payload']
         self.target_user = p['member']['login']
         self.target_action = p['action']
 
 @register_event
 class IssueCommentEvent(Event):
-    def make(self, raw_event):
+    def make_from_event(self, raw_event):
         p = raw_event['payload']
         self.action = p['action']
         self.issue_number = p['issue']['number']
@@ -138,18 +158,22 @@ class EventProcessor(object):
     def __init__(self):
         self.count = 0
 
-    def process_event(self, raw_event):
-        event = Event.from_raw(raw_event)
+    def process_event(self, raw_event, source_fmt):
+        event = Event.from_raw(raw_event, source_fmt)
         if event:
             self.count += 1
             if self.count % 10000 == 0:
                 log("processed: {}".format(self.count))
-            # i know this is dumb, i should have saved the *really* raw_event(json)
-            print(json.dumps(raw_event).strip())
+            #print(json.dumps(raw_event).strip())
+            #print('---')
+            #print(json.dumps(event.__dict__).strip())
+            #sys.exit(1)
 
-class EventSource(object):
+class EventEventSource(object):
     """
     Iterate over every event
+    The title seems idiotic, but the Event data can either come from the
+    "Event API" or the "Timeline API" depending on the year.
     """
 
     def __init__(self, path, predicate=bool):
@@ -177,13 +201,14 @@ class EventSource(object):
                 if self.predicate(event))
 
 
-if __name__=='__main__':
+def main():
     predicate = None
-    if len(sys.argv) == 2:
-        predicate = make_user_event_filter(sys.argv[1])
-    # predicate = make_event_type_filter('GollumEvent')
+    if len(sys.argv) > 1:
+        predicate = make_event_type_filter(sys.argv[1])
     processor = EventProcessor()
-    predicate = bool
-    source = EventSource(ARCHIVE_PATH, predicate)
+    source = EventEventSource(ARCHIVE_PATH, predicate)
     for raw_event in source:
-        processor.process_event(raw_event)
+        processor.process_event(raw_event, 'event')
+
+if __name__=='__main__':
+    main()
