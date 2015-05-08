@@ -89,7 +89,11 @@ class CommitCommentEvent(Event):
 
 @register_event
 class ReleaseEvent(Event):
-    pass
+    def make(self, raw_event):
+        self.action = raw_event['payload']['action']
+        r = raw_event['payload']['release']
+        self.tag_name = r['tag_name']
+        self.download_url = r['html_url']
 
 @register_event
 class PublicEvent(Event):
