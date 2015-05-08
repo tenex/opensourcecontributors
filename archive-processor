@@ -3,14 +3,15 @@
 import os
 import os.path
 import sys
-from datetime import datetime
 import csv
 import json
 import itertools
 import gzip
 import glob
 import fileinput
+import urllib.parse
 from pprint import pprint
+from datetime import datetime
 
 GITHUB_ARCHIVE_EVENT_PATH = os.getenv("GITHUB_ARCHIVE_EVENT") or os.path.expanduser('~/github-archive')
 GITHUB_ARCHIVE_TIMELINE_PATH = os.getenv("GITHUB_ARCHIVE_TIMELINE") or os.path.expanduser('~/github-archive-timeline')
@@ -46,8 +47,19 @@ class Event(object):
             self._org_lower = self.org.lower()
 
     def make_common_from_timeline(self, raw_event):
-        datetime.strptime('2014-06-14 06:13:26', '%Y-%m-%d %H:%M:%S')
-        pass
+        self.type = raw_event['type']
+        self.created_at = datetime.strptime(raw_event['created_at'],
+                                            '%Y-%m-%d %H:%M:%S').isoformat()
+        if raw_event['actor']:
+            self.user = raw_event['actor']
+            self._user_lower = self.user.lower()
+        if raw_event['repository_name']:
+            self.repo = raw_event['repository_name']
+            self._repo_lower = self.repo.lower()
+        if raw_event['repository_organization']:
+            self.org = raw_event['repository_organization']
+            self._org_lower = self.org.lower()
+
 
 
     def make_from_event(self, raw_event):
