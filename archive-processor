@@ -16,11 +16,29 @@ class Event(object):
     types = dict()
 
     def __init__(self, raw_event):
-        self.__dict__ = raw_event
-        #self.type = raw_event['type']
+        #self.__dict__ = raw_event
+        # Common to all events
+        self.type = raw_event['type']
+        self.id = raw_event['id']
+        self.created_at = raw_event['created_at']
+
+        # Frequent on events
+        if 'actor' in raw_event:
+            self.user = raw_event['actor']['login']
+            self._user_lower = self.user.lower()
+        if 'repo' in raw_event:
+            self.repo_name = raw_event['repo']['name']
+            self._repo_lower = self.repo.lower()
+        if 'org' in raw_event:
+            self.org = raw_event['org']['login']
+            self._org_lower = self.org.lower()
+
+
+        self.make(raw_event)
+
 
     def make(self, raw_event):
-        """OVERRIDE ME!"""
+        pass
 
     @classmethod
     def register_event(cls, event_cls):
