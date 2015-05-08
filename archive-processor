@@ -101,7 +101,10 @@ class PublicEvent(Event):
 
 @register_event
 class MemberEvent(Event):
-    pass
+    def make(self, raw_event):
+        p = raw_event['payload']
+        self.target_user = p['member']['login']
+        self.target_action = p['action']
 
 @register_event
 class IssueCommentEvent(Event):
