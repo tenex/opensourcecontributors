@@ -78,7 +78,14 @@ class PushEvent(Event):
 
 @register_event
 class CommitCommentEvent(Event):
-    pass
+    def make(self, raw_event):
+        comment = raw_event['payload']['comment']
+        self.path = comment['path'] # to file, if applicable
+        self.html_url = comment['html_url']
+        self.line = comment['line']
+        self.position = comment['position']
+        self.body = comment['body']
+        self.commit_id = comment['commit_id']
 
 @register_event
 class ReleaseEvent(Event):
