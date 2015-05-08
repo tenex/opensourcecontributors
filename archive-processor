@@ -65,7 +65,12 @@ class GollumEvent(Event):
 
 @register_event
 class IssuesEvent(Event):
-    pass
+    def make(self, raw_event):
+        self.repo_name = raw_event['repo']['name']
+        self.action = raw_event['payload']['action']
+        issue = raw_event['payload']['issue']
+        self.html_url = issue['html_url']
+        self.issue_number = issue['number']
 
 @register_event
 class PushEvent(Event):
