@@ -47,3 +47,13 @@ WHERE type IN (
 ```
 
 If you actually want to use this data, there's no need to run that query; just ask me for the CSVs. When gzipped, they are about 19GB.
+
+Also note that for testing purposes -- for example, the following query:
+
+```
+SELECT *
+FROM [githubarchive:year.2014]
+LIMIT 1000
+```
+
+you will note that in the results pane of Google's BigQuery page, there is the string "null" where it really means a real null value. That makes its way into the exported CSV. So you should export the table the real way, or you will have the string "null" for almost every value.
