@@ -108,10 +108,14 @@ class MemberEvent(Event):
 
 @register_event
 class IssueCommentEvent(Event):
-    pass
-
-def jsonp(j):
-    print(json.dumps(j, sort_keys=True, indent=4))
+    def make(self, raw_event):
+        p = raw_event['payload']
+        self.action = p['action']
+        self.issue_number = p['issue']['number']
+        self.issue_url = p['issue']['html_url']
+        self.comment_url = p['comment']['html_url']
+        self.comment_body = p['comment']['body']
+        self.comment_id = p['comment']['id']
 
 def log(*args):
     print(*args, file=sys.stderr)
