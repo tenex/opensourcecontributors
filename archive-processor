@@ -172,12 +172,26 @@ class IssueCommentEvent(Event):
         self.action = p['action']
         self.issue_number = p['issue']['number']
         self.issue_url = p['issue']['html_url']
+        self.comment_id = p['comment']['id']
         self.comment_url = p['comment']['html_url']
         self.comment_body = p['comment']['body']
-        self.comment_id = p['comment']['id']
+
 
     def make_from_timeline(self, raw_event):
-        pass
+        self.issue_url = urllib.parse.urldefrag(raw_event['url']).url
+        self.action=raw_event.get('payload_action', '') # closed, open, created, null
+
+        # this timeline is so awful. ಠ_ಠ
+        try:
+            self.issue_number = int(os.path.basename(self.issue_url))
+        except:
+            self.issue_number = ''
+
+        self.comment_url = raw_event['url']
+        self.comment_id = raw_event['payload_comment_id']
+        self.comment_body = raw_event['payload_comment_body']
+
+
 
 def log(*args):
     print(*args, file=sys.stderr)
