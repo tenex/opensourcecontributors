@@ -27,7 +27,7 @@ class Event(object):
             self.user = raw_event['actor']['login']
             self._user_lower = self.user.lower()
         if 'repo' in raw_event:
-            self.repo_name = raw_event['repo']['name']
+            self.repo = raw_event['repo']['name']
             self._repo_lower = self.repo.lower()
         if 'org' in raw_event:
             self.org = raw_event['org']['login']
@@ -74,7 +74,8 @@ class IssuesEvent(Event):
 
 @register_event
 class PushEvent(Event):
-    pass
+    def make(self, raw_event):
+        self.payload = raw_event['payload']
 
 @register_event
 class CommitCommentEvent(Event):
