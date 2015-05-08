@@ -61,7 +61,7 @@ register_event = Event.register_event
 @register_event
 class GollumEvent(Event):
     def make(self, raw_event):
-        pass
+        self.pages = raw_event['payload']['pages']
 
 @register_event
 class IssuesEvent(Event):
