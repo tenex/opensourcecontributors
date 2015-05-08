@@ -3,6 +3,8 @@
 import os
 import os.path
 import sys
+from datetime import datetime
+import csv
 import json
 import itertools
 import gzip
@@ -10,7 +12,9 @@ import glob
 import fileinput
 from pprint import pprint
 
-ARCHIVE_PATH = os.getenv("GITHUB_ARCHIVE") or os.path.expanduser('~/github-archive')
+GITHUB_ARCHIVE_EVENT_PATH = os.getenv("GITHUB_ARCHIVE_EVENT") or os.path.expanduser('~/github-archive')
+GITHUB_ARCHIVE_TIMELINE_PATH = os.getenv("GITHUB_ARCHIVE_TIMELINE") or os.path.expanduser('~/github-archive-timeline')
+
 
 class Event(object):
     types = dict()
@@ -42,6 +46,7 @@ class Event(object):
             self._org_lower = self.org.lower()
 
     def make_common_from_timeline(self, raw_event):
+        datetime.strptime('2014-06-14 06:13:26', '%Y-%m-%d %H:%M:%S')
         pass
 
 
@@ -78,6 +83,9 @@ class GollumEvent(Event):
     def make_from_event(self, raw_event):
         self.pages = raw_event['payload']['pages']
 
+    def make_from_timeline(self, raw_event):
+        pass
+
 @register_event
 class IssuesEvent(Event):
     def make_from_event(self, raw_event):
@@ -87,10 +95,16 @@ class IssuesEvent(Event):
         self.html_url = issue['html_url']
         self.issue_number = issue['number']
 
+    def make_from_timeline(self, raw_event):
+        pass
+
 @register_event
 class PushEvent(Event):
     def make_from_event(self, raw_event):
         self.payload = raw_event['payload']
+
+    def make_from_timeline(self, raw_event):
+        pass
 
 @register_event
 class CommitCommentEvent(Event):
@@ -103,6 +117,9 @@ class CommitCommentEvent(Event):
         self.body = comment['body']
         self.commit_id = comment['commit_id']
 
+    def make_from_timeline(self, raw_event):
+        pass
+
 @register_event
 class ReleaseEvent(Event):
     def make_from_event(self, raw_event):
@@ -111,9 +128,15 @@ class ReleaseEvent(Event):
         self.tag_name = r['tag_name']
         self.download_url = r['html_url']
 
+    def make_from_timeline(self, raw_event):
+        pass
+
 @register_event
 class PublicEvent(Event):
     def make_from_event(self, raw_event):
+        pass
+
+    def make_from_timeline(self, raw_event):
         pass
 
     def __str__(self):
@@ -127,6 +150,9 @@ class MemberEvent(Event):
         self.target_user = p['member']['login']
         self.target_action = p['action']
 
+    def make_from_timeline(self, raw_event):
+        pass
+
 @register_event
 class IssueCommentEvent(Event):
     def make_from_event(self, raw_event):
@@ -138,13 +164,13 @@ class IssueCommentEvent(Event):
         self.comment_body = p['comment']['body']
         self.comment_id = p['comment']['id']
 
+    def make_from_timeline(self, raw_event):
+        pass
+
 def log(*args):
     print(*args, file=sys.stderr)
 
 def make_user_event_filter(login):
-    """
-    Make a predicate closure for user filtering
-    """
     def _filter(raw_event):
         return raw_event['actor']['login'] == login
     return _filter
@@ -172,7 +198,7 @@ class EventProcessor(object):
 class EventEventSource(object):
     """
     Iterate over every event
-    The title seems idiotic, but the Event data can either come from the
+    The class name seems idiotic, but the Event data can either come from the
     "Event API" or the "Timeline API" depending on the year.
     """
 
@@ -184,7 +210,6 @@ class EventEventSource(object):
         log('Processing {}'.format(path))
         sys.stdout.flush()
         return gzip.open(path,'rt')
-
 
     def __iter__(self):
         # Iterator for source files:
@@ -200,15 +225,40 @@ class EventEventSource(object):
         return (event for event in events
                 if self.predicate(event))
 
+class TimelineEventSource(object):
+    """
+    Iterate over every event from 2011-2014 (when gitarchive used the Timeline API)
+    """
+
+    def __init__(self, path, predicate=bool):
+        self.path = path
+        self.predicate = predicate
+
+    def _open_file(self, path, mode):
+        log('Processing {}'.format(path))
+        sys.stdout.flush()
+        return gzip.open(path,'rt')
+
+    def __iter__(self):
+        archive_filenames = os.path.join(self.path, '*.csv.gz')
+        archive_filenames = glob.iglob(archive_filenames)
+
+        # Iterator for lines of these source files
+        lines = fileinput.FileInput(files=archive_filenames,
+                                    openhook=self._open_file)
+        reader = csv.DictReader(lines)
+        return reader
+
 
 def main():
     predicate = None
     if len(sys.argv) > 1:
         predicate = make_event_type_filter(sys.argv[1])
     processor = EventProcessor()
-    source = EventEventSource(ARCHIVE_PATH, predicate)
+    #source = EventEventSource(GITHUB_ARCHIVE_EVENT_PATH, predicate)
+    source = TimelineEventSource(GITHUB_ARCHIVE_TIMELINE_PATH, predicate)
     for raw_event in source:
-        processor.process_event(raw_event, 'event')
+        processor.process_event(raw_event, 'timeline')
 
 if __name__=='__main__':
     main()
