@@ -35,7 +35,7 @@ class Event(object):
 
     def make_common_from_event(self, raw_event):
         self.type = raw_event['type']
-        self.id = raw_event['id']
+        self._event_id = raw_event['id']
         self.created_at = dateutil.parser.parse(raw_event['created_at']).isoformat()
 
         if 'actor' in raw_event:
@@ -296,10 +296,14 @@ def main():
     if len(sys.argv) > 1:
         predicate = make_event_type_filter(sys.argv[1])
     processor = EventProcessor()
-    #source = EventEventSource(GITHUB_ARCHIVE_EVENT_PATH, predicate)
+    source = EventEventSource(GITHUB_ARCHIVE_EVENT_PATH, predicate)
+    for raw_event in source:
+        processor.process_event(raw_event, 'event')
+        break
     source = TimelineEventSource(GITHUB_ARCHIVE_TIMELINE_PATH, predicate)
     for raw_event in source:
         processor.process_event(raw_event, 'timeline')
+        break
 
 if __name__=='__main__':
     main()
