@@ -138,8 +138,13 @@ class CommitCommentEvent(Event):
         self.body = comment['body']
         self.commit_id = comment['commit_id']
 
-    def make_from_timeline(self, raw_event):
-        pass
+    def make_from_timeline(self, d):
+        self.path = d['payload_comment_path']
+        self.html_url = d['url']
+        self.line = d['payload_commit_position']
+        self.position = d['payload_commit_position']
+        self.body = d['payload_comment_body']
+        self.commit_id = d['payload_commit']
 
 @register_event
 class ReleaseEvent(Event):
