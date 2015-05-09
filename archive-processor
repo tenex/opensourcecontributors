@@ -109,14 +109,15 @@ class GollumEvent(Event):
 @register_event
 class IssuesEvent(Event):
     def make_from_event(self, raw_event):
-        self.repo_name = raw_event['repo']['name']
         self.action = raw_event['payload']['action']
         issue = raw_event['payload']['issue']
         self.html_url = issue['html_url']
         self.issue_number = issue['number']
 
-    def make_from_timeline(self, raw_event):
-        pass
+    def make_from_timeline(self, d):
+        self.action = d['payload_action']
+        self.html_url = d['url']
+        self.issue_number = d['payload_number']
 
 @register_event
 class PushEvent(Event):
