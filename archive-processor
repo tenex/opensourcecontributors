@@ -124,11 +124,23 @@ class IssuesEvent(Event):
 
 @register_event
 class PushEvent(Event):
-    def make_from_event(self, raw_event):
-        self.payload = raw_event['payload']
+    def make_from_event(self, d):
+        p = d['payload']
+        self.ref = p['ref']
+        self.head = p['head']
+        self.before = p['before']
+        self.commit_count = p['size']
+        self.distinct_commit_count = p['distinct_size']
 
-    def make_from_timeline(self, raw_event):
-        pass
+    def make_from_timeline(self, d):
+        # The "commit" here seems to be a random commit in the push.
+        # Only one is listed, and it's not the first nor the last. ಠ_๏
+        self.ref = d['payload_ref']
+        self.head = d['payload_head']
+        self.commit_count = None
+        self.distinct_count = None
+        self.before = None
+
 
 @register_event
 class CommitCommentEvent(Event):
