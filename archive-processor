@@ -235,24 +235,27 @@ class EventProcessor(object):
                 log("processed: {}".format(self.count))
             #print(json.dumps(raw_event).strip())
             #print('---')
-            #print(json.dumps(event.__dict__).strip())
-            #sys.exit(1)
+            print(json.dumps(event.__dict__).strip())
 
-class EventEventSource(object):
+class EventSource(object):
+    def __init__(self, path, predicate=bool):
+        self.path = path
+        self.predicate = predicate
+
+    def _filenames(self, base, pattern):
+        return glob.iglob(os.path.join(base, pattern))
+
+    def _open_file(self, path, mode):
+        log('loading events from: {}'.format(path))
+        sys.stdout.flush()
+        return gzip.open(path,'rt')
+
+class EventEventSource(EventSource):
     """
     Iterate over every event
     The class name seems idiotic, but the Event data can either come from the
     "Event API" or the "Timeline API" depending on the year.
     """
-
-    def __init__(self, path, predicate=bool):
-        self.path = path
-        self.predicate = predicate
-
-    def _open_file(self, path, mode):
-        log('Processing {}'.format(path))
-        sys.stdout.flush()
-        return gzip.open(path,'rt')
 
     def __iter__(self):
         # Iterator for source files:
@@ -261,26 +264,17 @@ class EventEventSource(object):
 
         # Iterator for lines of these source files
         lines = fileinput.FileInput(files=archive_filenames,
-                                openhook=self._open_file)
+                                    openhook=self._open_file)
         # TODO make sure them things get closed ^^
 
         events = (json.loads(line) for line in lines)
         return (event for event in events
                 if self.predicate(event))
 
-class TimelineEventSource(object):
+class TimelineEventSource(EventSource):
     """
     Iterate over every event from 2011-2014 (when gitarchive used the Timeline API)
     """
-
-    def __init__(self, path, predicate=bool):
-        self.path = path
-        self.predicate = predicate
-
-    def _open_file(self, path, mode):
-        log('Processing {}'.format(path))
-        sys.stdout.flush()
-        return gzip.open(path,'rt')
 
     def __iter__(self):
         archive_filenames = os.path.join(self.path, '*.csv.gz')
@@ -290,7 +284,8 @@ class TimelineEventSource(object):
         lines = fileinput.FileInput(files=archive_filenames,
                                     openhook=self._open_file)
         reader = csv.DictReader(lines)
-        return reader
+        return (line for line in reader
+                if self.predicate(line))
 
 
 def main():
