@@ -99,7 +99,7 @@ class GollumEvent(Event):
         self.pages = [{
             'html_url': d["payload_page_html_url"],
             'summary': d["payload_page_summary"],
-            'name': d["payload_page_page_name"],
+            'page_name': d["payload_page_page_name"],
             'action': d["payload_page_action"],
             'title': d["payload_page_title"],
             'sha': d["payload_page_sha"]
