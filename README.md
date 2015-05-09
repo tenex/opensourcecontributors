@@ -8,7 +8,7 @@ Place all these files from 2015-01-01 until today in a directory pointed to by t
 
 ## BigQuery Data Sets
 
-For the data from 2011-2014 (actually, 2008-08-25 01:07:06 to 2014-12-31 23:59:59), this BigTable query was used:
+For the data from 2011-2014 (actually, 2008-08-25 01:07:06 to 2014-12-31 23:59:59), this BigTable query was used (which took me 47.5s to run):
 
 ```sql
 SELECT
@@ -22,8 +22,6 @@ SELECT
   payload_page_title,        -- GollumEvent
   payload_page_sha,          -- GollumEvent
   payload_number,            -- IssuesEvent
-
-
   payload_action,            -- MemberEvent, IssuesEvent, ReleaseEvent, IssueCommentEvent
   payload_member_login,      -- MemberEvent
   payload_commit_msg,        -- PushEvent
