@@ -8,26 +8,32 @@ Place all these files from 2015-01-01 until today in a directory pointed to by t
 
 ## BigQuery Data Sets
 
-For the data from 2011-2014, this BigTable query was used:
+For the data from 2011-2014 (actually, 2008-08-25 01:07:06 to 2014-12-31 23:59:59), this BigTable query was used:
 
 ```sql
 SELECT
   -- common fields
   created_at, actor, repository_owner, repository_name, repository_organization, type, url,
   -- specific to type
-  payload_action,            -- MemberEvent (added), IssuesEvent (open/closed)
+  payload_page_html_url,     -- GollumEvent
+  payload_page_summary,      -- GollumEvent
+  payload_page_page_name,    -- GollumEvent
+  payload_page_action,       -- GollumEvent
+  payload_page_title,        -- GollumEvent
+  payload_page_sha,          -- GollumEvent
+  payload_number,            -- IssuesEvent
+
+
+  payload_action,            -- MemberEvent, IssuesEvent, ReleaseEvent, IssueCommentEvent
   payload_member_login,      -- MemberEvent
   payload_commit_msg,        -- PushEvent
   payload_commit_email,      -- PushEvent
   payload_commit_id,         -- PushEvent
   payload_head,              -- PushEvent
   payload_ref,               -- PushEvent
-  payload_comment_url,       -- CommitCommentEvent
   payload_comment_commit_id, -- CommitCommentEvent
-  payload_comment_position,  -- CommitCommentEvent
   payload_comment_path,      -- CommitCommentEvent
   payload_comment_body,      -- CommitCommentEvent
-  repository_size,           -- PublicEvent
   payload_issue_id,          -- IssueCommentEvent
   payload_comment_id         -- IssueCommentEvent
 FROM (

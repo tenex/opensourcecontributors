@@ -144,7 +144,6 @@ class CommitCommentEvent(Event):
     def make_from_event(self, raw_event):
         comment = raw_event['payload']['comment']
         self.path = comment['path'] # to file, if applicable
-        self.line = comment['line']
         self.body = comment['body']
         self.comment_id = comment['id']
         self.commit_id = comment['commit_id']
@@ -156,7 +155,6 @@ class CommitCommentEvent(Event):
 
     def make_from_timeline(self, d):
         self.path = d['payload_comment_path']
-        self.line = d['payload_comment_position']
         self.body = d['payload_comment_body']
         self.comment_id = d['payload_comment_id']
         self.commit_id = d['payload_commit']
@@ -202,8 +200,8 @@ class IssueCommentEvent(Event):
         self.action = p['action']
         self.issue_number = p['issue']['number']
         self.issue_url = p['issue']['html_url']
-        self.comment_id = p['comment']['id']
         self.comment_url = p['comment']['html_url']
+        self.comment_id = p['comment']['id']
         self.comment_body = p['comment']['body']
 
 
