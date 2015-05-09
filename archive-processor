@@ -3,6 +3,8 @@
 import os
 import os.path
 import sys
+import re
+import argparse
 import csv
 import json
 import itertools
@@ -15,8 +17,7 @@ from pprint import pprint
 from datetime import datetime
 from datetime import timezone
 
-GITHUB_ARCHIVE_EVENT_PATH = os.getenv("GITHUB_ARCHIVE_EVENT") or os.path.expanduser('~/github-archive')
-GITHUB_ARCHIVE_TIMELINE_PATH = os.getenv("GITHUB_ARCHIVE_TIMELINE") or os.path.expanduser('~/github-archive-timeline')
+class ValidationError(RuntimeError): pass
 
 class Event(object):
     types = dict()
@@ -72,6 +73,16 @@ class Event(object):
         From old API (before 2015-01-01)
         """
         raise "{} must override make_from_timeline".format(self.__class__.__name__)
+
+    def validate(self):
+        """
+        Raises ValidationError if something not Kosher is detected
+        """
+        def _explode(reason):
+            raise ValidationError(reason)
+        if not re.match('^[\w\-\.]+/[\w\-\.]+$', self.repo):
+            _explode("repository [{}] doesn't match [owner/project]".format(self.repo))
+
 
     @classmethod
     def register_event(cls, event_cls):
@@ -241,6 +252,11 @@ class EventProcessor(object):
     def process_event(self, raw_event, source_fmt):
         event = Event.from_raw(raw_event, source_fmt)
         if event:
+            try:
+                event.validate()
+            except ValidationError as e:
+                print(json.dumps(event.__dict__).strip())
+                log(e)
             self.count += 1
             if self.count % 10000 == 0:
                 log("processed: {}".format(self.count))
