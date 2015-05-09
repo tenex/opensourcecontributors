@@ -179,7 +179,7 @@ class MemberEvent(Event):
 
     def make_from_timeline(self, raw_event):
         self.target_user = raw_event['payload_member_login']
-        self.target_action = raw_event['payload_target_action']
+        self.target_action = raw_event['payload_action']
 
 @register_event
 class IssueCommentEvent(Event):
