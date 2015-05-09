@@ -10,6 +10,7 @@ import gzip
 import glob
 import fileinput
 import urllib.parse
+import dateutil
 from pprint import pprint
 from datetime import datetime
 
@@ -53,14 +54,13 @@ class Event(object):
         if raw_event['actor']:
             self.user = raw_event['actor']
             self._user_lower = self.user.lower()
-        if raw_event['repository_name']:
-            self.repo = raw_event['repository_name']
+        if raw_event['repository_name'] and raw_event['repository_owner']:
+            self.repo = "{}/{}".format(raw_event['repository_name'],
+                                       raw_event['repository_owner'])
             self._repo_lower = self.repo.lower()
         if raw_event['repository_organization']:
             self.org = raw_event['repository_organization']
             self._org_lower = self.org.lower()
-
-
 
     def make_from_event(self, raw_event):
         """
