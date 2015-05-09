@@ -155,7 +155,9 @@ class ReleaseEvent(Event):
         self.download_url = r['html_url']
 
     def make_from_timeline(self, raw_event):
-        pass
+        self.action = raw_event['payload_action']
+        self.download_url = urllib.parse.urldefrag(raw_event['url']).url
+        self.tag_name = os.path.basename(self.download_url)
 
 @register_event
 class PublicEvent(Event):
