@@ -18,7 +18,6 @@ from datetime import timezone
 GITHUB_ARCHIVE_EVENT_PATH = os.getenv("GITHUB_ARCHIVE_EVENT") or os.path.expanduser('~/github-archive')
 GITHUB_ARCHIVE_TIMELINE_PATH = os.getenv("GITHUB_ARCHIVE_TIMELINE") or os.path.expanduser('~/github-archive-timeline')
 
-
 class Event(object):
     types = dict()
 
@@ -54,26 +53,25 @@ class Event(object):
                                        '%Y-%m-%d %H:%M:%S')
         created_at = created_at.replace(tzinfo=timezone.utc)
         self.created_at = created_at.isoformat()
-        if raw_event['actor']:
-            self.user = raw_event['actor']
-            self._user_lower = self.user.lower()
-        if raw_event['repository_name'] and raw_event['repository_owner']:
-            self.repo = "{}/{}".format(raw_event['repository_name'],
-                                       raw_event['repository_owner'])
-            self._repo_lower = self.repo.lower()
-        if raw_event['repository_organization']:
-            self.org = raw_event['repository_organization']
-            self._org_lower = self.org.lower()
+        self.user = raw_event['actor']
+        self._user_lower = self.user.lower()
+        self.repo = "{}/{}".format(raw_event['repository_owner'],
+                                   raw_event['repository_name'])
+        self._repo_lower = self.repo.lower()
+        self.org = raw_event['repository_organization']
+        self._org_lower = self.org.lower()
 
     def make_from_event(self, raw_event):
         """
         From new API, natively JSON (on/after 2015-01-01)
         """
+        raise "{} must override make_from_event".format(self.__class__.__name__)
 
     def make_from_timeline(self, row):
         """
         From old API (before 2015-01-01)
         """
+        raise "{} must override make_from_timeline".format(self.__class__.__name__)
 
     @classmethod
     def register_event(cls, event_cls):
@@ -95,8 +93,8 @@ register_event = Event.register_event
 
 @register_event
 class GollumEvent(Event):
-    def make_from_event(self, raw_event):
-        self.pages = raw_event['payload']['pages']
+    def make_from_event(self, d):
+        self.pages = d['payload']['pages']
 
     def make_from_timeline(self, d):
         self.pages = [{
@@ -111,9 +109,9 @@ class GollumEvent(Event):
 
 @register_event
 class IssuesEvent(Event):
-    def make_from_event(self, raw_event):
-        self.action = raw_event['payload']['action']
-        issue = raw_event['payload']['issue']
+    def make_from_event(self, d):
+        self.action = d['payload']['action']
+        issue = d['payload']['issue']
         self.html_url = issue['html_url']
         self.issue_number = issue['number']
 
@@ -137,29 +135,33 @@ class PushEvent(Event):
         # Only one is listed, and it's not the first nor the last. ಠ_๏
         self.ref = d['payload_ref']
         self.head = d['payload_head']
+        self.before = None
         self.commit_count = None
         self.distinct_count = None
-        self.before = None
-
 
 @register_event
 class CommitCommentEvent(Event):
     def make_from_event(self, raw_event):
         comment = raw_event['payload']['comment']
         self.path = comment['path'] # to file, if applicable
-        self.html_url = comment['html_url']
         self.line = comment['line']
-        self.position = comment['position']
         self.body = comment['body']
+        self.comment_id = comment['id']
         self.commit_id = comment['commit_id']
+        self.html_url = comment['html_url']
+
+    def _url_from_timeline(self):
+        template = "https://github.com/{e.repo}/commit/{e.commit_id}#commitcomment-{e.comment_id}"
+        return template.format(e=self)
 
     def make_from_timeline(self, d):
         self.path = d['payload_comment_path']
-        self.html_url = d['url']
         self.line = d['payload_comment_position']
-        self.position = d['payload_comment_position']
         self.body = d['payload_comment_body']
+        self.comment_id = d['payload_comment_id']
         self.commit_id = d['payload_commit']
+        self.html_url = self._url_from_timeline()
+
 
 @register_event
 class ReleaseEvent(Event):
@@ -216,7 +218,7 @@ class IssueCommentEvent(Event):
             self.issue_number = ''
 
         self.comment_url = raw_event['url']
-        self.comment_id = raw_event['payload_comment_id']
+        self.comment_id = int(raw_event['payload_comment_id'])
         self.comment_body = raw_event['payload_comment_body']
 
 
