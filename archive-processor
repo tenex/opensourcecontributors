@@ -259,21 +259,22 @@ class EventProcessor(object):
                 log(e)
             self.count += 1
             if self.count % 10000 == 0:
-                log("processed: {}".format(self.count))
+                log("processed: {} ({})".format(self.count,
+                                                source_fmt))
             #print(json.dumps(raw_event).strip())
             #print('---')
-            print(json.dumps(event.__dict__).strip())
+            #print(json.dumps(event.__dict__).strip())
 
 class EventSource(object):
     def __init__(self, path, predicate=bool):
         self.path = path
         self.predicate = predicate
 
-    def _filenames(self, base, pattern):
-        return glob.iglob(os.path.join(base, pattern))
+    def _filenames(self, pattern):
+        return glob.iglob(os.path.join(self.path, pattern))
 
     def _open_file(self, path, mode):
-        log('loading events from: {}'.format(path))
+        #log('loading events from: {}'.format(path))
         sys.stdout.flush()
         return gzip.open(path,'rt')
 
@@ -285,17 +286,13 @@ class EventEventSource(EventSource):
     """
 
     def __iter__(self):
-        # Iterator for source files:
-        archive_filenames = os.path.join(self.path, '*.json.gz')
-        archive_filenames = glob.iglob(archive_filenames)
-
         # Iterator for lines of these source files
-        lines = fileinput.FileInput(files=archive_filenames,
+        lines = fileinput.FileInput(files=self._filenames('*.json.gz'),
                                     openhook=self._open_file)
         # TODO make sure them things get closed ^^
 
         events = (json.loads(line) for line in lines)
-        return (event for event in events
+        return ((event, 'event') for event in events
                 if self.predicate(event))
 
 class TimelineEventSource(EventSource):
@@ -304,30 +301,45 @@ class TimelineEventSource(EventSource):
     """
 
     def __iter__(self):
-        archive_filenames = os.path.join(self.path, '*.csv.gz')
-        archive_filenames = glob.iglob(archive_filenames)
-
         # Iterator for lines of these source files
-        lines = fileinput.FileInput(files=archive_filenames,
+        lines = fileinput.FileInput(files=self._filenames('*.csv.gz'),
                                     openhook=self._open_file)
         reader = csv.DictReader(lines)
-        return (line for line in reader
+        return ((line, 'timeline') for line in reader
                 if self.predicate(line))
 
+def main(args):
+    # TODO This sucks
+    predicates = []
+    if args.match_type:
+        predicates.append(make_user_event_filter(args.match_type))
+    if args.match_user:
+        predicates.append(make_event_type_filter(sys.match_type))
+    if not predicates: predicates = [lambda x: True]
+    predicate = lambda x: any([p(x) for p in predicates]) #lol
 
-def main():
-    predicate = None
-    if len(sys.argv) > 1:
-        predicate = make_event_type_filter(sys.argv[1])
+    sources = []
+    if args.events_path:
+        sources.append(EventEventSource(args.events_path, predicate))
+    if args.timeline_path:
+        sources.append(TimelineEventSource(args.timeline_path, predicate))
+    source = itertools.chain(*sources)
+    print(source)
+
     processor = EventProcessor()
-    source = EventEventSource(GITHUB_ARCHIVE_EVENT_PATH, predicate)
-    for raw_event in source:
-        processor.process_event(raw_event, 'event')
-        break
-    source = TimelineEventSource(GITHUB_ARCHIVE_TIMELINE_PATH, predicate)
-    for raw_event in source:
-        processor.process_event(raw_event, 'timeline')
-        break
+    for raw_event, event_source in source:
+        processor.process_event(raw_event, event_source)
+
+GITHUB_ARCHIVE_EVENT_PATH = os.getenv("GITHUB_ARCHIVE_EVENT") or os.path.expanduser('~/github-archive')
+GITHUB_ARCHIVE_TIMELINE_PATH = os.getenv("GITHUB_ARCHIVE_TIMELINE") or os.path.expanduser('~/github-archive-timeline')
 
 if __name__=='__main__':
-    main()
+
+    parser = argparse.ArgumentParser(description='Process GitHub archive files')
+    parser.add_argument('--events-path')
+    parser.add_argument('--timeline-path')
+    parser.add_argument('--match-user')
+    parser.add_argument('--match-type')
+    args = parser.parse_args()
+
+    main(args)
