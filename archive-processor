@@ -416,13 +416,23 @@ class TimelineEventSource(EventSource):
                 if self.predicate(line))
 
 class EventSink(object):
-    def __init__(self):
+    def __init__(self, destination_dir=None):
         self.out_path = '<STDOUT>'
         self.out_stream = sys.stdout
+        self.destination_dir = destination_dir
 
     def notify_file_change(self, new_path):
+        """Rotate our destination file
+        """
+        if self.destination_dir is None:
+            # No place to put file anyway; always go to STDOUT
+            return
+
+        new_path = os.path.basename(new_path)
         path, path_ext = os.path.splitext(new_path)
-        new_path = ''.join([path + '-processed.json', path_ext])
+        new_path = os.path.join(
+            self.destination_dir,
+            ''.join([path + '-processed.json', path_ext]))
         log.info("eventsink: changing file: {} -> {}".format(
             self.out_path, new_path
         ))
@@ -432,19 +442,18 @@ class EventSink(object):
         self.out_stream = open(new_path, 'wb')
         if '.gz' in path_ext:
             log.info('sink: will gzip output')
-            self.out_stream = gzip.open(self.out_stream,'wb')
+            self.out_stream = gzip.open(self.out_stream,'w')
 
     def write(self, event):
-        output_str = json.dumps(event.__dict__).strip() + '\n'
-        self.out_stream.write(output_str.encode())
+        output = (json.dumps(event.__dict__).strip() + '\n').encode()
+        os.write(self.out_stream.fileno(), output) # shove some bytes into thing
 
 def main(args):
-    # TODO This sucks
     predicate = bool
     if args.match_type:
         predicate = make_user_event_filter(args.match_type)
 
-    sink = EventSink()
+    sink = EventSink(args.output_path)
 
     sources = []
     if args.events_path:
@@ -465,6 +474,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Process GitHub archive files')
     parser.add_argument('--events-path')
     parser.add_argument('--timeline-path')
+    parser.add_argument('--output-path')
     parser.add_argument('--match-type')
     args = parser.parse_args()
 
