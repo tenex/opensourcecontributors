@@ -4,6 +4,20 @@ This is a utility to find a list of all contributions a user has made to any pub
 
 The data from 2015-01-01 - present is found on [GitHub Archive](https://www.githubarchive.org). The data from before this uses a different schema and was obtained from Google's BigQuery (see below)
 
+### Processing data archives
+
+The tool `archive-processor` will transform either the Timeline or Event API archives into JSON files which can be imported directly into your database of choice. To generate the output files (which will be gzipped if given gzipped input), use:
+
+```sh
+ ./archive-processor --output-path /github-archive/processed --timeline-path /github-archive/2011-2014/ --events-path /github-archive/2015/
+```
+
+Logs will be dumped to your PWD and STDERR. It would be nice to refine that a bit. If you don't specify an `--output-path`, the processed JSON will be dumped to your STDOUT.
+
+#### Time / Money
+
+On my [vultr.com](http://www.vultr.com/?ref=6831514) VPS, with the cheapest plan at US $5 per month, it takes about 20 hours to process all this data with one script working on the timeline archives and a second one working on the event archives. I'm using a non-SSD disk because of the massive price difference. With the SSD, it would take about 8.3 hours for the timeline archive and about 4 hours for all the events archive data for 5 months.
+
 ## BigQuery Data Sets
 
 For the data from 2011-2014 (actually, 2008-08-25 01:07:06 to 2014-12-31 23:59:59), the GitHub Archive project recorded data from the (now deprecated) Timeline API. This is in a different format and has many more quirks than the new [GitHub Events API](https://developer.github.com/v3/activity/events/). To obtain this data, the following BigTable query was used (which took only 47.5s to run):
