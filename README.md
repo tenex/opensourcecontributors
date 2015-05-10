@@ -52,12 +52,32 @@ WHERE type IN (
 
 If you actually want to use this data, there's no need to run that query; just ask me for the CSVs. When gzipped, they are about 19GB.
 
-Also note that for testing purposes -- for example, the following query:
+### Erroneous data
 
-```
+There is lots of data in the archives that just doesn't make sense. Where I can, I've worked around it, for example by parsing needed data out of the event's URL. Here are some issues:
+
+#### BigQuery exports CSV nulls weird?
+
+Example:
+
+```sql
 SELECT *
 FROM [githubarchive:year.2014]
 LIMIT 1000
 ```
 
 you will note that in the results pane of Google's BigQuery page, there is the string "null" where it really means a real null value. That makes its way into the exported CSV. So you should export the table the real way, or you will have the string "null" for almost every value.
+
+#### PushEvent with no way of figuring out the repository (Timeline)
+
+Example:
+
+```sql
+SELECT *
+FROM [githubarchive:year.2011]
+WHERE payload_head='32b2177f05be005df3542c14d9a9985be2b553f7'
+LIMIT 5
+```
+
+`repository_url` is `https://github.com//` and `repository_name` is `/` for each of these. They actually push to:
+https://github.com/Jiyambi/WoW-Pro-Guides but I only know that by reading the commit messages.
