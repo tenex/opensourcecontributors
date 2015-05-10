@@ -66,7 +66,20 @@ LIMIT 1000
 
 you will note that in the results pane of Google's BigQuery page, there is the string "null" where it really means a real null value. That makes its way into the exported CSV. So you should export the table the real way, or you will have the string "null" for almost every value.
 
-#### PushEvent with no way of figuring out the repository (Timeline)
+#### PushEvent with no repository name (Timeline API)
+
+Example:
+
+```sql
+SELECT *
+FROM [githubarchive:year.2014]
+WHERE payload_head='8824ed4d86f587a2a556248d9abfac790a1cbd3f'
+LIMIT 1
+```
+
+It seems like sometimes, the only way to get the real repository name (`owner/project`) is to parse it from the URL.
+
+#### PushEvent with no way of figuring out the repository (Timeline API)
 
 Example:
 

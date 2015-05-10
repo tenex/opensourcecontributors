@@ -107,15 +107,16 @@ class Event(object):
         """
         raise "{} must override make_from_timeline".format(self.__class__.__name__)
 
+    def _explode(reason):
+        raise ValidationError(reason)
+
     def validate(self):
         """
         Raises ValidationError if something not Kosher is detected
         """
-        def _explode(reason):
-            raise ValidationError(reason)
         if not re.match('^[\w\-\.]+/[\w\-\.]+$', self.repo):
-            _explode("repository [{}] doesn't match [owner/project]".format(self.repo))
-
+            self._explode("repository [{}] doesn't match [owner/project]".format(self.repo))
+        self._validate() # child validations
 
     @classmethod
     def register_event(cls, event_cls):
@@ -150,6 +151,8 @@ class GollumEvent(Event):
             'sha': d["payload_page_sha"]
         }]
 
+    def _validate(self):
+        pass
 
 @register_event
 class IssuesEvent(Event):
@@ -166,6 +169,9 @@ class IssuesEvent(Event):
             self.issue_number = int(d['payload_number'])
         except:
             self.issue_number = None
+
+    def _validate(self):
+        pass
 
 @register_event
 class PushEvent(Event):
@@ -185,6 +191,9 @@ class PushEvent(Event):
         self.before = None
         self.commit_count = None
         self.distinct_count = None
+
+    def _validate(self):
+        pass
 
 @register_event
 class CommitCommentEvent(Event):
@@ -207,6 +216,9 @@ class CommitCommentEvent(Event):
         self.commit_id = d['payload_commit_id']
         self.html_url = self._url_from_timeline()
 
+    def _validate(self):
+        pass
+
 
 @register_event
 class ReleaseEvent(Event):
@@ -221,12 +233,18 @@ class ReleaseEvent(Event):
         self.download_url = urllib.parse.urldefrag(raw_event['url']).url
         self.tag_name = os.path.basename(self.download_url)
 
+    def _validate(self):
+        pass
+
 @register_event
 class PublicEvent(Event):
     def make_from_event(self, d):
         pass
 
     def make_from_timeline(self, d):
+        pass
+
+    def _validate(self):
         pass
 
 @register_event
@@ -239,6 +257,9 @@ class MemberEvent(Event):
     def make_from_timeline(self, raw_event):
         self.target_user = raw_event['payload_member_login']
         self.target_action = raw_event['payload_action']
+
+    def _validate(self):
+        pass
 
 @register_event
 class IssueCommentEvent(Event):
@@ -266,6 +287,8 @@ class IssueCommentEvent(Event):
         self.comment_id = int(raw_event['payload_comment_id'])
         self.comment_body = raw_event['payload_comment_body']
 
+    def _validate(self):
+        pass
 
 def make_user_event_filter(login):
     def _filter(raw_event):
