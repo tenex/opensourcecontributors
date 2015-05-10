@@ -319,13 +319,19 @@ class EventProcessor(object):
     def __init__(self, source, destination):
         self.source = source
         self.write_event = destination
-        self.count = 0
+        self.total_record_count = 0
+        self.count = 0 # success
         self.invalid_record_count = 0
         self.process_error_count = 0
 
     def _make_stats(self):
         duration = (datetime.now() - self.start_time).total_seconds()
-        return (self.count, duration, self.count / duration)
+        return (self.total_record_count,
+                duration,
+                self.total_record_count / duration,
+                self.count,
+                self.invalid_record_count,
+                self.process_error_count)
 
     def process_events(self):
         self.start_time = datetime.now()
@@ -333,15 +339,19 @@ class EventProcessor(object):
         for raw_event, event_source in self.source:
             event = self.process_event(raw_event, event_source)
 
-            if self.count % 20000 == 0:
+            if self.total_record_count > 0 and self.total_record_count % 20000 == 0:
                 duration = (datetime.now() - self.start_time).total_seconds()
-                log.info("processing: {} records in {:.2f} seconds ({:.2f} r/s)".format(
+                log.info("processing: {} records in {:.2f} seconds ({:.2f} r/s): {}s {}i {}e".format(
                     *self._make_stats()))
             if event:
                 self.write_event(event)
+                self.count += 1
 
-        log.info(colored("processing complete: {} records in {:.2f} seconds ({:.2f} r/s)".format(
-            *self._make_stats()), 'green'))
+            self.total_record_count += 1
+
+        stats = self._make_stats()
+        log.info(colored("processing: {} records in {:.2f} seconds ({:.2f} r/s): {}s {}i {}e".format(
+            *stats), 'green'))
         log.info(colored("invalid records: {}".format(self.invalid_record_count),
                       'yellow'))
         log.info(colored("processing errors: {}".format(self.process_error_count),
@@ -352,14 +362,15 @@ class EventProcessor(object):
         try:
             event = Event.from_raw(raw_event, source_fmt)
         except InvalidRecordError as e:
+            # This is a known invalid record; nothing we can do.
             self.invalid_record_count += 1
             return None
 
         if event:
             try:
                 event.validate()
-                self.count += 1
             except ValidationError as e:
+                # This is very bad.
                 msg = "{} ({}):\n\t{}\n\t{}".format(
                     colored('Invalid Event', 'red', attrs=['bold']),
                     colored(str(e), 'red'),
@@ -441,7 +452,7 @@ class EventSink(object):
         self.out_path = new_path
         self.out_stream = open(new_path, 'wb')
         if '.gz' in path_ext:
-            log.info('sink: will gzip output')
+            log.info('eventsink: will gzip output')
             self.out_stream = gzip.open(self.out_stream,'w')
 
     def write(self, event):
