@@ -2,13 +2,11 @@
 
 This is a utility to find a list of all contributions a user has made to any public repository on GitHub from 2011-01-01 through yesterday.
 
-The data from 2015-01-01 is found on [GitHub Archive](https://www.githubarchive.org). The data from before this uses a different schema and was obtained from Google's BigQuery (see below)
-
-Place all these files from 2015-01-01 until today in a directory pointed to by the environment variable `ARCHIVE_PATH`, or in `~/github-archive`.
+The data from 2015-01-01 - present is found on [GitHub Archive](https://www.githubarchive.org). The data from before this uses a different schema and was obtained from Google's BigQuery (see below)
 
 ## BigQuery Data Sets
 
-For the data from 2011-2014 (actually, 2008-08-25 01:07:06 to 2014-12-31 23:59:59), this BigTable query was used (which took me 47.5s to run):
+For the data from 2011-2014 (actually, 2008-08-25 01:07:06 to 2014-12-31 23:59:59), the GitHub Archive project recorded data from the (now deprecated) Timeline API. This is in a different format and has many more quirks than the new [GitHub Events API](https://developer.github.com/v3/activity/events/). To obtain this data, the following BigTable query was used (which took only 47.5s to run):
 
 ```sql
 SELECT
