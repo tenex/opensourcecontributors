@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
 # Works only for archives from 2015-01-01 -> Present
-import os
-import os.path
-import sys
-import re
-import argparse
-import csv
-import json
-import itertools
-import gzip
-import glob
-import fileinput
-import urllib.parse
-import dateutil.parser
-from termcolor import colored
-from pprint import pprint
 from datetime import datetime
 from datetime import timezone
+from pprint import pprint
+from termcolor import colored
+import argparse
+import csv
+import dateutil.parser
+import fileinput
+import glob
+import gzip
+import itertools
+import json
+import logging
+import os
+import os.path
+import re
+import sys
+import urllib.parse
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 class ValidationError(RuntimeError):
     """Indicates that an Event was created but seems invalid.
@@ -263,10 +267,6 @@ class IssueCommentEvent(Event):
         self.comment_body = raw_event['payload_comment_body']
 
 
-
-def log(*args):
-    print(*args, file=sys.stderr)
-
 def make_user_event_filter(login):
     def _filter(raw_event):
         return raw_event['actor']['login'] == login
@@ -278,8 +278,9 @@ def make_event_type_filter(event_type):
     return _filter
 
 class EventProcessor(object):
-    def __init__(self, source):
+    def __init__(self, source, destination):
         self.source = source
+        self.write_event = destination
         self.count = 0
         self.invalid_record_count = 0
         self.process_error_count = 0
@@ -288,19 +289,23 @@ class EventProcessor(object):
         self.start_time = datetime.now()
 
         for raw_event, event_source in self.source:
-            self.process_event(raw_event, event_source)
-            if self.count % 10000 == 0:
-                print(colored('.','green'),end='')
-                sys.stdout.flush()
+            event = self.process_event(raw_event, event_source)
+
+            # if self.count % 10000 == 0:
+            #     print(colored('.','green'),end='',file=sys.stderr)
+            #     sys.stderr.flush()
+
+            if event:
+                self.write_event(event)
 
         duration = (datetime.now() - self.start_time).total_seconds()
-        print()
-        print("processing complete: {} records in {} seconds ({:.2f} r/s)".format(
+
+        log.info("processing complete: {} records in {} seconds ({:.2f} r/s)".format(
             self.count, duration, self.count / duration
         ))
-        print(colored("invalid records: {}".format(self.invalid_record_count),
+        log.info(colored("invalid records: {}".format(self.invalid_record_count),
                       'yellow'))
-        print(colored("processing errors: {}".format(self.process_error_count),
+        log.info(colored("processing errors: {}".format(self.process_error_count),
                       'red'))
 
 
@@ -309,7 +314,7 @@ class EventProcessor(object):
             event = Event.from_raw(raw_event, source_fmt)
         except InvalidRecordError as e:
             self.invalid_record_count += 1
-            return
+            return None
 
         if event:
             try:
@@ -322,13 +327,11 @@ class EventProcessor(object):
                     json.dumps(event.__dict__).strip(),
                     json.dumps(raw_event).strip(),
                 )
-                # TODO dump this thing somewheres
-                print(msg)
-                self.error_count += 1
-                return
-            #print(json.dumps(raw_event).strip())
-            #print('---')
-            #print(json.dumps(event.__dict__).strip())
+                log.error(msg)
+                self.process_error_count += 1
+                return None
+
+            return event
 
 class EventSource(object):
     def __init__(self, path, predicate=bool):
@@ -371,6 +374,12 @@ class TimelineEventSource(EventSource):
         return ((line, 'timeline') for line in reader
                 if self.predicate(line))
 
+def make_destination(stream):
+    def _printer(event):
+        print(json.dumps(event.__dict__).strip(),
+              file=stream)
+    return _printer
+
 def main(args):
     # TODO This sucks
     predicates = []
@@ -388,7 +397,9 @@ def main(args):
         sources.append(TimelineEventSource(args.timeline_path, predicate))
     source = itertools.chain(*sources)
 
-    processor = EventProcessor(source)
+    destination = make_destination(sys.stdout)
+
+    processor = EventProcessor(source, destination)
     processor.process_events()
 
 if __name__=='__main__':
