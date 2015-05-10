@@ -2,6 +2,7 @@
 """Utility to automatically download needed .json.gz files from githubarchive.org
 """
 from datetime import datetime, timedelta
+import os
 import argparse
 import requests
 import sys
@@ -22,22 +23,21 @@ def retrieve(filename, sink_path):
    source.raise_for_status()
    sz = 0
    with open(sink_path, 'wb') as sink:
-      for chunk in r.iter_content(BUFFER_SIZE):
+      for chunk in source.iter_content(BUFFER_SIZE):
          sz += len(chunk)
-         os.stdout.write('.')
-         os.stdout.flush()
+         # sys.stdout.write('.')
+         # sys.stdout.flush()
          sink.write(chunk)
    return sz
 
 def main(args):
    t = START
    while t <= datetime.utcnow():
-      local_filename = os.path.join(
-         args.path,
-         "{}.json.gz".format(t.strftime(TIME_FMT)))
+      filename = "{}.json.gz".format(t.strftime(TIME_FMT))
+      local_filename = os.path.join(args.path, filename)
       print(local_filename, end='')
       if not os.path.isfile(local_filename):
-         print('downloading...')
+         print(' downloading...')
          sz = retrieve(filename, local_filename)
          print('\n{} B'.format(sz), end='')
       t += timedelta(hours=1)
