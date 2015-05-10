@@ -13,11 +13,22 @@ import glob
 import fileinput
 import urllib.parse
 import dateutil.parser
+from termcolor import colored
 from pprint import pprint
 from datetime import datetime
 from datetime import timezone
 
-class ValidationError(RuntimeError): pass
+class ValidationError(RuntimeError):
+    """Indicates that an Event was created but seems invalid.
+    Suggests that the processor is broken.
+    """
+    pass
+
+class InvalidRecordError(RuntimeError):
+    """Indicates that the record being processed contains errors.
+    Suggests that the input data is wrong; no fix necessary for processor.
+    """
+    pass
 
 class Event(object):
     types = dict()
@@ -56,11 +67,29 @@ class Event(object):
         self.created_at = created_at.isoformat()
         self.user = raw_event['actor']
         self._user_lower = self.user.lower()
-        self.repo = "{}/{}".format(raw_event['repository_owner'],
-                                   raw_event['repository_name'])
-        self._repo_lower = self.repo.lower()
         self.org = raw_event['repository_organization']
         self._org_lower = self.org.lower()
+
+        # At different points, "repository_name" means either:
+        # owner/project or project (or it's just messed up)
+        if '/' in raw_event['repository_name'] and raw_event['repository_name'] != '/':
+            self.repo = raw_event['repository_name']
+        elif raw_event['repository_owner'] and raw_event['repository_name']:
+            self.repo = "{}/{}".format(raw_event['repository_owner'],
+                                       raw_event['repository_name'])
+        elif raw_event['url']:
+            # Seriously? Yes, this (and others) otherwise lack the repo name:
+            # SELECT * FROM [githubarchive:year.2014]
+            # where payload_head='8824ed4d86f587a2a556248d9abfac790a1cbd3f'
+            #                    ^^ this is a PushEvent
+            u = urllib.parse.urlparse(raw_event['url'])
+            frags = u.path.split('/')
+            self.repo = '/'.join(frags[1:3])
+        else:
+            raise InvalidRecordError("timeline event does not contain repo name")
+
+        self._repo_lower = self.repo.lower()
+
 
     def make_from_event(self, raw_event):
         """
@@ -129,7 +158,10 @@ class IssuesEvent(Event):
     def make_from_timeline(self, d):
         self.action = d['payload_action']
         self.html_url = d['url']
-        self.issue_number = int(d['payload_number'])
+        try:
+            self.issue_number = int(d['payload_number'])
+        except:
+            self.issue_number = None
 
 @register_event
 class PushEvent(Event):
@@ -249,14 +281,16 @@ class EventProcessor(object):
     def __init__(self, source):
         self.source = source
         self.count = 0
+        self.invalid_record_count = 0
+        self.process_error_count = 0
 
     def process_events(self):
         self.start_time = datetime.now()
         for raw_event, event_source in self.source:
             self.process_event(raw_event, event_source)
             if self.count % 10000 == 0:
-                log("processed: {} ({})".format(self.count,
-                                                event_source))
+                log("processed: {:,} (from {})".format(self.count,
+                                                       event_source))
         duration = (datetime.now() - self.start_time).total_seconds()
         log("processing complete: {} records in {} seconds ({:.2f} r/s)".format(
             self.count, duration, self.count / duration
@@ -264,15 +298,28 @@ class EventProcessor(object):
 
 
     def process_event(self, raw_event, source_fmt):
-        event = Event.from_raw(raw_event, source_fmt)
+        try:
+            event = Event.from_raw(raw_event, source_fmt)
+        except InvalidRecordError as e:
+            self.invalid_record_count += 1
+            print(colored('invalid record found', 'blue'))
+            return
+
         if event:
             try:
                 event.validate()
+                self.count += 1
             except ValidationError as e:
-                print(json.dumps(event.__dict__).strip())
-                log(e)
-            self.count += 1
-
+                msg = "{} ({}):\n\t{}\n\t{}".format(
+                    colored('Invalid Event', 'red', attrs=['bold']),
+                    colored(str(e), 'red'),
+                    json.dumps(event.__dict__).strip(),
+                    json.dumps(raw_event).strip(),
+                )
+                # TODO dump this thing somewheres
+                print(msg)
+                self.error_count += 1
+                return
             #print(json.dumps(raw_event).strip())
             #print('---')
             #print(json.dumps(event.__dict__).strip())
@@ -292,7 +339,7 @@ class EventSource(object):
 
 class EventEventSource(EventSource):
     """
-    Iterate over every event
+    Iterate over every event from Event API
     The class name seems idiotic, but the Event data can either come from the
     "Event API" or the "Timeline API" depending on the year.
     """
@@ -309,7 +356,7 @@ class EventEventSource(EventSource):
 
 class TimelineEventSource(EventSource):
     """
-    Iterate over every event from 2011-2014 (when gitarchive used the Timeline API)
+    Iterate over every event from Timeline API (2011-2014)
     """
 
     def __iter__(self):
