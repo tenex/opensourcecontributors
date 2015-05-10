@@ -19,6 +19,9 @@ import re
 import sys
 import urllib.parse
 
+
+__version__ = '0.0.1'
+
 invocation_id = "{}-{}.log".format(
     os.uname().nodename,
     datetime.now().strftime('%Y%m%d-%H%M%S'))
@@ -370,15 +373,18 @@ class EventProcessor(object):
             return event
 
 class EventSource(object):
-    def __init__(self, path, predicate=bool):
+    def __init__(self, path, predicate, subscriber=None):
         self.path = path
         self.predicate = predicate
+        self.notify_file_change = subscriber
 
     def _filenames(self, pattern):
         return glob.iglob(os.path.join(self.path, pattern))
 
     def _open_file(self, path, mode):
         log.info("opening file: {}".format(path))
+        if self.notify_file_change:
+            self.notify_file_change(path)
         return gzip.open(path,'rt')
 
 class EventEventSource(EventSource):
@@ -392,7 +398,6 @@ class EventEventSource(EventSource):
         # Iterator for lines of these source files
         lines = fileinput.FileInput(files=self._filenames('*.json.gz'),
                                     openhook=self._open_file)
-        # TODO make sure them things get closed ^^
 
         events = (json.loads(line) for line in lines)
         return ((event, 'event') for event in events
@@ -404,18 +409,34 @@ class TimelineEventSource(EventSource):
     """
 
     def __iter__(self):
-        # Iterator for lines of these source files
         lines = fileinput.FileInput(files=self._filenames('*.csv.gz'),
                                     openhook=self._open_file)
         reader = csv.DictReader(lines)
         return ((line, 'timeline') for line in reader
                 if self.predicate(line))
 
-def make_destination(stream):
-    def _printer(event):
-        print(json.dumps(event.__dict__).strip(),
-              file=stream)
-    return _printer
+class EventSink(object):
+    def __init__(self):
+        self.out_path = '<STDOUT>'
+        self.out_stream = sys.stdout
+
+    def notify_file_change(self, new_path):
+        path, path_ext = os.path.splitext(new_path)
+        new_path = ''.join([path + '-processed.json', path_ext])
+        log.info("eventsink: changing file: {} -> {}".format(
+            self.out_path, new_path
+        ))
+        if self.out_stream and self.out_stream != sys.stdout:
+            self.out_stream.close()
+        self.out_path = new_path
+        self.out_stream = open(new_path, 'wb')
+        if '.gz' in path_ext:
+            log.info('sink: will gzip output')
+            self.out_stream = gzip.open(self.out_stream,'wb')
+
+    def write(self, event):
+        output_str = json.dumps(event.__dict__).strip() + '\n'
+        self.out_stream.write(output_str.encode())
 
 def main(args):
     # TODO This sucks
@@ -423,16 +444,20 @@ def main(args):
     if args.match_type:
         predicate = make_user_event_filter(args.match_type)
 
+    sink = EventSink()
+
     sources = []
     if args.events_path:
-        sources.append(EventEventSource(args.events_path, predicate))
+        source = EventEventSource(args.events_path, predicate,
+                                  sink.notify_file_change)
+        sources.append(source)
     if args.timeline_path:
-        sources.append(TimelineEventSource(args.timeline_path, predicate))
+        source = TimelineEventSource(args.timeline_path, predicate,
+                                     sink.notify_file_change)
+        sources.append(source)
     source = itertools.chain(*sources)
 
-    destination = make_destination(sys.stdout)
-
-    processor = EventProcessor(source, destination)
+    processor = EventProcessor(source, sink.write)
     processor.process_events()
 
 if __name__=='__main__':
