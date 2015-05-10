@@ -286,15 +286,22 @@ class EventProcessor(object):
 
     def process_events(self):
         self.start_time = datetime.now()
+
         for raw_event, event_source in self.source:
             self.process_event(raw_event, event_source)
             if self.count % 10000 == 0:
-                log("processed: {:,} (from {})".format(self.count,
-                                                       event_source))
+                print(colored('.','green'),end='')
+                sys.stdout.flush()
+
         duration = (datetime.now() - self.start_time).total_seconds()
-        log("processing complete: {} records in {} seconds ({:.2f} r/s)".format(
+        print()
+        print("processing complete: {} records in {} seconds ({:.2f} r/s)".format(
             self.count, duration, self.count / duration
         ))
+        print(colored("invalid records: {}".format(self.invalid_record_count),
+                      'yellow'))
+        print(colored("processing errors: {}".format(self.process_error_count),
+                      'red'))
 
 
     def process_event(self, raw_event, source_fmt):
@@ -302,7 +309,6 @@ class EventProcessor(object):
             event = Event.from_raw(raw_event, source_fmt)
         except InvalidRecordError as e:
             self.invalid_record_count += 1
-            print(colored('invalid record found', 'blue'))
             return
 
         if event:
@@ -333,8 +339,6 @@ class EventSource(object):
         return glob.iglob(os.path.join(self.path, pattern))
 
     def _open_file(self, path, mode):
-        #log('loading events from: {}'.format(path))
-        sys.stdout.flush()
         return gzip.open(path,'rt')
 
 class EventEventSource(EventSource):
