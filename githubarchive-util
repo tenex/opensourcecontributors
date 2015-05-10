@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""Utility to automatically download needed .json.gz files from githubarchive.org
+"""
+from datetime import datetime, timedelta
+import argparse
+import requests
+import sys
+
+START = datetime(2015, 1, 1, 0)
+TIME_FMT = '%Y-%m-%d-%-H'
+BUFFER_SIZE = 1024 * 1024
+
+def gha_url(filename):
+   return "http://data.githubarchive.org/{}".format(filename)
+
+def retrieve(filename, sink_path):
+   url = gha_url(filename)
+   if os.path.isfile(sink_path):
+      raise RuntimeError('will not overwrite file already present')
+
+   source = requests.get(url, stream=True)
+   source.raise_for_status()
+   sz = 0
+   with open(sink_path, 'wb') as sink:
+      for chunk in r.iter_content(BUFFER_SIZE):
+         sz += len(chunk)
+         os.stdout.write('.')
+         os.stdout.flush()
+         sink.write(chunk)
+   return sz
+
+def main(args):
+   t = START
+   while t <= datetime.utcnow():
+      local_filename = os.path.join(
+         args.path,
+         "{}.json.gz".format(t.strftime(TIME_FMT)))
+      print(local_filename, end='')
+      if not os.path.isfile(local_filename):
+         print('downloading...')
+         sz = retrieve(filename, local_filename)
+         print('\n{} B'.format(sz), end='')
+      t += timedelta(hours=1)
+      print()
+
+
+if __name__=='__main__':
+   parser = argparse.ArgumentParser(description='Maintain copy of GitHub Archive')
+   parser.add_argument('--path', required=True)
+   args = parser.parse_args()
+
+   main(args)
