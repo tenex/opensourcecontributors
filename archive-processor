@@ -168,7 +168,7 @@ class CommitCommentEvent(Event):
         self.path = d['payload_comment_path']
         self.body = d['payload_comment_body']
         self.comment_id = d['payload_comment_id']
-        self.commit_id = d['payload_commit']
+        self.commit_id = d['payload_commit_id']
         self.html_url = self._url_from_timeline()
 
 
@@ -246,8 +246,22 @@ def make_event_type_filter(event_type):
     return _filter
 
 class EventProcessor(object):
-    def __init__(self):
+    def __init__(self, source):
+        self.source = source
         self.count = 0
+
+    def process_events(self):
+        self.start_time = datetime.now()
+        for raw_event, event_source in self.source:
+            self.process_event(raw_event, event_source)
+            if self.count % 10000 == 0:
+                log("processed: {} ({})".format(self.count,
+                                                event_source))
+        duration = (datetime.now() - self.start_time).total_seconds()
+        log("processing complete: {} records in {} seconds ({:.2f} r/s)".format(
+            self.count, duration, self.count / duration
+        ))
+
 
     def process_event(self, raw_event, source_fmt):
         event = Event.from_raw(raw_event, source_fmt)
@@ -258,9 +272,7 @@ class EventProcessor(object):
                 print(json.dumps(event.__dict__).strip())
                 log(e)
             self.count += 1
-            if self.count % 10000 == 0:
-                log("processed: {} ({})".format(self.count,
-                                                source_fmt))
+
             #print(json.dumps(raw_event).strip())
             #print('---')
             #print(json.dumps(event.__dict__).strip())
@@ -324,14 +336,9 @@ def main(args):
     if args.timeline_path:
         sources.append(TimelineEventSource(args.timeline_path, predicate))
     source = itertools.chain(*sources)
-    print(source)
 
-    processor = EventProcessor()
-    for raw_event, event_source in source:
-        processor.process_event(raw_event, event_source)
-
-GITHUB_ARCHIVE_EVENT_PATH = os.getenv("GITHUB_ARCHIVE_EVENT") or os.path.expanduser('~/github-archive')
-GITHUB_ARCHIVE_TIMELINE_PATH = os.getenv("GITHUB_ARCHIVE_TIMELINE") or os.path.expanduser('~/github-archive-timeline')
+    processor = EventProcessor(source)
+    processor.process_events()
 
 if __name__=='__main__':
 
