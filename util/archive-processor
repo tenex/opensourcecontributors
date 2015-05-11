@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!python3
 # Works only for archives from 2015-01-01 -> Present
 from datetime import datetime
 from datetime import timezone
@@ -127,7 +127,7 @@ class Event(object):
     def _validate(self):
         raise "{} must override _validate".format(self.__class__.__name__)
 
-    def _explode(reason):
+    def _explode(self, reason):
         raise ValidationError(reason)
 
     def validate(self):
