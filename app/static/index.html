@@ -15,6 +15,7 @@
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/ie10-viewport-bug-workaround.js"></script>
     <script src="/static/js/handlebars-v3.0.3.js"></script>
+    <script src="/static/js/moment.min.js"></script>
     <style>
      body {
        margin-top:60px;
@@ -26,29 +27,90 @@
 
     <!-- Handlebars! -->
     <script id="gollumevent-template" type="text/x-handlebars-template">
-      <li>
-        {{created_at}}
-      </li>
+      <article>
+        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
+        {{inflectEvent type}}
+        to
+        <a href="https://github.com/{{repo}}">{{repo}}</a>
+      </article>
     </script>
     <script id="issuesevent-template" type="text/x-handlebars-template">
+      <article>
+        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
+        {{inflectEvent type}}
+      </article>
     </script>
     <script id="pushevent-template" type="text/x-handlebars-template">
+      <article>
+        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
+        {{inflectEvent type}}
+        {{distinct_commit_count}} commits, ending in:
+        <a href="https://github.com/{{repo}}/commits/{{head}}">{{head}}</a>
+        to
+        <a href="https://github.com/{{repo}}">{{repo}}</a>
+      </article>
     </script>
     <script id="commitcommentevent-template" type="text/x-handlebars-template">
+      <article>
+        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
+        {{inflectEvent type}}
+      </article>
     </script>
     <script id="releaseevent-template" type="text/x-handlebars-template">
+      <article>
+        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
+        {{inflectEvent type}}
+        <a href="https://github.com/{{repo}}/tags/{{tag_name}}">{{tag_name}}</a>
+        of <a href="https://github.com/{{repo}}">{{repo}}</a>
+      </article>
     </script>
     <script id="publicevent-template" type="text/x-handlebars-template">
+      <article>
+        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
+      {{inflectEvent type}}
+      </article>
     </script>
     <script id="memberevent-template" type="text/x-handlebars-template">
+      <article>
+        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
+      {{inflectEvent type}}
+      </article>
     </script>
     <script id="issuecommentevent-template" type="text/x-handlebars-template">
+      <article>
+        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
+      {{inflectEvent type}}
+      </article>
     </script>
 
     <script>
      // Handlebars things
-     gollumEventTemplate = Handlebars.compile($("#gollumevent-template").html());
-
+     Handlebars.registerHelper('dateFmt', function(d) {
+       return moment(d).calendar();
+     });
+     Handlebars.registerHelper('inflectEvent', function(e) {
+       verbs = {
+         'GollumEvent': 'edited Wiki',
+         'IssuesEvent': 'dealt with an issue', // should use action
+         'PushEvent': 'pushed',
+         'CommitCommentEvent': 'commented on commit',
+         'ReleaseEvent': 'released version',
+         'PublicEvent': 'open-sourced',
+         'MemberEvent': 'added member',
+         'IssueCommentEvent': 'commentedon issue',
+       };
+       return verbs[e];
+     });
+     eventTemplates = {
+       'GollumEvent'        : Handlebars.compile($('#gollumevent-template').html()),
+       'IssuesEvent'        : Handlebars.compile($('#issuesevent-template').html()),
+       'PushEvent'          : Handlebars.compile($('#pushevent-template').html()),
+       'CommitCommentEvent' : Handlebars.compile($('#commitcommentevent-template').html()),
+       'ReleaseEvent'       : Handlebars.compile($('#releaseevent-template').html()),
+       'PublicEvent'        : Handlebars.compile($('#publicevent-template').html()),
+       'MemberEvent'        : Handlebars.compile($('#memberevent-template').html()),
+       'IssueCommentEvent'  : Handlebars.compile($('#issuecommentevent-template').html()),
+     }
 
       $(function() {
        $("form#user-query").submit(function(e) {
@@ -59,7 +121,7 @@
 
            $.each(data.events, function(i, value) {
              console.log(JSON.stringify(value));
-             var content = gollumEventTemplate(value);
+             var content = eventTemplates[value.type](value);
              $("#results").append(content);
            });
          });
@@ -117,9 +179,7 @@
 
       </div>
 
-      <div>
-        <ul id="results">
-        </ul>
+      <div  id="results">
       </div>
 
     </div> <!-- /container -->
