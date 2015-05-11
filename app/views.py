@@ -5,7 +5,7 @@ from app.tools import jsonify
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return app.send_static_file('index.html')
 
 @app.route('/search/<query>')
 def search(query):

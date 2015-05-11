@@ -23,8 +23,50 @@
        padding:10px;
      }
     </style>
-    <script>
+
+    <!-- Handlebars! -->
+    <script id="gollumevent-template" type="text/x-handlebars-template">
+      <li>
+        {{created_at}}
+      </li>
     </script>
+    <script id="issuesevent-template" type="text/x-handlebars-template">
+    </script>
+    <script id="pushevent-template" type="text/x-handlebars-template">
+    </script>
+    <script id="commitcommentevent-template" type="text/x-handlebars-template">
+    </script>
+    <script id="releaseevent-template" type="text/x-handlebars-template">
+    </script>
+    <script id="publicevent-template" type="text/x-handlebars-template">
+    </script>
+    <script id="memberevent-template" type="text/x-handlebars-template">
+    </script>
+    <script id="issuecommentevent-template" type="text/x-handlebars-template">
+    </script>
+
+    <script>
+     // Handlebars things
+     gollumEventTemplate = Handlebars.compile($("#gollumevent-template").html());
+
+
+      $(function() {
+       $("form#user-query").submit(function(e) {
+         e.preventDefault();
+         var url = "/search/"+$("#query").val();
+         $.getJSON(url, function(data) {
+           $("#results").empty();
+
+           $.each(data.events, function(i, value) {
+             console.log(JSON.stringify(value));
+             var content = gollumEventTemplate(value);
+             $("#results").append(content);
+           });
+         });
+       });
+     });
+    </script>
+
     <!-- Custom styles for this template -->
     <!-- <link href="/static/css/theme.css" rel="stylesheet"> -->
 
@@ -64,7 +106,7 @@
       <!-- Main jumbotron for a primary marketing message or call to action -->
       <div class="jumbotron query-container">
         <p>
-          <form class="form-inline">
+          <form class="form-inline" id="user-query">
             <div class="form-group">
               <label for="query" class="sr-only">GitHub Username</label>
               <input type="text" class="form-control" id="query" placeholder="GitHub User">
@@ -75,7 +117,9 @@
 
       </div>
 
-      <div id="results">
+      <div>
+        <ul id="results">
+        </ul>
       </div>
 
     </div> <!-- /container -->
