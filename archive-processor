@@ -384,13 +384,16 @@ class EventProcessor(object):
             return event
 
 class EventSource(object):
-    def __init__(self, path, predicate, subscriber=None):
+    def __init__(self, path, record_predicate, file_predicate, subscriber=None):
         self.path = path
-        self.predicate = predicate
+        self.record_predicate = record_predicate
+        self.file_predicate = file_predicate
         self.notify_file_change = subscriber
 
     def _filenames(self, pattern):
-        return glob.iglob(os.path.join(self.path, pattern))
+        files = glob.iglob(os.path.join(self.path, pattern))
+        return (f for f in files
+                if self.file_predicate(f))
 
     def _open_file(self, path, mode):
         log.info("opening file: {}".format(path))
@@ -412,7 +415,7 @@ class EventEventSource(EventSource):
 
         events = (json.loads(line) for line in lines)
         return ((event, 'event') for event in events
-                if self.predicate(event))
+                if self.record_predicate(event))
 
 class TimelineEventSource(EventSource):
     """
@@ -424,13 +427,27 @@ class TimelineEventSource(EventSource):
                                     openhook=self._open_file)
         reader = csv.DictReader(lines)
         return ((line, 'timeline') for line in reader
-                if self.predicate(line))
+                if self.record_predicate(line))
 
 class EventSink(object):
     def __init__(self, destination_dir=None):
         self.out_path = '<STDOUT>'
         self.out_stream = sys.stdout
         self.destination_dir = destination_dir
+
+    def already_processed(self, input_path):
+        sink_path = self.filename_transform(input_path)
+        rv = os.path.exists(sink_path) and os.stat(sink_path).st_size > 0
+        if rv: log.info("eventsink: {} already processed".format(input_path))
+        return rv
+
+    def filename_transform(self, input_path):
+        if not self.destination_dir: return None
+        path, path_ext = os.path.splitext(input_path)
+        return os.path.join(
+            self.destination_dir,
+            ''.join([path + '-processed.json', path_ext]))
+
 
     def notify_file_change(self, new_path):
         """Rotate our destination file
@@ -440,10 +457,8 @@ class EventSink(object):
             return
 
         new_path = os.path.basename(new_path)
-        path, path_ext = os.path.splitext(new_path)
-        new_path = os.path.join(
-            self.destination_dir,
-            ''.join([path + '-processed.json', path_ext]))
+        new_path = self.filename_transform(new_path)
+
         log.info("eventsink: changing file: {} -> {}".format(
             self.out_path, new_path
         ))
@@ -451,6 +466,8 @@ class EventSink(object):
             self.out_stream.close()
         self.out_path = new_path
         self.out_stream = open(new_path, 'wb')
+
+        path, path_ext = os.path.splitext(new_path)
         if '.gz' in path_ext:
             log.info('eventsink: will gzip output')
             self.out_stream = gzip.open(self.out_stream,'w')
@@ -460,19 +477,24 @@ class EventSink(object):
         os.write(self.out_stream.fileno(), output) # shove some bytes into thing
 
 def main(args):
-    predicate = bool
+    record_predicate = bool
     if args.match_type:
-        predicate = make_user_event_filter(args.match_type)
+        record_predicate = make_user_event_filter(args.match_type)
 
     sink = EventSink(args.output_path)
+    file_predicate = lambda f: not sink.already_processed(f)
 
     sources = []
     if args.events_path:
-        source = EventEventSource(args.events_path, predicate,
+        source = EventEventSource(args.events_path,
+                                  record_predicate,
+                                  file_predicate,
                                   sink.notify_file_change)
         sources.append(source)
     if args.timeline_path:
-        source = TimelineEventSource(args.timeline_path, predicate,
+        source = TimelineEventSource(args.timeline_path,
+                                     record_predicate,
+                                     file_predicate,
                                      sink.notify_file_change)
         sources.append(source)
     source = itertools.chain(*sources)
