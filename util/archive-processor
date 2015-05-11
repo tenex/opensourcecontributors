@@ -1,4 +1,4 @@
-#!python3
+#!/usr/bin/env python3
 # Works only for archives from 2015-01-01 -> Present
 from datetime import datetime
 from datetime import timezone
@@ -471,11 +471,11 @@ class EventSink(object):
         path, path_ext = os.path.splitext(new_path)
         if '.gz' in path_ext:
             log.info('eventsink: will gzip output')
-            self.out_stream = gzip.open(self.out_stream,'w')
+            self.out_stream = gzip.open(self.out_stream,'wb')
 
     def write(self, event):
-        output = (json.dumps(event.__dict__).strip() + '\n').encode()
-        os.write(self.out_stream.fileno(), output) # shove some bytes into thing
+        output = json.dumps(event.__dict__).strip() + '\n'
+        self.out_stream.write(output.encode())
 
 def main(args):
     record_predicate = bool
