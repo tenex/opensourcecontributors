@@ -304,7 +304,9 @@ class IssueCommentEvent(Event):
             self.issue_number = ''
 
         self.comment_url = raw_event['url']
-        self.comment_id = int(raw_event['payload_comment_id'])
+        self.comment_id = None
+        if raw_event['payload_commit_id']:
+            self.comment_id = int(raw_event['payload_comment_id'])
         self.comment_body = raw_event['payload_comment_body']
 
     def _validate(self):
