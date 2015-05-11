@@ -1,5 +1,7 @@
 from app import app, mongo
-from flask import render_template, jsonify
+from flask import render_template
+from flask.ext.pymongo import ASCENDING, DESCENDING
+from app.tools import jsonify
 
 @app.route('/')
 def index():
@@ -7,7 +9,8 @@ def index():
 
 @app.route('/search/<query>')
 def search(query):
-    events = mongo.db.contributions.find({
-        '_user_lower' : query.lower()
-    })
-    return jsonify(events)
+    collection = mongo.db.contributions
+    criteria = {'_user_lower': query.lower()}
+    events = collection.find(criteria).sort('created_at', DESCENDING)
+    events = { 'events': list(events) }
+    return jsonify(**events)
