@@ -28,8 +28,12 @@
     <!-- Handlebars! -->
     <script id="gollumevent-template" type="text/x-handlebars-template">
       <article>
-        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-        {{inflectEvent type}}
+        {{dateFmt created_at}}
+        <a href="https://github.com/{{user}}">{{user}}</a>
+        {{inflectEvent type}} pages:
+        {{#each pages}}
+        <a href="{{html_url}}">{{title}}</a>
+        {{/each}}
         to
         <a href="https://github.com/{{repo}}">{{repo}}</a>
       </article>
@@ -84,6 +88,10 @@
     </script>
 
     <script>
+      // Oxford commas code golf:
+     // f=(a,b=a.pop())=>a[0]?a.join(', ')+(a[1]?',':'')+' and '+b:b
+     // or
+     // l=a.length;l>2&&(a[l-1]='and '+a[l-1]);a.join(l>2?', ':' and ')
      // Handlebars things
      Handlebars.registerHelper('dateFmt', function(d) {
        return moment(d).calendar();
