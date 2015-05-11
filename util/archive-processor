@@ -436,13 +436,15 @@ class EventSink(object):
         self.destination_dir = destination_dir
 
     def already_processed(self, input_path):
+        if not self.destination_dir: return False
+
         sink_path = self.filename_transform(input_path)
-        rv = os.path.exists(sink_path) and os.stat(sink_path).st_size > 0
-        if rv: log.info("eventsink: {} already processed".format(input_path))
-        return rv
+        return os.path.exists(sink_path) and os.stat(sink_path).st_size > 0
 
     def filename_transform(self, input_path):
         if not self.destination_dir: return None
+
+        input_path = os.path.basename(input_path)
         path, path_ext = os.path.splitext(input_path)
         return os.path.join(
             self.destination_dir,
@@ -456,7 +458,6 @@ class EventSink(object):
             # No place to put file anyway; always go to STDOUT
             return
 
-        new_path = os.path.basename(new_path)
         new_path = self.filename_transform(new_path)
 
         log.info("eventsink: changing file: {} -> {}".format(
