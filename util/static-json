@@ -1,0 +1,22 @@
+#!/usr/bin/zsh
+input_path=$1
+output_path=$2
+mkdir -p $output_path
+for input_file in ${input_path}/*.json.gz;
+do
+    input_file="$(readlink -f "$input_file")"
+    #echo "$input_file" 1>&2
+    i=0
+    zcat $input_file | while read -r line;
+    do
+        ((i++))
+        #DON'T FORGET THE -E!!!!!!!!
+        gh_user="$(jq -r '._user_lower' <(echo -E $line))"
+        if [ $? -ne 0 ]; then
+            echo "${input_file}:${i}"
+            echo $line
+        fi
+        out_file="${output_path}/${gh_user}.json"
+        echo "$line" >> "$out_file"
+    done
+done
