@@ -5,10 +5,10 @@ do
     input_file="$(readlink -f "$input_file")"
     #echo "$input_file" 1>&2
     i=0
-    zcat $input_file | while read line;
+    zcat $input_file | while read -r line;
     do
         ((i++))
-        echo "$line" | jq . > /dev/null
+        echo "${line}" | jq . > /dev/null
         if [ $? -ne 0 ]; then
             echo "${input_file}:${i}"
             #echo "$i" "$line"
