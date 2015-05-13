@@ -11,6 +11,7 @@
 
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="/static/octicons/octicons.css" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/ie10-viewport-bug-workaround.js"></script>
@@ -25,29 +26,21 @@
      }
     </style>
 
+    <script type="text/x-handlebars-template">
+    </script>
+
     <!-- Handlebars! -->
     <script id="gollumevent-template" type="text/x-handlebars-template">
-      <article>
-        {{dateFmt created_at}}
         <a href="https://github.com/{{user}}">{{user}}</a>
-        {{inflectEvent type}} pages:
-        {{#each pages}}
-        <a href="{{html_url}}">{{title}}</a>
-        {{/each}}
-        to
-        <a href="https://github.com/{{repo}}">{{repo}}</a>
-      </article>
     </script>
     <script id="issuesevent-template" type="text/x-handlebars-template">
       <article>
         {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-        {{inflectEvent type}}
       </article>
     </script>
     <script id="pushevent-template" type="text/x-handlebars-template">
       <article>
         {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-        {{inflectEvent type}}
         {{distinct_commit_count}} commits, ending in:
         <a href="https://github.com/{{repo}}/commits/{{head}}">{{head}}</a>
         to
@@ -56,35 +49,70 @@
     </script>
     <script id="commitcommentevent-template" type="text/x-handlebars-template">
       <article>
-        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-        {{inflectEvent type}}
+        {{dateFmt created_at}}
+        <a href="https://github.com/{{user}}">{{user}}</a>
       </article>
     </script>
     <script id="releaseevent-template" type="text/x-handlebars-template">
       <article>
-        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-        {{inflectEvent type}}
+        {{dateFmt created_at}}
+        <a href="https://github.com/{{user}}">{{user}}</a>
+        released tag
         <a href="https://github.com/{{repo}}/tags/{{tag_name}}">{{tag_name}}</a>
         of <a href="https://github.com/{{repo}}">{{repo}}</a>
       </article>
     </script>
     <script id="publicevent-template" type="text/x-handlebars-template">
       <article>
-        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-      {{inflectEvent type}}
+        {{dateFmt created_at}}
+        <a href="https://github.com/{{user}}">{{user}}</a> open-sourced
+        <a href="https://github.com/{{repo}}">{{repo}}</a>!
       </article>
     </script>
     <script id="memberevent-template" type="text/x-handlebars-template">
       <article>
-        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-      {{inflectEvent type}}
+        {{dateFmt created_at}}
+        <a href="https://github.com/{{user}}">{{user}}</a>
+        {{target_action}}
+        <a href="https://github.com/{{target_user}}">{{target_user}}</a> to
+        <a href="https://github.com/{{repo}}">{{repo}}</a>
       </article>
     </script>
     <script id="issuecommentevent-template" type="text/x-handlebars-template">
       <article>
         {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-      {{inflectEvent type}}
+        {{inflectEvent type}}
       </article>
+    </script>
+    <script id="contributions-template" type="text/x-handlebars-template">
+        <table class="table table-striped">
+          <thead>
+            <th>
+              <span class="octicon octicon-calendar"></span>
+            </th>
+            <th>
+              <span class="octicon octicon-person"></span>
+            </th>
+            <th>
+              <span class="octicon octicon-repo"></span>
+            </th>
+            <th>
+              <!-- event type -->
+            </th>
+            <th>
+              <!-- description -->
+            </th>
+            <th>
+              <span class="octicon octicon-link"></span>
+            </th>
+          </thead>
+          <tbody>
+            {{#each}}
+            <tr>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
     </script>
 
     <script>
@@ -96,18 +124,9 @@
      Handlebars.registerHelper('dateFmt', function(d) {
        return moment(d).calendar();
      });
-     Handlebars.registerHelper('inflectEvent', function(e) {
-       verbs = {
-         'GollumEvent': 'edited Wiki',
-         'IssuesEvent': 'dealt with an issue', // should use action
-         'PushEvent': 'pushed',
-         'CommitCommentEvent': 'commented on commit',
-         'ReleaseEvent': 'released version',
-         'PublicEvent': 'open-sourced',
-         'MemberEvent': 'added member',
-         'IssueCommentEvent': 'commentedon issue',
-       };
-       return verbs[e];
+     Handlebars.registerHelper('multiplePages', function(e) {
+       console.log(JSON.stringify(e));
+       return e.pages.length > 1;
      });
      eventTemplates = {
        'GollumEvent'        : Handlebars.compile($('#gollumevent-template').html()),
@@ -187,7 +206,7 @@
 
       </div>
 
-      <div  id="results">
+      <div id="results">
       </div>
 
     </div> <!-- /container -->
