@@ -24,28 +24,42 @@
      .query-container {
        padding:10px;
      }
+     td {
+       white-space: nowrap;
+     }
     </style>
-
-    <script type="text/x-handlebars-template">
-    </script>
 
     <!-- Handlebars! -->
     <script id="gollumevent-template" type="text/x-handlebars-template">
-        <a href="https://github.com/{{user}}">{{user}}</a>
+      {{#ifMultiplePages this}}
+      edited multiple Wiki pages:
+      <ul>
+      {{#each pages}}
+        <li>
+          {{action}} the page
+          <a href="{{html_url}}">{{title}}</a>
+          (<a href="{{html_url}}/_history">history</a>)
+        </li>
+      {{/each}}
+      </ul>
+      {{else}}
+      {{#with pages.[0]}}
+      {{action}} the Wiki page
+      <a href="{{html_url}}">{{title}}</a>
+      (<a href="{{html_url}}/_history">history</a>)
+      {{/with}}
+      {{/ifMultiplePages}}
     </script>
     <script id="issuesevent-template" type="text/x-handlebars-template">
-      <article>
-        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-      </article>
+        {{user}} {{action}} issue
+        <a href="https://github.com/{{repo}}/issues/{{issue_number}}">
+          {{issue_number}}
+        </a>
     </script>
     <script id="pushevent-template" type="text/x-handlebars-template">
-      <article>
-        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-        {{distinct_commit_count}} commits, ending in:
-        <a href="https://github.com/{{repo}}/commits/{{head}}">{{head}}</a>
-        to
-        <a href="https://github.com/{{repo}}">{{repo}}</a>
-      </article>
+      pushed {{distinct_commit_count}}
+      {{pluralize distinct_commit_count "commit" "commits"}}, ending in:
+        <a href="https://github.com/{{repo}}/commits/{{head}}">{{formatSHA head}}</a>
     </script>
     <script id="commitcommentevent-template" type="text/x-handlebars-template">
       <article>
@@ -80,24 +94,28 @@
     </script>
     <script id="issuecommentevent-template" type="text/x-handlebars-template">
       <article>
-        {{dateFmt created_at}} <a href="https://github.com/{{user}}">{{user}}</a>
-        {{inflectEvent type}}
+        {{dateFmt created_at}}
+        <a href="https://github.com/{{user}}">{{user}}</a>
+        {{target_action}}
+        <a href="https://github.com/{{target_user}}">{{target_user}}</a> to
+        <a href="https://github.com/{{repo}}">{{repo}}</a>
       </article>
     </script>
     <script id="contributions-template" type="text/x-handlebars-template">
+      {{#if events}}
         <table class="table table-striped">
           <thead>
             <th>
-              <span class="octicon octicon-calendar"></span>
+              <!-- event type -->
             </th>
             <th>
-              <span class="octicon octicon-person"></span>
+              <span class="octicon octicon-calendar"></span>
             </th>
             <th>
               <span class="octicon octicon-repo"></span>
             </th>
             <th>
-              <!-- event type -->
+              <span class="octicon octicon-repo"></span>
             </th>
             <th>
               <!-- description -->
@@ -107,12 +125,33 @@
             </th>
           </thead>
           <tbody>
-            {{#each}}
+            {{#each events}}
             <tr>
+              <td>
+                <span title="{{type}}" class="octicon {{eventIcon type}}"></span>
+              </td>
+              <td title="{{created_at}}">
+                {{dateFmt created_at}}
+              </td>
+              <td>
+                <a href="https://github.com/{{repo}}">{{repo}}</a>
+              </td>
+              <td>
+                <a href="https://github.com/{{user}}">{{user}}</a>
+              </td>
+              <td style="width:100%">
+                {{> (selectEventPartial this) }}
+              </td>
+              <td>
+                <a href=""></a>
+              </td>
             </tr>
             {{/each}}
           </tbody>
         </table>
+        {{else}}
+        <h1>No results :(</h1>
+        {{/if}}
     </script>
 
     <script>
@@ -120,43 +159,71 @@
      // f=(a,b=a.pop())=>a[0]?a.join(', ')+(a[1]?',':'')+' and '+b:b
      // or
      // l=a.length;l>2&&(a[l-1]='and '+a[l-1]);a.join(l>2?', ':' and ')
-     // Handlebars things
-     Handlebars.registerHelper('dateFmt', function(d) {
-       return moment(d).calendar();
-     });
-     Handlebars.registerHelper('multiplePages', function(e) {
-       console.log(JSON.stringify(e));
-       return e.pages.length > 1;
-     });
-     eventTemplates = {
-       'GollumEvent'        : Handlebars.compile($('#gollumevent-template').html()),
-       'IssuesEvent'        : Handlebars.compile($('#issuesevent-template').html()),
-       'PushEvent'          : Handlebars.compile($('#pushevent-template').html()),
-       'CommitCommentEvent' : Handlebars.compile($('#commitcommentevent-template').html()),
-       'ReleaseEvent'       : Handlebars.compile($('#releaseevent-template').html()),
-       'PublicEvent'        : Handlebars.compile($('#publicevent-template').html()),
-       'MemberEvent'        : Handlebars.compile($('#memberevent-template').html()),
-       'IssueCommentEvent'  : Handlebars.compile($('#issuecommentevent-template').html()),
-     }
 
-      $(function() {
+     ///////////////////////
+     // Handlebars things //
+     ///////////////////////
+     // Helpers
+     Handlebars.registerHelper('pluralize', function(c, s, p) {
+         return (c === 1) ? s : p;
+     });
+     Handlebars.registerHelper('dateFmt', function(d) {
+         //return d ? moment(d).calendar() : "";
+         return d ? moment(d).fromNow() : "";
+     });
+     Handlebars.registerHelper('ifMultiplePages', function(ctx, options) {
+       return (ctx.pages.length > 1) ? options.fn(this) : options.inverse(this);
+     });
+     Handlebars.registerHelper("eventIcon", function(eventType) {
+       var eventTypeData = {
+         "GollumEvent"        : "book",
+         "IssuesEvent"        : "issue-opened",
+         "PushEvent"          : "repo-push",
+         "CommitCommentEvent" : "comment",
+         "ReleaseEvent"       : "tag",
+         "PublicEvent"        : "megaphone",
+         "MemberEvent"        : "person",
+         "IssueCommentEvent"  : "comment-discussion"
+       };
+       var icon = eventTypeData[eventType];
+       return "octicon-" + icon;
+     });
+     selectEventPartial = function(event) {
+       return event["type"];
+     }
+     Handlebars.registerHelper("selectEventPartial", selectEventPartial);
+     Handlebars.registerHelper("formatSHA", function(hash) {
+       return hash.slice(0,7);
+     });
+
+
+     Handlebars.registerPartial("GollumEvent"        , $("#gollumevent-template").html());
+     Handlebars.registerPartial("IssuesEvent"        , $("#issuesevent-template").html());
+     Handlebars.registerPartial("PushEvent"          , $("#pushevent-template").html());
+     Handlebars.registerPartial("CommitCommentEvent" , $("#commitcommentevent-template").html());
+     Handlebars.registerPartial("ReleaseEvent"       , $("#releaseevent-template").html());
+     Handlebars.registerPartial("PublicEvent"        , $("#publicevent-template").html());
+     Handlebars.registerPartial("MemberEvent"        , $("#memberevent-template").html());
+     Handlebars.registerPartial("IssueCommentEvent"  , $("#issuecommentevent-template").html());
+
+     var renderTemplate = Handlebars.compile(
+       $("#contributions-template").html()
+     );
+
+     $(function() {
        $("form#user-query").submit(function(e) {
          e.preventDefault();
          var url = "/search/"+$("#query").val();
          $.getJSON(url, function(data) {
-           $("#results").empty();
-
-           $.each(data.events, function(i, value) {
-             console.log(JSON.stringify(value));
-             var content = eventTemplates[value.type](value);
-             $("#results").append(content);
-           });
+             console.log("Found "+data.events.length+" events");
+             $("#results").html(
+               renderTemplate(data)
+             );
          });
        });
      });
     </script>
 
-    <!-- Custom styles for this template -->
     <!-- <link href="/static/css/theme.css" rel="stylesheet"> -->
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -192,7 +259,6 @@
 
     <div class="container theme-showcase" role="main">
 
-      <!-- Main jumbotron for a primary marketing message or call to action -->
       <div class="jumbotron query-container">
         <p>
           <form class="form-inline" id="user-query">
@@ -203,7 +269,6 @@
             <button type="submit" class="btn btn-primary">Search</button>
           </form>
         </p>
-
       </div>
 
       <div id="results">
