@@ -1,0 +1,179 @@
+.tetrominos {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-112px, -96px);
+      -ms-transform: translate(-112px, -96px);
+          transform: translate(-112px, -96px);
+}
+
+.tetromino {
+  width: 96px;
+  height: 112px;
+  position: absolute;
+  -webkit-transition: all ease .3s;
+          transition: all ease .3s;
+  background: url('data:image/svg+xml;utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 684"%3E%3Cpath fill="%23010101" d="M305.7 0L0 170.9v342.3L305.7 684 612 513.2V170.9L305.7 0z"/%3E%3Cpath fill="%23fff" d="M305.7 80.1l-233.6 131 233.6 131 234.2-131-234.2-131"/%3E%3C/svg%3E') no-repeat top center;
+}
+
+.box1 {
+  -webkit-animation: tetromino1 1.5s ease-out infinite;
+          animation: tetromino1 1.5s ease-out infinite;
+}
+
+.box2 {
+  -webkit-animation: tetromino2 1.5s ease-out infinite;
+          animation: tetromino2 1.5s ease-out infinite;
+}
+
+.box3 {
+  -webkit-animation: tetromino3 1.5s ease-out infinite;
+          animation: tetromino3 1.5s ease-out infinite;
+  z-index: 2;
+}
+
+.box4 {
+  -webkit-animation: tetromino4 1.5s ease-out infinite;
+          animation: tetromino4 1.5s ease-out infinite;
+}
+
+@-webkit-keyframes tetromino1 {
+  0%, 40% {
+    /* compose logo */
+    /* 1 on 3 */
+    /* L-shape */
+    -webkit-transform: translate(0, 0);
+            transform: translate(0, 0);
+  }
+  50% {
+    /* pre-box */
+    -webkit-transform: translate(48px, -27px);
+            transform: translate(48px, -27px);
+  }
+  60%, 100% {
+    /* box */
+    /* compose logo */
+    -webkit-transform: translate(96px, 0);
+            transform: translate(96px, 0);
+  }
+}
+
+@keyframes tetromino1 {
+  0%, 40% {
+    /* compose logo */
+    /* 1 on 3 */
+    /* L-shape */
+    -webkit-transform: translate(0, 0);
+            transform: translate(0, 0);
+  }
+  50% {
+    /* pre-box */
+    -webkit-transform: translate(48px, -27px);
+            transform: translate(48px, -27px);
+  }
+  60%, 100% {
+    /* box */
+    /* compose logo */
+    -webkit-transform: translate(96px, 0);
+            transform: translate(96px, 0);
+  }
+}
+@-webkit-keyframes tetromino2 {
+  0%, 20% {
+    /* compose logo */
+    /* 1 on 3 */
+    -webkit-transform: translate(96px, 0px);
+            transform: translate(96px, 0px);
+  }
+  40%, 100% {
+    /* L-shape */
+    /* box */
+    /* compose logo */
+    -webkit-transform: translate(144px, 27px);
+            transform: translate(144px, 27px);
+  }
+}
+@keyframes tetromino2 {
+  0%, 20% {
+    /* compose logo */
+    /* 1 on 3 */
+    -webkit-transform: translate(96px, 0px);
+            transform: translate(96px, 0px);
+  }
+  40%, 100% {
+    /* L-shape */
+    /* box */
+    /* compose logo */
+    -webkit-transform: translate(144px, 27px);
+            transform: translate(144px, 27px);
+  }
+}
+@-webkit-keyframes tetromino3 {
+  0% {
+    /* compose logo */
+    -webkit-transform: translate(144px, 27px);
+            transform: translate(144px, 27px);
+  }
+  20%, 60% {
+    /* 1 on 3 */
+    /* L-shape */
+    /* box */
+    -webkit-transform: translate(96px, 54px);
+            transform: translate(96px, 54px);
+  }
+  90%, 100% {
+    /* compose logo */
+    -webkit-transform: translate(48px, 27px);
+            transform: translate(48px, 27px);
+  }
+}
+@keyframes tetromino3 {
+  0% {
+    /* compose logo */
+    -webkit-transform: translate(144px, 27px);
+            transform: translate(144px, 27px);
+  }
+  20%, 60% {
+    /* 1 on 3 */
+    /* L-shape */
+    /* box */
+    -webkit-transform: translate(96px, 54px);
+            transform: translate(96px, 54px);
+  }
+  90%, 100% {
+    /* compose logo */
+    -webkit-transform: translate(48px, 27px);
+            transform: translate(48px, 27px);
+  }
+}
+@-webkit-keyframes tetromino4 {
+  0%, 60% {
+    /* compose logo */
+    /* 1 on 3 */
+    /* L-shape */
+    /* box */
+    -webkit-transform: translate(48px, 27px);
+            transform: translate(48px, 27px);
+  }
+  90%, 100% {
+    /* compose logo */
+    -webkit-transform: translate(0, 0);
+            transform: translate(0, 0);
+  }
+}
+@keyframes tetromino4 {
+  0%, 60% {
+    /* compose logo */
+    /* 1 on 3 */
+    /* L-shape */
+    /* box */
+    -webkit-transform: translate(48px, 27px);
+            transform: translate(48px, 27px);
+  }
+  90%, 100% {
+    /* compose logo */
+    -webkit-transform: translate(0, 0);
+            transform: translate(0, 0);
+  }
+}
+
