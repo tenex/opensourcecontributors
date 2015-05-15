@@ -4,6 +4,40 @@ This is a utility to find a list of all contributions a user has made to any pub
 
 The data from 2015-01-01 - present is found on [GitHub Archive](https://www.githubarchive.org). The data from before this uses a different schema and was obtained from Google's BigQuery (see below)
 
+As of 2015-05-12, it tracks a total of
+```sh
+% zcat /github-archive/processed/*.json.gz | wc -l # 90GB so be patient
+244763730
+```
+events.
+
+```none
+> db.contributions.stats();
+{
+  "ns" : "contributions.contributions",
+  "count" : 244763730,
+  "size" : 130174541792,
+  "avgObjSize" : 531,
+  "numExtents" : 84,
+  "storageSize" : 135945120832,
+  "lastExtentSize" : 2146426864,
+  "paddingFactor" : 1,
+  "paddingFactorNote" : "paddingFactor is unused and unmaintained in 3.0. It remains hard coded to 1.0 for compatibility only.",
+  "userFlags" : 1,
+  "capped" : false,
+  "nindexes" : 2,
+  "totalIndexSize" : 14545848016,
+  "indexSizes" : {
+    "_id_" : 7943090288,
+    "_user_lower_1" : 6602757728
+  },
+  "ok" : 1
+}
+```
+
+So the total storage requirement for imported data is about `136 GB` of MongoDB space. That's using the new WiredTiger engine.
+
+
 ### Processing data archives
 
 The tool `archive-processor` will transform either the Timeline or Event API archives into JSON files which can be imported directly into your database of choice. To generate the output files (which will be gzipped if given gzipped input), use:
@@ -12,11 +46,15 @@ The tool `archive-processor` will transform either the Timeline or Event API arc
  ./archive-processor --output-path /github-archive/processed --timeline-path /github-archive/2011-2014/ --events-path /github-archive/2015/
 ```
 
-Logs will be dumped to your PWD and STDERR. It would be nice to refine that a bit. If you don't specify an `--output-path`, the processed JSON will be dumped to your STDOUT.
+Logs will be dumped to your PWD and STDERR. It would be nice to refine that a bit. If you don't specify an `--output-path`, the processed JSON will be dumped to your STDOUT. If you do specify an `--output-path`, the tool will skip over files that have already been processed.
+
 
 #### Time / Money
 
 On my [vultr.com](http://www.vultr.com/?ref=6831514) VPS, with the cheapest plan at US $5 per month, it takes about 20 hours to process all this data with one script working on the timeline archives and a second one working on the event archives. I'm using a non-SSD disk because of the massive price difference. With the SSD, it would take about 8.3 hours for the timeline archive and about 4 hours for all the events archive data for 5 months.
+
+github-archive (timeline, events, processed; all gzipped): 60GB
+mongodb: 150GB
 
 ## BigQuery Data Sets
 
