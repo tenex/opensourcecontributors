@@ -12,6 +12,7 @@
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/bootstrap-theme.min.css" rel="stylesheet">
     <link href="/static/octicons/octicons.css" rel="stylesheet">
+    <link href="/static/css/loader.css" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/ie10-viewport-bug-workaround.js"></script>
@@ -24,12 +25,19 @@
      .query-container {
        padding:10px;
      }
-     td {
-       white-space: nowrap;
-     }
     </style>
 
     <!-- Handlebars! -->
+    <script id="results-summary-template" type="text/x-handlebars-template">
+      <h4>
+        <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
+        <a href="https://github.com/{{user}}"><strong>{{user}}</strong></a>
+        made
+        <strong>{{total}}</strong> contributions
+        to
+        <strong>{{repos.length}}</strong> repositories
+      </h4>
+    </script>
     <script id="gollumevent-template" type="text/x-handlebars-template">
       {{#ifMultiplePages this}}
       edited multiple Wiki pages:
@@ -51,58 +59,78 @@
       {{/ifMultiplePages}}
     </script>
     <script id="issuesevent-template" type="text/x-handlebars-template">
-        {{user}} {{action}} issue
+      {{action}} issue
         <a href="https://github.com/{{repo}}/issues/{{issue_number}}">
           {{issue_number}}
         </a>
     </script>
     <script id="pushevent-template" type="text/x-handlebars-template">
       pushed {{distinct_commit_count}}
-      {{pluralize distinct_commit_count "commit" "commits"}}, ending in:
-        <a href="https://github.com/{{repo}}/commits/{{head}}">{{formatSHA head}}</a>
+      {{pluralize distinct_commit_count "commit" "commits"}} to
+        <a href="https://github.com/{{repo}}/commits/{{head}}">{{ref}} ({{formatSHA head}})</a>
     </script>
     <script id="commitcommentevent-template" type="text/x-handlebars-template">
-      <article>
-        {{dateFmt created_at}}
-        <a href="https://github.com/{{user}}">{{user}}</a>
-      </article>
+      <a href="{{html_url}}">commented</a>
+      on commit
+      <a href="https://github.com/{{repo}}/commits/{{commit_id}}">{{formatSHA commit_id}}</a>
+      {{path}}: <a href="{{html_url}}">{{truncate body}}</a>
     </script>
     <script id="releaseevent-template" type="text/x-handlebars-template">
-      <article>
-        {{dateFmt created_at}}
-        <a href="https://github.com/{{user}}">{{user}}</a>
-        released tag
-        <a href="https://github.com/{{repo}}/tags/{{tag_name}}">{{tag_name}}</a>
-        of <a href="https://github.com/{{repo}}">{{repo}}</a>
-      </article>
+      released tag
+      <a href="https://github.com/{{repo}}/releases/tag/{{tag_name}}">{{tag_name}}</a>
     </script>
     <script id="publicevent-template" type="text/x-handlebars-template">
-      <article>
-        {{dateFmt created_at}}
-        <a href="https://github.com/{{user}}">{{user}}</a> open-sourced
-        <a href="https://github.com/{{repo}}">{{repo}}</a>!
-      </article>
+      open-sourced <a href="https://github.com/{{repo}}">{{repo}}</a>!
     </script>
     <script id="memberevent-template" type="text/x-handlebars-template">
-      <article>
-        {{dateFmt created_at}}
-        <a href="https://github.com/{{user}}">{{user}}</a>
         {{target_action}}
         <a href="https://github.com/{{target_user}}">{{target_user}}</a> to
         <a href="https://github.com/{{repo}}">{{repo}}</a>
-      </article>
     </script>
     <script id="issuecommentevent-template" type="text/x-handlebars-template">
-      <article>
-        {{dateFmt created_at}}
-        <a href="https://github.com/{{user}}">{{user}}</a>
-        {{target_action}}
-        <a href="https://github.com/{{target_user}}">{{target_user}}</a> to
-        <a href="https://github.com/{{repo}}">{{repo}}</a>
-      </article>
+      <a href="{{comment_url}}">commented</a>
+      on
+      <a href="{{issue_url}}">issue {{issue_number}}</a>
     </script>
     <script id="contributions-template" type="text/x-handlebars-template">
       {{#if events}}
+      <nav>
+        <ul class="pagination">
+          {{#pagination currentPage pageCount 5}}
+
+          {{#unless startFromFirstPage}}
+          <li>
+            <a href="#" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
+          </li>
+          {{/unless}}
+
+          {{#each pages}}
+          {{#if isCurrent}}
+          <li class="active">
+            <a data-page="{{page}}" class="pagination-link" href="#">
+              {{page}}
+              <span class="sr-only">(current)</span>
+            </a>
+          </li>
+          {{/if}}
+          {{#unless isCurrent}}
+          <li>
+            <a data-page="{{page}}" class="pagination-link" href="#">{{page}}</a>
+          </li>
+          {{/unless}}
+          {{/each}}
+
+          {{#unless endAtLastPage}}
+          <li>
+            <a href="#" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
+          </li>
+          {{/unless}}
+
+          {{/pagination}}
+        </ul>
+      </nav>
+
+
         <table class="table table-striped">
           <thead>
             <th>
@@ -115,13 +143,10 @@
               <span class="octicon octicon-repo"></span>
             </th>
             <th>
-              <span class="octicon octicon-repo"></span>
+              <span class="octicon octicon-person"></span>
             </th>
             <th>
               <!-- description -->
-            </th>
-            <th>
-              <span class="octicon octicon-link"></span>
             </th>
           </thead>
           <tbody>
@@ -133,95 +158,164 @@
               <td title="{{created_at}}">
                 {{dateFmt created_at}}
               </td>
-              <td>
+              <td style="white-space:nowrap">
                 <a href="https://github.com/{{repo}}">{{repo}}</a>
               </td>
               <td>
                 <a href="https://github.com/{{user}}">{{user}}</a>
               </td>
-              <td style="width:100%">
-                {{> (selectEventPartial this) }}
-              </td>
               <td>
-                <a href=""></a>
+                {{> (selectEventPartial this) }}
               </td>
             </tr>
             {{/each}}
           </tbody>
         </table>
         {{else}}
-        <h1>No results :(</h1>
+        <div class="alert alert-danger" role="alert">
+          <span class="glyphicon glyphicon-exclamation-sign pull-right" aria-hidden="true"></span>
+          <strong>No results for that user.</strong>
+        </div>
         {{/if}}
     </script>
 
     <script>
-      // Oxford commas code golf:
-     // f=(a,b=a.pop())=>a[0]?a.join(', ')+(a[1]?',':'')+' and '+b:b
-     // or
-     // l=a.length;l>2&&(a[l-1]='and '+a[l-1]);a.join(l>2?', ':' and ')
-
      ///////////////////////
      // Handlebars things //
      ///////////////////////
      // Helpers
-     Handlebars.registerHelper('pluralize', function(c, s, p) {
-         return (c === 1) ? s : p;
-     });
-     Handlebars.registerHelper('dateFmt', function(d) {
-         //return d ? moment(d).calendar() : "";
-         return d ? moment(d).fromNow() : "";
-     });
-     Handlebars.registerHelper('ifMultiplePages', function(ctx, options) {
-       return (ctx.pages.length > 1) ? options.fn(this) : options.inverse(this);
-     });
-     Handlebars.registerHelper("eventIcon", function(eventType) {
-       var eventTypeData = {
-         "GollumEvent"        : "book",
-         "IssuesEvent"        : "issue-opened",
-         "PushEvent"          : "repo-push",
-         "CommitCommentEvent" : "comment",
-         "ReleaseEvent"       : "tag",
-         "PublicEvent"        : "megaphone",
-         "MemberEvent"        : "person",
-         "IssueCommentEvent"  : "comment-discussion"
-       };
-       var icon = eventTypeData[eventType];
-       return "octicon-" + icon;
-     });
-     selectEventPartial = function(event) {
-       return event["type"];
-     }
-     Handlebars.registerHelper("selectEventPartial", selectEventPartial);
-     Handlebars.registerHelper("formatSHA", function(hash) {
-       return hash.slice(0,7);
-     });
+           Handlebars.registerHelper('pluralize', function(c, s, p) {
+             return (c === 1) ? s : p;
+           });
+           Handlebars.registerHelper('truncate', function(s) {
+             if (!s) { return ""; }
+             return (s.length > 15) ? s.slice(0,15)+"..." : s;
+           });
+           Handlebars.registerHelper('dateFmt', function(d) {
+             //return d ? moment(d).calendar() : "";
+             return d ? moment(d).fromNow() : "";
+           });
+           Handlebars.registerHelper('ifMultiplePages', function(ctx, options) {
+             return (ctx.pages.length > 1) ? options.fn(this) : options.inverse(this);
+           });
+           Handlebars.registerHelper("eventIcon", function(eventType) {
+             var eventTypeData = {
+               "GollumEvent"        : "book",
+               "IssuesEvent"        : "issue-opened",
+               "PushEvent"          : "repo-push",
+               "CommitCommentEvent" : "comment",
+               "ReleaseEvent"       : "tag",
+               "PublicEvent"        : "megaphone",
+               "MemberEvent"        : "person",
+               "IssueCommentEvent"  : "comment-discussion"
+             };
+             var icon = eventTypeData[eventType];
+             return "octicon-" + icon;
+           });
+           selectEventPartial = function(event) {
+             return event["type"];
+           }
+           Handlebars.registerHelper("selectEventPartial", selectEventPartial);
+           Handlebars.registerHelper("formatSHA", function(hash) {
+             return hash.slice(0,7);
+           });
+           Handlebars.registerHelper('pagination', function(currentPage, totalPage, size, options) {
+             var startPage, endPage, context;
+
+             if (arguments.length === 3) {
+               options = size;
+               size = 5;
+             }
+
+             startPage = currentPage - Math.floor(size / 2);
+             endPage = currentPage + Math.floor(size / 2);
+
+             if (startPage <= 0) {
+               endPage -= (startPage - 1);
+               startPage = 1;
+             }
+
+             if (endPage > totalPage) {
+               endPage = totalPage;
+               if (endPage - size + 1 > 0) {
+                 startPage = endPage - size + 1;
+               } else {
+                 startPage = 1;
+               }
+             }
+
+             context = {
+               startFromFirstPage: false,
+               pages: [],
+               endAtLastPage: false,
+             };
+             if (startPage === 1) {
+               context.startFromFirstPage = true;
+             }
+             for (var i = startPage; i <= endPage; i++) {
+               context.pages.push({
+                 page: i,
+                 isCurrent: i === currentPage,
+               });
+             }
+             if (endPage === totalPage) {
+               context.endAtLastPage = true;
+             }
+
+             return options.fn(context);
+           });
 
 
-     Handlebars.registerPartial("GollumEvent"        , $("#gollumevent-template").html());
-     Handlebars.registerPartial("IssuesEvent"        , $("#issuesevent-template").html());
-     Handlebars.registerPartial("PushEvent"          , $("#pushevent-template").html());
-     Handlebars.registerPartial("CommitCommentEvent" , $("#commitcommentevent-template").html());
-     Handlebars.registerPartial("ReleaseEvent"       , $("#releaseevent-template").html());
-     Handlebars.registerPartial("PublicEvent"        , $("#publicevent-template").html());
-     Handlebars.registerPartial("MemberEvent"        , $("#memberevent-template").html());
-     Handlebars.registerPartial("IssueCommentEvent"  , $("#issuecommentevent-template").html());
+           Handlebars.registerPartial("GollumEvent"        , $("#gollumevent-template").html());
+           Handlebars.registerPartial("IssuesEvent"        , $("#issuesevent-template").html());
+           Handlebars.registerPartial("PushEvent"          , $("#pushevent-template").html());
+           Handlebars.registerPartial("CommitCommentEvent" , $("#commitcommentevent-template").html());
+           Handlebars.registerPartial("ReleaseEvent"       , $("#releaseevent-template").html());
+           Handlebars.registerPartial("PublicEvent"        , $("#publicevent-template").html());
+           Handlebars.registerPartial("MemberEvent"        , $("#memberevent-template").html());
+           Handlebars.registerPartial("IssueCommentEvent"  , $("#issuecommentevent-template").html());
 
-     var renderTemplate = Handlebars.compile(
-       $("#contributions-template").html()
-     );
+           var renderTemplate = Handlebars.compile(
+             $("#contributions-template").html()
+           );
+           var renderSummary = Handlebars.compile(
+             $("#results-summary-template").html()
+           );
 
-     $(function() {
-       $("form#user-query").submit(function(e) {
-         e.preventDefault();
-         var url = "/search/"+$("#query").val();
-         $.getJSON(url, function(data) {
-             console.log("Found "+data.events.length+" events");
-             $("#results").html(
-               renderTemplate(data)
-             );
-         });
-       });
-     });
+           var _query = "";
+
+           var runSearch = function(query, page) {
+             _query = query;
+               var url = "/search/"+query+"/"+page;
+               $("#loader").show();
+               $("#help").hide();
+               $("#results").hide();
+               $("#submit-button").attr("disabled","disabled");
+               $.getJSON(url, function(data) {
+                 $("#results-table").html(
+                   renderTemplate(data)
+                 );
+                 $("#summary").html(
+                   renderSummary(data)
+                 );
+                 $("#results").show();
+               }).always(function() {
+                 $("#loader").hide();
+                 $("#submit-button").removeAttr("disabled");
+               });
+           };
+
+           $(function() {
+             $("form#user-query").submit(function(e) {
+               e.preventDefault();
+               var query = $("#query").val();
+               runSearch(query, 1);
+             });
+           });
+
+           $(document).on("click", ".pagination-link", function(e) {
+             runSearch(_query, $(this).data("page"));
+           });
     </script>
 
     <!-- <link href="/static/css/theme.css" rel="stylesheet"> -->
@@ -253,29 +347,43 @@
             <li><a href="http://hut8.io">Hut8.io</a></li>
             <li><a href="mailto:liambowen@gmail.com">Contact</a></li>
           </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </nav>
-
-    <div class="container theme-showcase" role="main">
-
-      <div class="jumbotron query-container">
-        <p>
-          <form class="form-inline" id="user-query">
+          <form class="navbar-form navbar-right" id="user-query">
             <div class="form-group">
               <label for="query" class="sr-only">GitHub Username</label>
               <input type="text" class="form-control" id="query" placeholder="GitHub User">
             </div>
-            <button type="submit" class="btn btn-primary">Search</button>
+            <button id="submit-button" type="submit" class="btn btn-primary">Search</button>
           </form>
-        </p>
+        </div><!--/.nav-collapse -->
       </div>
+    </nav>
 
-      <div id="results">
+    <div class="container" role="main">
+      <div class="well">
+        <div id="help">
+          <h3>Search for a user above to begin</h3>
+        </div>
+        <div id="summary">
+
+        </div>
       </div>
+        <div id="results" style="display:none" class="row">
+          <div class="col-md-12">
+            <div id="results-table">
 
+            </div>
+          </div>
+        </div>
+
+      <div id="loader" style="display:none;"   class="tetrominos">
+        <div class="tetromino box1"></div>
+        <div class="tetromino box2"></div>
+        <div class="tetromino box3"></div>
+        <div class="tetromino box4"></div>
+      </div>
     </div> <!-- /container -->
-
+<!--
+-->
 
   </body>
 </html>
