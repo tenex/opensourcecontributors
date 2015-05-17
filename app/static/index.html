@@ -184,138 +184,138 @@
      // Handlebars things //
      ///////////////////////
      // Helpers
-           Handlebars.registerHelper('pluralize', function(c, s, p) {
-             return (c === 1) ? s : p;
-           });
-           Handlebars.registerHelper('truncate', function(s) {
-             if (!s) { return ""; }
-             return (s.length > 15) ? s.slice(0,15)+"..." : s;
-           });
-           Handlebars.registerHelper('dateFmt', function(d) {
-             //return d ? moment(d).calendar() : "";
-             return d ? moment(d).fromNow() : "";
-           });
-           Handlebars.registerHelper('ifMultiplePages', function(ctx, options) {
-             return (ctx.pages.length > 1) ? options.fn(this) : options.inverse(this);
-           });
-           Handlebars.registerHelper("eventIcon", function(eventType) {
-             var eventTypeData = {
-               "GollumEvent"        : "book",
-               "IssuesEvent"        : "issue-opened",
-               "PushEvent"          : "repo-push",
-               "CommitCommentEvent" : "comment",
-               "ReleaseEvent"       : "tag",
-               "PublicEvent"        : "megaphone",
-               "MemberEvent"        : "person",
-               "IssueCommentEvent"  : "comment-discussion"
-             };
-             var icon = eventTypeData[eventType];
-             return "octicon-" + icon;
-           });
-           selectEventPartial = function(event) {
-             return event["type"];
-           }
-           Handlebars.registerHelper("selectEventPartial", selectEventPartial);
-           Handlebars.registerHelper("formatSHA", function(hash) {
-             return hash.slice(0,7);
-           });
-           Handlebars.registerHelper('pagination', function(currentPage, totalPage, size, options) {
-             var startPage, endPage, context;
+     Handlebars.registerHelper('pluralize', function(c, s, p) {
+       return (c === 1) ? s : p;
+     });
+     Handlebars.registerHelper('truncate', function(s) {
+       if (!s) { return ""; }
+       return (s.length > 15) ? s.slice(0,15)+"..." : s;
+     });
+     Handlebars.registerHelper('dateFmt', function(d) {
+       //return d ? moment(d).calendar() : "";
+       return d ? moment(d).fromNow() : "";
+     });
+     Handlebars.registerHelper('ifMultiplePages', function(ctx, options) {
+       return (ctx.pages.length > 1) ? options.fn(this) : options.inverse(this);
+     });
+     Handlebars.registerHelper("eventIcon", function(eventType) {
+       var eventTypeData = {
+         "GollumEvent"        : "book",
+         "IssuesEvent"        : "issue-opened",
+         "PushEvent"          : "repo-push",
+         "CommitCommentEvent" : "comment",
+         "ReleaseEvent"       : "tag",
+         "PublicEvent"        : "megaphone",
+         "MemberEvent"        : "person",
+         "IssueCommentEvent"  : "comment-discussion"
+       };
+       var icon = eventTypeData[eventType];
+       return "octicon-" + icon;
+     });
+     selectEventPartial = function(event) {
+       return event["type"];
+     }
+     Handlebars.registerHelper("selectEventPartial", selectEventPartial);
+     Handlebars.registerHelper("formatSHA", function(hash) {
+       return hash.slice(0,7);
+     });
+     Handlebars.registerHelper('pagination', function(currentPage, totalPage, size, options) {
+       var startPage, endPage, context;
 
-             if (arguments.length === 3) {
-               options = size;
-               size = 5;
-             }
+       if (arguments.length === 3) {
+         options = size;
+         size = 5;
+       }
 
-             startPage = currentPage - Math.floor(size / 2);
-             endPage = currentPage + Math.floor(size / 2);
+       startPage = currentPage - Math.floor(size / 2);
+       endPage = currentPage + Math.floor(size / 2);
 
-             if (startPage <= 0) {
-               endPage -= (startPage - 1);
-               startPage = 1;
-             }
+       if (startPage <= 0) {
+         endPage -= (startPage - 1);
+         startPage = 1;
+       }
 
-             if (endPage > totalPage) {
-               endPage = totalPage;
-               if (endPage - size + 1 > 0) {
-                 startPage = endPage - size + 1;
-               } else {
-                 startPage = 1;
-               }
-             }
+       if (endPage > totalPage) {
+         endPage = totalPage;
+         if (endPage - size + 1 > 0) {
+           startPage = endPage - size + 1;
+         } else {
+           startPage = 1;
+         }
+       }
 
-             context = {
-               startFromFirstPage: false,
-               pages: [],
-               endAtLastPage: false,
-             };
-             if (startPage === 1) {
-               context.startFromFirstPage = true;
-             }
-             for (var i = startPage; i <= endPage; i++) {
-               context.pages.push({
-                 page: i,
-                 isCurrent: i === currentPage,
-               });
-             }
-             if (endPage === totalPage) {
-               context.endAtLastPage = true;
-             }
+       context = {
+         startFromFirstPage: false,
+         pages: [],
+         endAtLastPage: false,
+       };
+       if (startPage === 1) {
+         context.startFromFirstPage = true;
+       }
+       for (var i = startPage; i <= endPage; i++) {
+         context.pages.push({
+           page: i,
+           isCurrent: i === currentPage,
+         });
+       }
+       if (endPage === totalPage) {
+         context.endAtLastPage = true;
+       }
 
-             return options.fn(context);
-           });
+       return options.fn(context);
+     });
 
 
-           Handlebars.registerPartial("GollumEvent"        , $("#gollumevent-template").html());
-           Handlebars.registerPartial("IssuesEvent"        , $("#issuesevent-template").html());
-           Handlebars.registerPartial("PushEvent"          , $("#pushevent-template").html());
-           Handlebars.registerPartial("CommitCommentEvent" , $("#commitcommentevent-template").html());
-           Handlebars.registerPartial("ReleaseEvent"       , $("#releaseevent-template").html());
-           Handlebars.registerPartial("PublicEvent"        , $("#publicevent-template").html());
-           Handlebars.registerPartial("MemberEvent"        , $("#memberevent-template").html());
-           Handlebars.registerPartial("IssueCommentEvent"  , $("#issuecommentevent-template").html());
+     Handlebars.registerPartial("GollumEvent"        , $("#gollumevent-template").html());
+     Handlebars.registerPartial("IssuesEvent"        , $("#issuesevent-template").html());
+     Handlebars.registerPartial("PushEvent"          , $("#pushevent-template").html());
+     Handlebars.registerPartial("CommitCommentEvent" , $("#commitcommentevent-template").html());
+     Handlebars.registerPartial("ReleaseEvent"       , $("#releaseevent-template").html());
+     Handlebars.registerPartial("PublicEvent"        , $("#publicevent-template").html());
+     Handlebars.registerPartial("MemberEvent"        , $("#memberevent-template").html());
+     Handlebars.registerPartial("IssueCommentEvent"  , $("#issuecommentevent-template").html());
 
-           var renderTemplate = Handlebars.compile(
-             $("#contributions-template").html()
-           );
-           var renderSummary = Handlebars.compile(
-             $("#results-summary-template").html()
-           );
+     var renderTemplate = Handlebars.compile(
+       $("#contributions-template").html()
+     );
+     var renderSummary = Handlebars.compile(
+       $("#results-summary-template").html()
+     );
 
-           var _query = "";
+     var _query = "";
 
-           var runSearch = function(query, page) {
-             _query = query;
-               var url = "/search/"+query+"/"+page;
-               $("#loader").show();
-               $("#help").hide();
-               $("#results").hide();
-               $("#submit-button").attr("disabled","disabled");
-               $.getJSON(url, function(data) {
-                 $("#results-table").html(
-                   renderTemplate(data)
-                 );
-                 $("#summary").html(
-                   renderSummary(data)
-                 );
-                 $("#results").show();
-               }).always(function() {
-                 $("#loader").hide();
-                 $("#submit-button").removeAttr("disabled");
-               });
-           };
+     var runSearch = function(query, page) {
+       _query = query;
+       var url = "/search/"+query+"/"+page;
+       $("#loader").show();
+       $("#help").hide();
+       $("#results").hide();
+       $("#submit-button").attr("disabled","disabled");
+       $.getJSON(url, function(data) {
+         $("#results-table").html(
+           renderTemplate(data)
+         );
+         $("#summary").html(
+           renderSummary(data)
+         );
+         $("#results").show();
+       }).always(function() {
+         $("#loader").hide();
+         $("#submit-button").removeAttr("disabled");
+       });
+     };
 
-           $(function() {
-             $("form#user-query").submit(function(e) {
-               e.preventDefault();
-               var query = $("#query").val();
-               runSearch(query, 1);
-             });
-           });
+     $(function() {
+       $("form#user-query").submit(function(e) {
+         e.preventDefault();
+         var query = $("#query").val();
+         runSearch(query, 1);
+       });
+     });
 
-           $(document).on("click", ".pagination-link", function(e) {
-             runSearch(_query, $(this).data("page"));
-           });
+     $(document).on("click", ".pagination-link", function(e) {
+       runSearch(_query, $(this).data("page"));
+     });
     </script>
 
     <!-- <link href="/static/css/theme.css" rel="stylesheet"> -->
