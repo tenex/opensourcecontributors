@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # Works only for archives from 2015-01-01 -> Present
-from datetime import datetime
-from datetime import timezone
+from datetime import datetime, timezone
+import pymongo
 from pprint import pprint
-from termcolor import colored
 import argparse
 import csv
+import filelock
 import dateutil.parser
 import fileinput
 import glob
@@ -14,13 +14,99 @@ import itertools
 import json
 import logging
 import os
-import os.path
 import re
 import sys
 import urllib.parse
 
 
 __version__ = '0.0.1'
+
+LOCKFILE_PATH = "/tmp/archive-importer"
+
+invocation_id = "{}-{}-{}.log".format(
+    "importer",
+    os.uname().nodename,
+    datetime.now().strftime('%Y%m%d-%H%M%S'))
+
+# Setup logging
+log = logging.getLogger('gha-importer[{}]'.format(os.uname().nodename))
+logging.Formatter.default_msec_format = '%s.%03d'
+log_formatter = logging.Formatter(
+    fmt='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
+file_log_handler = logging.FileHandler(invocation_id)
+console_log_handler = logging.StreamHandler()
+file_log_handler.setFormatter(log_formatter)
+console_log_handler.setFormatter(log_formatter)
+log.addHandler(file_log_handler)
+log.addHandler(console_log_handler)
+log.setLevel(logging.INFO)
+
+
+def import_file(path, done_path, db):
+    """Import file's JSON
+    This does not import files atomically. However it will not import duplicate
+    documents due to a unique index on _event_id. If an error is encountered with
+    this index, it will be ignored.
+    Both path and done_path should be absolute paths. They must also be on the same
+    device, as inodes are taken as identities.
+    """
+    log.info("importing events from [{}]".format(path))
+    start_time = datetime.now()
+
+    def _make_stats(rec_count, sz, path):
+        duration = (datetime.now() - start_time).total_seconds()
+        return (rec_count, sz, duration, rec_count/duration, path)
+    with gzip.open(path, 'rt') as source:
+        sz = 0
+        record_i = 0
+        for record in source:
+            record_data = json.loads(record)
+            db.contributions.insert(record_data)
+
+            sz += len(record)
+            record_i += 1
+            if record_i % 1000 == 0:
+                log.info("importing in progress: {} records ({} bytes) in {:.2f} seconds ({:.2f} r/s) from [{}]".format(
+                    *_make_stats(record_i, sz, path)
+                )
+        log.info("imported: {} records ({} bytes) in {:.2f} seconds ({:.2f} r/s) from [{}]".format(
+            *_make_stats(record_i, sz, path)
+        )
+
+    # Once they are all definitely imported, make the symlink to mark progress
+    # It's okay if this doesn't get written; duplicates won't make it into the DB
+    basename = os.path.basename(path)
+    progress_path = os.path.join(done_path, basename)
+    log.info("marking progress for [{}] as [{}]".format(basename, progress_path))
+    os.symlink(path,  progress_path)
+
+
+
+
+def main(args):
+    log.info("importing events from [{}]; saving progress to [{}]".format(
+        args.events_path, args.done_path
+    ))
+    completed_pattern = os.path.join(args.done_path, '*.json.gz')
+    completed_files = glob.glob(completed_pattern)
+    log.info("found {} previously imported files".format(len(completed_files)))
+    completed_inodes = set([os.stat(cf).st_ino for cf in completed_files])
+
+    # Figure out if they're the same
+    sources = glob.glob(os.path.join(args.events_path,
+                                     '*.json.gz'))
+
+    log.info("found {} potential sources".format(len(sources)))
+    sources = sorted([f for f in sources
+               if os.stat(f).st_ino
+               not in completed_inodes])
+    log.info("found {} unimported sources".format(len(sources)))
+
+    db = pymongo.MongoClient().contributions
+    log.info("connected to MongoDB")
+
+    for source in sources:
+        import_file(source, args.done_path, db)
 
 
 if __name__=='__main__':
@@ -30,4 +116,10 @@ if __name__=='__main__':
     parser.add_argument('--done-path')
     args = parser.parse_args()
 
-    main(args)
+    # Ensure only one instance of this thing is running at once
+    lock = filelock.FileLock(LOCKFILE_PATH)
+    with lock:
+        try:
+            main(args)
+        except Exception as e:
+            log.error("unhandled fatal error: {}".format(e))
