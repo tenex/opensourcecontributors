@@ -6,7 +6,9 @@ Prerequisites:
 * have virtualenv
 
 as root:
+
 ```sh
+
 # code:
 mkdir /srv
 cd /srv
@@ -33,7 +35,10 @@ ln -s /srv/conf/emperor.ini /etc/uwsgi
 ln -s /srv/conf/emperor.uwsgi.service /etc/systemd/system
 
 # profit
+systemctl enable emperor.uwsgi
 systemctl start emperor.uwsgi
 systemctl restart nginx
+
 # that probably didn't work so debug it
+
 ```
