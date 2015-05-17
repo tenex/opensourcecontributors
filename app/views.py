@@ -11,15 +11,30 @@ PAGE_SIZE = 50
 def index():
     return app.send_static_file('index.html')
 
-@app.route('/search/<query>')
-@app.route('/search/<query>/<int:page>')
-def search(query, page=1):
+@app.route('/summary/<user>')
+def summary(user):
     collection = mongo.db.contributions
     criteria = {
         '_user_lower': query.lower(),
-        # 'type': 'CommitCommentEvent'
     }
+    repos = collection.find(criteria)
+    repos = repos.distinct('repo').sort("repo", ASCENDING)
+
     total = collection.find(criteria).count()
+
+    summary = {
+        "repos": repos,
+    }
+    return jsonify(**summary)
+
+@app.route('/events/<user>')
+@app.route('/events/<user>/<int:page>')
+def events(user, page=1):
+    collection = mongo.db.contributions
+    criteria = {
+        '_user_lower': query.lower(),
+    }
+
     skip = (page-1) * PAGE_SIZE
     total_pages = math.ceil(float(total) / PAGE_SIZE)
     repos = collection.find(criteria).distinct('repo')
