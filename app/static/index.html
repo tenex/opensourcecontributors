@@ -55,10 +55,10 @@
             <li><a href="http://hut8.io">Hut8.io</a></li>
             <li><a href="mailto:liambowen@gmail.com">Contact</a></li>
           </ul>
-          <form class="navbar-form navbar-right" ng-submit="userCtrl.setUser()">
+          <form name="userForm" class="navbar-form navbar-right" ng-submit="userCtrl.setUser()">
             <div class="form-group">
               <label for="query" class="sr-only">GitHub Username</label>
-              <input type="text" ng-model="userCtrl.user"
+              <input type="text" ng-model="userCtrl.username"
                      class="form-control" id="query" placeholder="GitHub User">
             </div>
             <button id="submit-button" type="submit" class="btn btn-primary">Search</button>
@@ -69,31 +69,128 @@
 
     <div class="container" role="main">
       <div class="well">
-        <div id="help">
+        <div ng-hide="userCtrl.processed">
           <h3>Search for a user above to begin</h3>
-          {{ userCtrl.user }}
+          {{ userCtrl.username }}
         </div>
-        <div id="summary">
-
+        <div ng-show="userCtrl.processed">
+          <h4>
+            <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
+            <a href="{{userCtrl.userUrl}}">
+              <strong>{{userCtrl.processedUsername}}</strong>
+            </a>
+            made
+            <strong>{{userCtrl.eventCount}}</strong> contributions
+            to
+            <strong>{{userCtrl.repos.length}}</strong> repositories
+          </h4>
         </div>
       </div>
-        <div id="results" style="display:none" class="row">
-          <div class="col-md-12">
-            <div id="results-table">
 
+      <div id="results" ng-show="userCtrl.processed" class="row">
+        <div class="col-md-12">
+          <ul class="nav nav-pills">
+            <li role="presentation" ng-class="{active: userCtrl.isCurrentTab(userCtrl.tabs.repoList)}">
+              <a ng-click="userCtrl.setCurrentTab(userCtrl.tabs.repoList)" href>Repositories</a>
+            </li>
+            <li role="presentation" ng-class="{active: userCtrl.isCurrentTab(userCtrl.tabs.eventList)}">
+              <a ng-click="userCtrl.setCurrentTab(userCtrl.tabs.eventList)" href>Events</a>
+            </li>
+          </ul>
+
+          <div style="margin-top:.5em">
+            <!-- Repositories -->
+            <ul class="list-group" ng-show="userCtrl.isCurrentTab(userCtrl.tabs.repoList)">
+              <li class="list-group-item" ng-repeat="repo in userCtrl.repos">
+                <a href="https://github.com/{{repo}}">{{ repo }}</a>
+              </li>
+            </ul>
+
+            <!-- Events result table -->
+            <div ng-show="userCtrl.isCurrentTab(userCtrl.tabs.eventList)">
+
+              <!-- TODO PAGINATION HERE -->
+              <nav ng-show="userCtrl.multipleEventPages">
+                <ul class="pagination">
+
+                  <li ng-class="{disabled: userCtrl.currentEventPage === 1}">
+                      <a href="#" aria-label="Previous" ng-click="userCtrl.previousEventsPage()">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+
+                  <li ng-repeat="pageNum in userCtrl.range(userCtrl.eventPageCount)"
+                      ng-class="{active: userCtrl.currentEventPage === pageNum}">
+                    <a class="pagination-link" ng-click="userCtrl.setCurrentEventsPage(pageNum)" href>
+                      {{ pageNum }}
+                    </a>
+                  </li>
+
+                  <li ng-class="{disabled: userCtrl.currentEventPage === userCtrl.eventPageCount}">
+                    <a href="#" aria-label="Next" ng-click="userCtrl.nextEventsPage()">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+
+                </ul>
+              </nav>
+
+              <table class="table table-striped">
+                <thead>
+                  <th>
+                    <!-- event type -->
+                  </th>
+                  <th>
+                    <span class="octicon octicon-calendar"></span>
+                  </th>
+                  <th>
+                    <span class="octicon octicon-repo"></span>
+                  </th>
+                  <th>
+                    <span class="octicon octicon-person"></span>
+                  </th>
+                  <th>
+                    <!-- description -->
+                  </th>
+                </thead>
+                <tbody>
+
+                  <tr ng-repeat="event in userCtrl.events">
+                    <td>
+                      <span title="" class="octicon octicon-person">
+                      </span>
+                    </td>
+                    <td title="">
+                      time
+                    </td>
+                    <td style="white-space:nowrap">
+                      repo
+                    </td>
+                    <td>
+                      <a href="{{userCtrl.userUrl}}">{{userCtrl.processedUsername}}</a>
+                    </td>
+                    <td>
+                      here's some stuff
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
             </div>
-          </div>
-        </div>
 
-      <div id="loader" style="display:none;"   class="tetrominos">
+          </div>
+
+        </div>
+      </div> <!-- /results -->
+
+      <div id="loader" ng-show="userCtrl.processing"  class="tetrominos">
         <div class="tetromino box1"></div>
         <div class="tetromino box2"></div>
         <div class="tetromino box3"></div>
         <div class="tetromino box4"></div>
       </div>
+
     </div> <!-- /container -->
-<!--
--->
 
   </body>
 </html>
