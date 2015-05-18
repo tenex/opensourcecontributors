@@ -13,13 +13,18 @@
     <link href="/static/css/bootstrap-theme.min.css" rel="stylesheet">
     <link href="/static/octicons/octicons.css" rel="stylesheet">
     <link href="/static/css/loader.css" rel="stylesheet">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <script src="/static/js/angular.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
-    <script src="/static/js/ie10-viewport-bug-workaround.js"></script>
-    <script src="/static/js/moment.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/angular.min.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/js/ie10-viewport-bug-workaround.js"></script>
+    <script type="text/javascript" src="/static/js/moment.min.js"></script>
     <script type="text/javascript" src="/static/js/app.js"></script>
-
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <!-- TODO  put this in its own place-->
     <style>
      body {
        margin-top:60px;
@@ -28,164 +33,6 @@
        padding:10px;
      }
     </style>
-
-    <!-- Handlebars! -->
-    <script id="results-summary-template" type="text/x-handlebars-template">
-      <h4>
-        <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
-        <a href="https://github.com/{{user}}"><strong>{{user}}</strong></a>
-        made
-        <strong>{{total}}</strong> contributions
-        to
-        <strong>{{repos.length}}</strong> repositories
-      </h4>
-    </script>
-    <script id="gollumevent-template" type="text/x-handlebars-template">
-      {{#ifMultiplePages this}}
-      edited multiple Wiki pages:
-      <ul>
-      {{#each pages}}
-        <li>
-          {{action}} the page
-          <a href="{{html_url}}">{{title}}</a>
-          (<a href="{{html_url}}/_history">history</a>)
-        </li>
-      {{/each}}
-      </ul>
-      {{else}}
-      {{#with pages.[0]}}
-      {{action}} the Wiki page
-      <a href="{{html_url}}">{{title}}</a>
-      (<a href="{{html_url}}/_history">history</a>)
-      {{/with}}
-      {{/ifMultiplePages}}
-    </script>
-    <script id="issuesevent-template" type="text/x-handlebars-template">
-      {{action}} issue
-        <a href="https://github.com/{{repo}}/issues/{{issue_number}}">
-          {{issue_number}}
-        </a>
-    </script>
-    <script id="pushevent-template" type="text/x-handlebars-template">
-      pushed {{distinct_commit_count}}
-      {{pluralize distinct_commit_count "commit" "commits"}} to
-        <a href="https://github.com/{{repo}}/commits/{{head}}">{{ref}} ({{formatSHA head}})</a>
-    </script>
-    <script id="commitcommentevent-template" type="text/x-handlebars-template">
-      <a href="{{html_url}}">commented</a>
-      on commit
-      <a href="https://github.com/{{repo}}/commits/{{commit_id}}">{{formatSHA commit_id}}</a>
-      {{path}}: <a href="{{html_url}}">{{truncate body}}</a>
-    </script>
-    <script id="releaseevent-template" type="text/x-handlebars-template">
-      released tag
-      <a href="https://github.com/{{repo}}/releases/tag/{{tag_name}}">{{tag_name}}</a>
-    </script>
-    <script id="publicevent-template" type="text/x-handlebars-template">
-      open-sourced <a href="https://github.com/{{repo}}">{{repo}}</a>!
-    </script>
-    <script id="memberevent-template" type="text/x-handlebars-template">
-        {{target_action}}
-        <a href="https://github.com/{{target_user}}">{{target_user}}</a> to
-        <a href="https://github.com/{{repo}}">{{repo}}</a>
-    </script>
-    <script id="issuecommentevent-template" type="text/x-handlebars-template">
-      <a href="{{comment_url}}">commented</a>
-      on
-      <a href="{{issue_url}}">issue {{issue_number}}</a>
-    </script>
-    <script id="contributions-template" type="text/x-handlebars-template">
-      {{#if events}}
-      <nav>
-        <ul class="pagination">
-          {{#pagination currentPage pageCount 5}}
-
-          {{#unless startFromFirstPage}}
-          <li>
-            <a href="#" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>
-          </li>
-          {{/unless}}
-
-          {{#each pages}}
-          {{#if isCurrent}}
-          <li class="active">
-            <a data-page="{{page}}" class="pagination-link" href="#">
-              {{page}}
-              <span class="sr-only">(current)</span>
-            </a>
-          </li>
-          {{/if}}
-          {{#unless isCurrent}}
-          <li>
-            <a data-page="{{page}}" class="pagination-link" href="#">{{page}}</a>
-          </li>
-          {{/unless}}
-          {{/each}}
-
-          {{#unless endAtLastPage}}
-          <li>
-            <a href="#" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>
-          </li>
-          {{/unless}}
-
-          {{/pagination}}
-        </ul>
-      </nav>
-
-
-        <table class="table table-striped">
-          <thead>
-            <th>
-              <!-- event type -->
-            </th>
-            <th>
-              <span class="octicon octicon-calendar"></span>
-            </th>
-            <th>
-              <span class="octicon octicon-repo"></span>
-            </th>
-            <th>
-              <span class="octicon octicon-person"></span>
-            </th>
-            <th>
-              <!-- description -->
-            </th>
-          </thead>
-          <tbody>
-            {{#each events}}
-            <tr>
-              <td>
-                <span title="{{type}}" class="octicon {{eventIcon type}}"></span>
-              </td>
-              <td title="{{created_at}}">
-                {{dateFmt created_at}}
-              </td>
-              <td style="white-space:nowrap">
-                <a href="https://github.com/{{repo}}">{{repo}}</a>
-              </td>
-              <td>
-                <a href="https://github.com/{{user}}">{{user}}</a>
-              </td>
-              <td>
-                {{> (selectEventPartial this) }}
-              </td>
-            </tr>
-            {{/each}}
-          </tbody>
-        </table>
-        {{else}}
-        <div class="alert alert-danger" role="alert">
-          <span class="glyphicon glyphicon-exclamation-sign pull-right" aria-hidden="true"></span>
-          <strong>No results for that user.</strong>
-        </div>
-        {{/if}}
-    </script>
-
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
   </head>
 
   <body role="document" ng-controller="UserController as userCtrl">
