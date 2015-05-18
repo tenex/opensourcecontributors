@@ -1,5 +1,5 @@
 (function() {
-    var app = angular.module('ghca', []);
+    var app = angular.module('ghca', ['angularMoment']);
 
     app.controller("UserController", ["$http","$log", function($http, $log) {
         this.user = "";
