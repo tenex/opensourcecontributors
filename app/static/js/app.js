@@ -9,14 +9,13 @@
         // Have we retrieved the user's information (except all events)?
         this.processed = false;
 
-        this.setUser = function(x) {
+        this.setUser = function() {
             var user = this;
             $http.get('/user/'+this.user, {}).success(function(data) {
                 user = data;
                 user.userUrl = "https://github.com/"+data.user;
                 user.processed = true;
             });
-            $log(x);
         };
     }]);
 

@@ -188,7 +188,7 @@
     <![endif]-->
   </head>
 
-  <body role="document">
+  <body role="document" ng-controller="UserController as userCtrl">
 
     <!-- Fixed navbar -->
     <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -204,14 +204,15 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
+            <li class="active"><a href="/">Home</a></li>
             <li><a href="http://hut8.io">Hut8.io</a></li>
             <li><a href="mailto:liambowen@gmail.com">Contact</a></li>
           </ul>
-          <form class="navbar-form navbar-right" id="user-query">
+          <form class="navbar-form navbar-right" ng-submit="userCtrl.setUser()">
             <div class="form-group">
               <label for="query" class="sr-only">GitHub Username</label>
-              <input type="text" class="form-control" id="query" placeholder="GitHub User">
+              <input type="text" ng-model="userCtrl.user"
+                     class="form-control" id="query" placeholder="GitHub User">
             </div>
             <button id="submit-button" type="submit" class="btn btn-primary">Search</button>
           </form>
@@ -223,6 +224,7 @@
       <div class="well">
         <div id="help">
           <h3>Search for a user above to begin</h3>
+          {{ userCtrl.user }}
         </div>
         <div id="summary">
 
