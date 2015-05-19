@@ -166,8 +166,7 @@
 
                   <tr ng-repeat="event in userCtrl.events">
                     <td>
-                      <span title="" class="octicon octicon-person">
-                      </span>
+                      <span event-octicon ng-model="event.type"></span>
                     </td>
                     <td title="">
                       <time am-time-ago="event.created_at"></time>
