@@ -215,7 +215,9 @@
                       </span>
 
                       <span ng-switch-when="IssueCommentEvent">
-                        <!-- TODO -->
+                        <a href="{{event.comment_url}}">commented</a>
+                        on
+                        <a href="{{event.issue_url}}">issue {{event.issue_number}}</a>
                       </span>
 
                       <span ng-switch-default>
