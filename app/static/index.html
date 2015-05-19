@@ -176,8 +176,51 @@
                     <td>
                       <a href="{{userCtrl.userUrl}}">{{userCtrl.processedUsername}}</a>
                     </td>
-                    <td>
-                      here's some stuff
+                    <td ng-switch on="event.type">
+
+                      <span ng-switch-when="GollumEvent">
+                        <!-- TODO -->
+                      </span>
+
+                      <span ng-switch-when="IssuesEvent">
+                        {{ event.action }} issue
+                        <a href="https://github.com/{{event.repo}}/issues/{{event.issue_number}}">
+                          {{ event.issue_number }}
+                        </a>
+                      </span>
+
+                      <span ng-switch-when="PushEvent">
+                        pushed
+                        <ng-pluralize count="event.distinct_commit_count"
+                                      when="{'1': 'a commit', 'other': '{} commits'}">
+                        </ng-pluralize>
+                        to
+                        <a href="https://github.com/{{event.repo}}/commits/{{event.head}}">{{event.ref}} ({{ event.head | limitTo : 7 }})</a>
+                      </span>
+
+                      <span ng-switch-when="CommitCommentEvent">
+                        <!-- TODO -->
+                      </span>
+
+                      <span ng-switch-when="ReleaseEvent">
+                        <!-- TODO -->
+                      </span>
+
+                      <span ng-switch-when="PublicEvent">
+                        <!-- TODO -->
+                      </span>
+
+                      <span ng-switch-when="MemberEvent">
+                        <!-- TODO -->
+                      </span>
+
+                      <span ng-switch-when="IssueCommentEvent">
+                        <!-- TODO -->
+                      </span>
+
+                      <span ng-switch-default>
+                       {{ event.type }} WTF?
+                      </span>
                     </td>
                   </tr>
 
