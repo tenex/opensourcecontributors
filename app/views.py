@@ -19,7 +19,7 @@ def user(username):
     }
     repos = collection.find(criteria)
     repos = repos.distinct('repo')
-    repos.sort()
+    repos.sort(key=str.lower)
 
     event_count = collection.find(criteria).count()
 
