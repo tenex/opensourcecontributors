@@ -69,26 +69,30 @@
     </nav>
 
     <div class="container" role="main">
-      <div class="well">
-        <div ng-hide="userCtrl.processed">
-          <h3>Search for a user above to begin</h3>
-          {{ userCtrl.username }}
-        </div>
-        <div ng-show="userCtrl.processed">
-          <h4>
-            <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
-            <a href="{{userCtrl.userUrl}}">
-              <strong>{{userCtrl.processedUsername}}</strong>
-            </a>
-            made
-            <strong>{{userCtrl.eventCount}}</strong> contributions
-            to
-            <strong>{{userCtrl.repos.length}}</strong> repositories
-          </h4>
-        </div>
+      <div class="well" ng-hide="userCtrl.processed || userCtrl.username">
+        <h3>Search for a user above to begin</h3>
       </div>
 
-      <div id="results" ng-show="userCtrl.processed" class="row">
+      <div class="alert alert-danger" role="alert"
+           ng-show="userCtrl.processed && !userCtrl.hasResults">
+        <span class="glyphicon glyphicon-exclamation-sign pull-right" aria-hidden="true"></span>
+        <strong>No results for {{userCtrl.processedUsername}}.</strong>
+      </div>
+
+      <div class="well" ng-show="userCtrl.hasResults">
+        <h4>
+          <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
+          <a href="{{userCtrl.userUrl}}">
+            <strong>{{userCtrl.processedUsername}}</strong>
+          </a>
+          made
+          <strong>{{userCtrl.eventCount}}</strong> contributions
+          to
+          <strong>{{userCtrl.repos.length}}</strong> repositories
+        </h4>
+      </div>
+
+      <div id="results" ng-show="userCtrl.hasResults" class="row">
         <div class="col-md-12">
           <ul class="nav nav-pills">
             <li role="presentation" ng-class="{active: userCtrl.isCurrentTab(userCtrl.tabs.repoList)}">
@@ -162,7 +166,7 @@
                       </span>
                     </td>
                     <td title="">
-                      <time am-time-ago="event.created_at | date"></time> /
+                      <time am-time-ago="event.created_at"></time>
                     </td>
                     <td style="white-space:nowrap">
                       <a href="https://github.com/{{event.repo}}">
