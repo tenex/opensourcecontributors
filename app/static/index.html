@@ -199,19 +199,34 @@
                       </span>
 
                       <span ng-switch-when="CommitCommentEvent">
-                        <!-- TODO -->
+                        <a href="{{event.html_url}}">commented</a>
+                        on commit
+                        <a href="https://github.com/{{event.repo}}/commits/{{event.commit_id}}">
+                          {{ event.commit_id | limitTo : 7 }}
+                        </a>
+                        {{event.path}}
+                        <!-- : <a href="{{event.html_url}}">{{body}}</a> TODO truncate right-->
                       </span>
 
                       <span ng-switch-when="ReleaseEvent">
-                        <!-- TODO -->
+                        released tag
+                        <a href="https://github.com/{{event.repo}}/releases/tag/{{event.tag_name}}">
+                          {{ event.tag_name }}
+                        </a>
                       </span>
 
                       <span ng-switch-when="PublicEvent">
-                        <!-- TODO -->
+                        open-sourced <a href="https://github.com/{{event.repo}}">{{event.repo}}</a>!
                       </span>
 
                       <span ng-switch-when="MemberEvent">
-                        <!-- TODO -->
+                        {{ event.target_action }}
+                        <a href="https://github.com/{{event.target_user}}">
+                          {{event.target_user}}
+                        </a> to
+                        <a href="https://github.com/{{event.repo}}">
+                          {{event.repo}}
+                        </a>
                       </span>
 
                       <span ng-switch-when="IssueCommentEvent">
