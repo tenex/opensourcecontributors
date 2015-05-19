@@ -179,7 +179,23 @@
                     <td ng-switch on="event.type">
 
                       <span ng-switch-when="GollumEvent">
-                        <!-- TODO -->
+                        <span ng-if="event.pages.length > 1">
+                          edited multiple Wiki pages:
+                          <ul>
+                            <li ng-repeat="page in event.pages">
+                              {{ page.action }} the page
+                              <a href="{{page.html_url}}">{{page.title}}</a>
+                              (<a href="{{page.html_url}}/_history">history</a>)
+                            </li>
+                          </ul>
+                        </span>
+                        <span ng-if="event.pages.length == 1">
+                          {{ event.pages[0].action }} the page
+                          <a href="{{event.pages[0].html_url}}">{{event.pages[0].title}}</a>
+                          (<a href="{{event.pages[0].html_url}}/_history">
+                            history
+                          </a>)
+                        </span>
                       </span>
 
                       <span ng-switch-when="IssuesEvent">
