@@ -1,0 +1,62 @@
+#!/bin/bash
+set -e
+
+cd $( dirname "${BASH_SOURCE[0]}" )/..
+
+echo "deploying from $(pwd)"
+
+if [[ $EUID -ne 0 ]];
+then
+    echo "deployment must be done as root" 1>&2
+    exit 1
+fi
+
+wanted_branch="master"
+current_branch="$(git rev-parse --abbrev-ref HEAD)"
+
+if [[ $current_branch != $wanted_branch ]];
+then
+    echo "cannot deploy branch: ${current_branch} to production (must be ${wanted_branch})" 1>&2
+    exit 1
+fi
+
+current_release="$(git describe --long --dirty)"
+dirty_pattern="-dirty$"
+if [[ $current_release =~ $dirty_pattern ]];
+then
+    echo "this repository is dirty (${current_release}). please clean it."
+    #exit 1
+fi
+
+echo "making /tmp/deploy"
+[[ -d /tmp/deploy ]] && rm -rf /tmp/deploy
+mkdir -p /tmp/deploy
+echo "copying app to /tmp/deploy"
+cp -r ./app /tmp/deploy
+cp ./requirements.txt /tmp/deploy
+cd /tmp/deploy
+echo "now in $(pwd)"
+echo "making venv"
+virtualenv --python=/usr/bin/python3 venv
+echo "installing packages to virtualenv"
+./venv/bin/pip install -r /tmp/deploy/requirements.txt
+
+echo "changing owner to www-data:www-data"
+chown -R www-data:www-data /tmp/deploy
+
+echo "Emperor status:"
+systemctl status emperor.uwsgi
+
+read -p "finalize deployment? " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    mv -f /tmp/deploy/app /srv/app
+    mv -f /tmp/deploy/venv /srv/venv
+fi
+
+echo "Emperor status:"
+systemctl status emperor.uwsgi
+
+echo "clean up /tmp/deploy if you want"
+cowsay "Deployment complete!"
