@@ -1,7 +1,5 @@
 (function() {
-    var app = angular.module('ghca', ['angularMoment']);
-
-    app.constant("moment", moment);
+    var app = angular.module('ghca', ['angularMoment','truncate']);
 
     app.controller("UserController", ["$http","$log", "moment", function($http, $log, moment) {
         // TODO Is this how you fake enums in JS?! I hate JS.
