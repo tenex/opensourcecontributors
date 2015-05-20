@@ -1,9 +1,12 @@
+from flask import Flask, render_template
+from flask.ext.pymongo import PyMongo, ASCENDING, DESCENDING
+from tools import jsonify
 import time
 import math
-from app import app, mongo
-from flask import render_template
-from flask.ext.pymongo import ASCENDING, DESCENDING
-from app.tools import jsonify
+
+app = Flask(__name__)
+app.config.from_object('config')
+mongo = PyMongo(app)
 
 PAGE_SIZE = 50
 
