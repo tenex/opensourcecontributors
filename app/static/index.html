@@ -5,8 +5,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="icon" href="/favicon.ico">
-
     <title>GitHub Contributions Archive</title>
 
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
@@ -192,9 +190,9 @@
                       </span>
 
                       <span ng-switch-when="IssuesEvent">
-                        {{ event.action }} issue
+                        {{ event.action }}
                         <a href="https://github.com/{{event.repo}}/issues/{{event.issue_number}}">
-                          {{ event.issue_number }}
+                          issue {{ event.issue_number }}
                         </a>
                       </span>
 
