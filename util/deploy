@@ -55,6 +55,9 @@ then
     mv -f /tmp/deploy/venv /srv/venv
 fi
 
+echo "restarting emperor:"
+systemctl restart emperor.uwsgi
+
 echo "Emperor status:"
 systemctl status emperor.uwsgi
 
