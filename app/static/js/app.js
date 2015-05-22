@@ -24,19 +24,23 @@
             }
         };
 
-        this.username = "";
-        this.processedUsername = ""; // The data below is for...
-        this.userUrl = "";
-        this.eventCount = 0;
-        this.repos = [];
+        this.initialize = function() {
+            this.username = "";
+            this.processedUsername = ""; // The data below is for...
+            this.userUrl = "";
+            this.eventCount = 0;
+            this.repos = [];
 
-        // Event-related stuff
-        this.eventPages = {}; // a cache of sorts
-        this.eventPageCount = 0;
-        this.currentEventPage = 1;
-        this.events = []; // the current page
-        this.eventPageSize = 50; // constant
-        this.eventCount = 0;
+            // Event-related stuff
+            this.eventPages = {}; // a cache of sorts
+            this.eventPageCount = 0;
+            this.currentEventPage = 1;
+            this.events = []; // the current page
+            this.eventPageSize = 50; // constant
+            this.eventCount = 0;
+        };
+
+        this.initialize();
 
         // Have we retrieved the user's information (except a list of their events)?
         this.processed = false;
@@ -80,6 +84,7 @@
 
         this.setUser = function() {
             var userCtrl = this;
+            this.initialize();
             this.processed = false;
             this.processing = true;
             $http.get('/user/'+this.username, {})

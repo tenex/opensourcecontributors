@@ -14,6 +14,12 @@ PAGE_SIZE = 50
 def index():
     return app.send_static_file('index.html')
 
+@app.route('/stats')
+def stats():
+    summary = {
+    }
+    return jsonify(**summary)
+
 @app.route('/user/<username>')
 def user(username):
     collection = mongo.db.contributions
