@@ -1,0 +1,11 @@
+html {
+    overflow: -moz-scrollbars-vertical;
+    overflow: scroll;
+    min-height: 100%;
+    position:relative;
+}
+
+body {
+    margin-top:60px;
+    margin-bottom:60px;
+}
