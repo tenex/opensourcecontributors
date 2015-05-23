@@ -558,8 +558,7 @@ class EventEventSource(EventSource):
                                     openhook=self._open_file)
 
         events = (json.loads(line) for line in lines)
-        return ((event, 'event') for event in events
-                if self.record_predicate(event))
+        return ((event, 'event') for event in events)
 
 class TimelineEventSource(EventSource):
     """
@@ -570,8 +569,7 @@ class TimelineEventSource(EventSource):
         lines = fileinput.FileInput(files=self._filenames('*.csv.gz'),
                                     openhook=self._open_file)
         reader = csv.DictReader(lines)
-        return ((line, 'timeline') for line in reader
-                if self.record_predicate(line))
+        return ((line, 'timeline') for line in reader)
 
 class EventSink(object):
     def __init__(self, destination_dir=None):
