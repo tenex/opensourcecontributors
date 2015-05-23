@@ -505,13 +505,49 @@ def main(args):
     processor = EventProcessor(source, sink.write)
     processor.process_events()
 
+
+
+
+def fetch(args):
+    print("fetching")
+def transform(args):
+    print("transforming")
+def load(args):
+    print("loading")
+
+def process(args):
+    print("processing")
+    fetch(args)
+    transform(args)
+    load(args)
+
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser(description='Process GitHub archive files')
+
     parser.add_argument('--events-path')
     parser.add_argument('--timeline-path')
     parser.add_argument('--output-path')
-    parser.add_argument('--match-type')
+
+    subparsers = parser.add_subparsers(dest='mode')
+
+    process_parser = subparsers.add_parser('process')
+    process_parser.set_defaults(func=process)
+
+    fetch_parser = subparsers.add_parser('fetch')
+    fetch_parser.set_defaults(func=fetch)
+
+    transform_parser = subparsers.add_parser('transform')
+    transform_parser.set_defaults(func=transform)
+
+    load_parser = subparsers.add_parser('load')
+    load_parser.set_defaults(func=load)
+
     args = parser.parse_args()
 
-    main(args)
+    if args.mode is None:
+        parser.print_help()
+        sys.exit(1)
+
+    args.func(args)
+    # main(args)
