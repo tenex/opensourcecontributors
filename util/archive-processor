@@ -121,14 +121,14 @@ class EventLoader(object):
             self._log_stats(len(records), 1000, file_start_time, True, events_file)
 
     def mark_loaded(self, events_file):
-        """Create symlink in "loaded" directory to file that was just loaded
+        """Create link in "loaded" directory to file that was just loaded
         It's okay if this doesn't get written; duplicates won't make it into the DB
         because of the unique index on `_event_id`
         """
         basename = os.path.basename(events_file)
         link_path = os.path.join(self.loaded_path, basename)
         log.info("marking [{}] as loaded in [{}]".format(basename, link_path))
-        os.symlink(events_file, link_path)
+        os.link(events_file, link_path)
 
 
 class GithubArchiveFetcher(object):
