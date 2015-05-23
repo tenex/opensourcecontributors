@@ -176,12 +176,12 @@ class GithubArchiveFetcher(object):
             for chunk in source.iter_content(self.BUFFER_SIZE):
                 sz += len(chunk)
                 sink.write(chunk)
-                last_modified = source.headers['Last-Modified']
-                last_modified = datetime.strptime(last_modified,
-                                                  '%a, %d %b %Y %H:%M:%S %Z')
-                last_modified = last_modified.timestamp()
-                os.utime(sink_path, (last_modified, last_modified))
-                return sz
+            last_modified = source.headers['Last-Modified']
+            last_modified = datetime.strptime(last_modified,
+                                              '%a, %d %b %Y %H:%M:%S %Z')
+            last_modified = last_modified.timestamp()
+            os.utime(sink_path, (last_modified, last_modified))
+            return sz
 
 class ValidationError(RuntimeError):
     """Indicates that an Event was created but seems invalid.
