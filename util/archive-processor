@@ -93,14 +93,14 @@ class EventLoader(object):
             self.load_file(source)
             self.mark_loaded(source)
 
-    def _log_stats(self, record_count, data_size, start_time, done=False, source_path=None):
+    def _log_stats(self, record_count, start_time, done=False, source_path=None):
         duration = (datetime.now() - start_time).total_seconds()
         filename = os.path.basename(source_path)
         verb = { False: "loading in progress", True: "loaded" }[done]
         from_str = ""
         if source_path: from_str = " from [{}]".format(source_path)
-        log.info("{}: {} records ({} bytes) in {:.2f} seconds ({:.2f} r/s){}".format(
-            verb, record_count, data_size, duration, record_count/duration, from_str
+        log.info("{}: {} records in {:.2f} seconds ({:.2f} r/s){}".format(
+            verb, record_count, duration, record_count/duration, from_str
         ))
 
 
@@ -118,7 +118,7 @@ class EventLoader(object):
                 self.db.contributions.insert(records, continue_on_error=True)
             except pymongo.errors.DuplicateKeyError as e:
                 log.debug("tried to load duplicate key(s) ({})".format(e))
-            self._log_stats(len(records), 1000, file_start_time, True, events_file)
+            self._log_stats(len(records), file_start_time, True, events_file)
 
     def mark_loaded(self, events_file):
         """Create link in "loaded" directory to file that was just loaded
