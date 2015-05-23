@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import os.path
+import pymongo
 import re
 import requests
 import sys
@@ -41,6 +42,93 @@ console_log_handler.setFormatter(log_formatter)
 log.addHandler(file_log_handler)
 log.addHandler(console_log_handler)
 log.setLevel(logging.DEBUG)
+
+class EventLoader(object):
+    """Loads transformed .json.gz files into MongoDB
+    This class does not load files atomically. However it will not load duplicate
+    events due to a unique index on `_event_id`. If an error is encountered with
+    this index, it will be ignored for this reason.
+    """
+
+    def __init__(self, transformed_path, loaded_path):
+        """Construct new EventLoader
+        Both parameter paths should be absolute, and must be on the same device
+        as equality is compared using inodes.
+        """
+        self.transformed_path = transformed_path
+        self.loaded_path = loaded_path
+        self.db = pymongo.MongoClient().contributions
+        log.info("connected to MongoDB")
+
+    def _find_loaded_inodes(self):
+        loaded_files = glob.glob(os.path.join(self.loaded_path, '*.json.gz'))
+        log.info("found {} previously loaded files".format(len(loaded_files)))
+        return set([os.stat(cf).st_ino for cf in loaded_files])
+
+    def _find_sources(self):
+        sources = glob.glob(os.path.join(self.transformed_path,
+                                         '*.json.gz'))
+        log.info("found {} potential sources".format(len(sources)))
+        sources = sorted([f for f in sources
+                          if os.stat(f).st_ino
+                          not in self._loaded_inodes])
+        log.info("found {} sources needed loading".format(len(sources)))
+        return sources
+
+
+    def load(self):
+        log.info("loading events from [{}]; saving progress to [{}]".format(
+            self.transformed_path, self.loaded_path
+        ))
+
+        self._loaded_inodes = self._find_loaded_inodes()
+        self._sources = self._find_sources()
+
+        self._start_time = datetime.now()
+        for source in self._sources:
+            self.load_file(source)
+            self.mark_loaded(source)
+
+    def _log_stats(record_count, data_size, start_time, done=False, source_path=None):
+        duration = (datetime.now() - start_time).total_seconds()
+        filename = os.basename(source_path)
+        verb = { False: "loading in progress", True: "loaded" }[done]
+        from_str = ""
+        if source_path: from_str = " from [{}]".format(source_path)
+        log.info("{}: {} records ({} bytes) in {:.2f} seconds ({:.2f} r/s){}".format(
+            verb, record_count, data_size, duration, record_count/duration, from_str
+        ))
+
+
+    def load_file(self, events_file):
+        """Load a single events file into MongoDB
+        """
+        log.info("loading events from [{}]".format(events_file))
+        file_start_time = datetime.now()
+        with gzip.open(events_file, 'rt') as source:
+            sz = 0
+            record_i = 0
+            # TODO Insert multiple records at once (very important!)
+            # TODO Ignore errors having to do with _event_id IX
+            for record in source:
+                record_data = json.loads(record)
+                self.db.contributions.insert(record_data)
+                sz += len(record)
+                record_i += 1
+                if record_i % 1000 == 0:
+                    self._log_stats(record_i, sz, file_start_time, False, events_file)
+            self._log_stats(record_i, sz, file_start_time, True, events_file)
+
+    def mark_loaded(self, events_file):
+        """Create symlink in "loaded" directory to file that was just loaded
+        It's okay if this doesn't get written; duplicates won't make it into the DB
+        because of the unique index on `_event_id`
+        """
+        basename = os.path.basename(events_file)
+        link_path = os.path.join(self.loaded_path, basename)
+        log.info("marking [{}] as loaded in [{}]".format(basename, link_path))
+        os.symlink(events_file, link_path)
+
 
 class GithubArchiveFetcher(object):
     """Retrieves needed .json.gz files from githubarchive.org
