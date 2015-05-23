@@ -113,10 +113,14 @@ class EventLoader(object):
             sz = 0
             record_i = 0
             # TODO Insert multiple records at once (very important!)
-            # TODO Ignore errors having to do with _event_id IX
             for record in source:
                 record_data = json.loads(record)
-                self.db.contributions.insert(record_data)
+                try:
+                    self.db.contributions.insert(record_data)
+                except pymongo.errors.DuplicateKeyError:
+                    log.debug("tried to load duplicate key (_event_id: {})".format(
+                        record_data['_event_id']
+                    ))
                 sz += len(record)
                 record_i += 1
                 if record_i % 1000 == 0:
