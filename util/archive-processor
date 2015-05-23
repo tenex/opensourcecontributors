@@ -460,14 +460,14 @@ class IssueCommentEvent(Event):
     def _validate(self):
         pass
 
-class EventProcessor(object):
+class EventTransformer(object):
     def __init__(self, source, destination):
         self.source = source
         self.write_event = destination
         self.total_record_count = 0
         self.count = 0 # success
         self.invalid_record_count = 0
-        self.process_error_count = 0
+        self.transform_error_count = 0
 
     def _make_stats(self):
         duration = (datetime.now() - self.start_time).total_seconds()
@@ -476,17 +476,17 @@ class EventProcessor(object):
                 self.total_record_count / duration,
                 self.count,
                 self.invalid_record_count,
-                self.process_error_count)
+                self.transform_error_count)
 
-    def process_events(self):
+    def transform_events(self):
         self.start_time = datetime.now()
 
         for raw_event, event_source in self.source:
-            event = self.process_event(raw_event, event_source)
+            event = self.transform_event(raw_event, event_source)
 
             if self.total_record_count > 0 and self.total_record_count % 20000 == 0:
                 duration = (datetime.now() - self.start_time).total_seconds()
-                log.info("processing: {} records in {:.2f} seconds ({:.2f} r/s): {}s {}i {}e".format(
+                log.info("transforming: {} records in {:.2f} seconds ({:.2f} r/s): {}s {}i {}e".format(
                     *self._make_stats()))
             if event:
                 self.write_event(event)
@@ -495,15 +495,15 @@ class EventProcessor(object):
             self.total_record_count += 1
 
         stats = self._make_stats()
-        log.info(colored("processing: {} records in {:.2f} seconds ({:.2f} r/s): {}s {}i {}e".format(
+        log.info(colored("transforming: {} records in {:.2f} seconds ({:.2f} r/s): {}s {}i {}e".format(
             *stats), 'green'))
         log.info(colored("invalid records: {}".format(self.invalid_record_count),
                       'yellow'))
-        log.info(colored("processing errors: {}".format(self.process_error_count),
+        log.info(colored("transformation errors: {}".format(self.transform_error_count),
                       'red'))
 
 
-    def process_event(self, raw_event, source_fmt):
+    def transform_event(self, raw_event, source_fmt):
         try:
             event = Event.from_raw(raw_event, source_fmt)
         except InvalidRecordError as e:
@@ -523,17 +523,16 @@ class EventProcessor(object):
                     json.dumps(raw_event).strip(),
                 )
                 log.error(msg)
-                self.process_error_count += 1
+                self.transform_error_count += 1
                 return None
 
             return event
 
 class EventSource(object):
-    def __init__(self, path, record_predicate, file_predicate, subscriber=None):
+    def __init__(self, path, file_predicate, file_change_subscriber=None):
         self.path = path
-        self.record_predicate = record_predicate
         self.file_predicate = file_predicate
-        self.notify_file_change = subscriber
+        self.notify_file_change = file_change_subscriber
 
     def _filenames(self, pattern):
         files = glob.iglob(os.path.join(self.path, pattern))
@@ -580,7 +579,7 @@ class EventSink(object):
         self.out_stream = sys.stdout
         self.destination_dir = destination_dir
 
-    def already_processed(self, input_path):
+    def already_transformed(self, input_path):
         if not self.destination_dir: return False
 
         sink_path = self.filename_transform(input_path)
@@ -622,42 +621,35 @@ class EventSink(object):
         output = json.dumps(event.__dict__).strip() + '\n'
         self.out_stream.write(output.encode())
 
-def main(args):
-    sink = EventSink(args.output_path)
-    file_predicate = lambda f: not sink.already_processed(f)
-
-    sources = []
-    if args.events_path:
-        source = EventEventSource(args.events_path,
-                                  bool,
-                                  file_predicate,
-                                  sink.notify_file_change)
-        sources.append(source)
-    if args.timeline_path:
-        source = TimelineEventSource(args.timeline_path,
-                                     record_predicate,
-                                     file_predicate,
-                                     sink.notify_file_change)
-        sources.append(source)
-    source = itertools.chain(*sources)
-
-    processor = EventProcessor(source, sink.write)
-    processor.process_events()
-
-
 def fetch(args):
     fetcher = GithubArchiveFetcher(args.events_path)
     fetcher.fetch()
 
 def transform(args):
-    print("transforming")
+    sink = EventSink(args.transformed_path)
+    file_predicate = lambda f: not sink.already_transformed(f)
+
+    sources = []
+    if args.events_path:
+        source = EventEventSource(args.events_path,
+                                  file_predicate,
+                                  sink.notify_file_change)
+        sources.append(source)
+    if args.timeline_path:
+        source = TimelineEventSource(args.timeline_path,
+                                     file_predicate,
+                                     sink.notify_file_change)
+        sources.append(source)
+    source = itertools.chain(*sources)
+
+    transformer = EventTransformer(source, sink.write)
+    transformer.transform_events()
 
 def load(args):
-    print("loading")
-
+    loader = EventLoader(args.transformed_path, args.loaded_path)
+    loader.load()
 
 def process(args):
-    print("processing")
     fetch(args)
     transform(args)
     load(args)
@@ -670,8 +662,8 @@ if __name__=='__main__':
                         default=os.getenv('GHC_EVENTS_PATH'))
     parser.add_argument('--timeline-path',
                         default=os.getenv('GHC_TIMELINE_PATH'))
-    parser.add_argument('--processed-path',
-                        default=os.getenv('GHC_PROCESSED_PATH'))
+    parser.add_argument('--transformed-path',
+                        default=os.getenv('GHC_TRANSFORMED_PATH'))
     parser.add_argument('--loaded-path',
                         default=os.getenv('GHC_LOADED_PATH'))
 
