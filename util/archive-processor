@@ -42,7 +42,7 @@ def make_logger():
     console_log_handler.setFormatter(log_formatter)
     logger.addHandler(file_log_handler)
     logger.addHandler(console_log_handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     return logger
 
 log = make_logger()
@@ -110,22 +110,15 @@ class EventLoader(object):
         log.info("loading events from [{}]".format(events_file))
         file_start_time = datetime.now()
         with gzip.open(events_file, 'rt') as source:
-            sz = 0
-            record_i = 0
-            # TODO Insert multiple records at once (very important!)
-            for record in source:
-                record_data = json.loads(record)
-                try:
-                    self.db.contributions.insert(record_data)
-                except pymongo.errors.DuplicateKeyError:
-                    log.debug("tried to load duplicate key (_event_id: {})".format(
-                        record_data['_event_id']
-                    ))
-                sz += len(record)
-                record_i += 1
-                if record_i % 1000 == 0:
-                    self._log_stats(record_i, sz, file_start_time, False, events_file)
-            self._log_stats(record_i, sz, file_start_time, True, events_file)
+            records = [json.loads(r) for r in source]
+            log.debug("loading {} records from {}".format(
+                len(records), events_file
+            ))
+            try:
+                self.db.contributions.insert(records, continue_on_error=True)
+            except pymongo.errors.DuplicateKeyError as e:
+                log.debug("tried to load duplicate key(s) ({})".format(e))
+            self._log_stats(len(records), 1000, file_start_time, True, events_file)
 
     def mark_loaded(self, events_file):
         """Create symlink in "loaded" directory to file that was just loaded
