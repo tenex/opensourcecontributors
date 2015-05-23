@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # Works only for archives from 2015-01-01 -> Present
-from datetime import datetime
-from datetime import timezone
+from datetime import datetime, timezone, timedelta
 from pprint import pprint
 from termcolor import colored
+from requests.exceptions import HTTPError
 import argparse
 import csv
 import dateutil.parser
@@ -16,6 +16,7 @@ import logging
 import os
 import os.path
 import re
+import requests
 import sys
 import urllib.parse
 
@@ -37,7 +38,60 @@ file_log_handler.setFormatter(log_formatter)
 console_log_handler.setFormatter(log_formatter)
 log.addHandler(file_log_handler)
 log.addHandler(console_log_handler)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
+
+class GithubArchiveFetcher(object):
+    """Retrieves needed .json.gz files from githubarchive.org
+    """
+
+    START = datetime(2015, 1, 1, 0)
+    TIME_FMT = '%Y-%m-%d-%-H'
+    BUFFER_SIZE = 1024 * 1024
+    URL_TEMPLATE = "http://data.githubarchive.org/{}"
+
+    def __init__(self, events_directory):
+        if not events_directory:
+            raise RuntimeError('no events directory specified')
+        self.events_directory = events_directory
+
+    def fetch(self):
+        t = self.START
+        while t <= datetime.utcnow():
+            filename = "{}.json.gz".format(t.strftime(self.TIME_FMT))
+            local_filename = os.path.join(self.events_directory, filename)
+            log.debug("considering {}".format(local_filename))
+            if not os.path.isfile(local_filename):
+                sz = self.fetch_file(filename, local_filename)
+                if sz: log.info('{}: got {} bytes'.format(filename, sz))
+                else: log.info('download canceled')
+            t += timedelta(hours=1)
+
+    def fetch_file(self, filename, sink_path):
+        """Retrieve one .json.gz file from GitHub Archive
+        """
+        url = self.URL_TEMPLATE.format(filename)
+        log.info("fetching {} from {}".format(filename, url))
+        if os.path.isfile(sink_path):
+            raise RuntimeError('will not overwrite file already present')
+
+        source = requests.get(url, stream=True)
+        try:
+            source.raise_for_status()
+        except HTTPError as e:
+            # TODO Special case for last file or two
+            log.error("encountered error with {} : ({})".format(url, e))
+            return 0
+        sz = 0
+        with open(sink_path, 'wb') as sink:
+            for chunk in source.iter_content(self.BUFFER_SIZE):
+                sz += len(chunk)
+                sink.write(chunk)
+                last_modified = source.headers['Last-Modified']
+                last_modified = datetime.strptime(last_modified,
+                                                  '%a, %d %b %Y %H:%M:%S %Z')
+                last_modified = last_modified.timestamp()
+                os.utime(sink_path, (last_modified, last_modified))
+                return sz
 
 class ValidationError(RuntimeError):
     """Indicates that an Event was created but seems invalid.
@@ -506,14 +560,16 @@ def main(args):
     processor.process_events()
 
 
-
-
 def fetch(args):
-    print("fetching")
+    fetcher = GithubArchiveFetcher(args.events_path)
+    fetcher.fetch()
+
 def transform(args):
     print("transforming")
+
 def load(args):
     print("loading")
+
 
 def process(args):
     print("processing")
@@ -525,9 +581,14 @@ if __name__=='__main__':
 
     parser = argparse.ArgumentParser(description='Process GitHub archive files')
 
-    parser.add_argument('--events-path')
-    parser.add_argument('--timeline-path')
-    parser.add_argument('--output-path')
+    parser.add_argument('--events-path',
+                        default=os.getenv('GHC_EVENTS_PATH'))
+    parser.add_argument('--timeline-path',
+                        default=os.getenv('GHC_TIMELINE_PATH'))
+    parser.add_argument('--processed-path',
+                        default=os.getenv('GHC_PROCESSED_PATH'))
+    parser.add_argument('--loaded-path',
+                        default=os.getenv('GHC_LOADED_PATH'))
 
     subparsers = parser.add_subparsers(dest='mode')
 
