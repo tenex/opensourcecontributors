@@ -685,5 +685,9 @@ if __name__=='__main__':
         parser.print_help()
         sys.exit(1)
 
-    args.func(args)
-    # main(args)
+    lock = filelock.FileLock(LOCKFILE_PATH)
+    with lock:
+        try:
+            args.func(args)
+        except Exception as e:
+            log.error("unhandled fatal error: {}".format(e))
