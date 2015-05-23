@@ -8,6 +8,7 @@ import argparse
 import csv
 import dateutil.parser
 import fileinput
+import filelock
 import glob
 import gzip
 import itertools
@@ -20,15 +21,16 @@ import requests
 import sys
 import urllib.parse
 
-
 __version__ = '0.0.1'
+
+LOCKFILE_PATH = "/tmp/archive-processor.lock"
 
 invocation_id = "{}-{}.log".format(
     os.uname().nodename,
     datetime.now().strftime('%Y%m%d-%H%M%S'))
 
 # Setup logging
-log = logging.getLogger('gha-processor[{}]'.format(os.uname().nodename))
+log = logging.getLogger('processor[{}]'.format(os.uname().nodename))
 logging.Formatter.default_msec_format = '%s.%03d'
 log_formatter = logging.Formatter(
     fmt='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
@@ -366,11 +368,6 @@ class IssueCommentEvent(Event):
     def _validate(self):
         pass
 
-def make_event_type_filter(event_type):
-    def _filter(raw_event):
-        return raw_event['type'] == event_type
-    return _filter
-
 class EventProcessor(object):
     def __init__(self, source, destination):
         self.source = source
@@ -534,17 +531,13 @@ class EventSink(object):
         self.out_stream.write(output.encode())
 
 def main(args):
-    record_predicate = bool
-    if args.match_type:
-        record_predicate = make_user_event_filter(args.match_type)
-
     sink = EventSink(args.output_path)
     file_predicate = lambda f: not sink.already_processed(f)
 
     sources = []
     if args.events_path:
         source = EventEventSource(args.events_path,
-                                  record_predicate,
+                                  bool,
                                   file_predicate,
                                   sink.notify_file_change)
         sources.append(source)
