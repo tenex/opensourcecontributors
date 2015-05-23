@@ -22,7 +22,7 @@ import requests
 import sys
 import urllib.parse
 
-__version__ = '0.0.1'
+__version__ = '0.2.0'
 
 LOCKFILE_PATH = "/tmp/archive-processor.lock"
 
@@ -42,7 +42,7 @@ def make_logger():
     console_log_handler.setFormatter(log_formatter)
     logger.addHandler(file_log_handler)
     logger.addHandler(console_log_handler)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     return logger
 
 log = make_logger()
@@ -540,7 +540,7 @@ class EventSource(object):
                 if self.file_predicate(f))
 
     def _open_file(self, path, mode):
-        log.info("opening file: {}".format(path))
+        log.info("transforming file: {}".format(path))
         if self.notify_file_change:
             self.notify_file_change(path)
         return gzip.open(path,'rt')
@@ -602,7 +602,7 @@ class EventSink(object):
 
         new_path = self.filename_transform(new_path)
 
-        log.info("eventsink: changing file: {} -> {}".format(
+        log.debug("eventsink: changing file: {} -> {}".format(
             self.out_path, new_path
         ))
         if self.out_stream and self.out_stream != sys.stdout:
@@ -612,7 +612,7 @@ class EventSink(object):
 
         path, path_ext = os.path.splitext(new_path)
         if '.gz' in path_ext:
-            log.info('eventsink: will gzip output')
+            log.debug('eventsink: will gzip output')
             self.out_stream = gzip.open(self.out_stream,'wb')
 
     def write(self, event):
