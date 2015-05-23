@@ -26,22 +26,26 @@ __version__ = '0.0.1'
 
 LOCKFILE_PATH = "/tmp/archive-processor.lock"
 
-invocation_id = "{}-{}.log".format(
+invocation_id = "ghc-{}-{}.log".format(
     os.uname().nodename,
     datetime.now().strftime('%Y%m%d-%H%M%S'))
 
 # Setup logging
-log = logging.getLogger('processor[{}]'.format(os.uname().nodename))
-logging.Formatter.default_msec_format = '%s.%03d'
-log_formatter = logging.Formatter(
-    fmt='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
-file_log_handler = logging.FileHandler(invocation_id)
-console_log_handler = logging.StreamHandler()
-file_log_handler.setFormatter(log_formatter)
-console_log_handler.setFormatter(log_formatter)
-log.addHandler(file_log_handler)
-log.addHandler(console_log_handler)
-log.setLevel(logging.DEBUG)
+def make_logger():
+    logger = logging.getLogger('processor[{}]'.format(os.uname().nodename))
+    logging.Formatter.default_msec_format = '%s.%03d'
+    log_formatter = logging.Formatter(
+        fmt='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
+    file_log_handler = logging.FileHandler(invocation_id)
+    console_log_handler = logging.StreamHandler()
+    file_log_handler.setFormatter(log_formatter)
+    console_log_handler.setFormatter(log_formatter)
+    logger.addHandler(file_log_handler)
+    logger.addHandler(console_log_handler)
+    logger.setLevel(logging.DEBUG)
+    return logger
+
+log = make_logger()
 
 class EventLoader(object):
     """Loads transformed .json.gz files into MongoDB
@@ -184,14 +188,14 @@ class GithubArchiveFetcher(object):
             return sz
 
 class ValidationError(RuntimeError):
-    """Indicates that an Event was created but seems invalid.
-    Suggests that the processor is broken.
+    """Indicates that an Event was transformed but the result looks invalid.
+    Suggests that the transformer is broken.
     """
     pass
 
 class InvalidRecordError(RuntimeError):
-    """Indicates that the record being processed contains errors.
-    Suggests that the input data is wrong; no fix necessary for processor.
+    """Indicates that the event being transformed contains errors.
+    Suggests that the input data is wrong; no fix necessary for transformer.
     """
     pass
 
