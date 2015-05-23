@@ -93,9 +93,9 @@ class EventLoader(object):
             self.load_file(source)
             self.mark_loaded(source)
 
-    def _log_stats(record_count, data_size, start_time, done=False, source_path=None):
+    def _log_stats(self, record_count, data_size, start_time, done=False, source_path=None):
         duration = (datetime.now() - start_time).total_seconds()
-        filename = os.basename(source_path)
+        filename = os.path.basename(source_path)
         verb = { False: "loading in progress", True: "loaded" }[done]
         from_str = ""
         if source_path: from_str = " from [{}]".format(source_path)
@@ -691,3 +691,4 @@ if __name__=='__main__':
             args.func(args)
         except Exception as e:
             log.error("unhandled fatal error: {}".format(e))
+            raise e
