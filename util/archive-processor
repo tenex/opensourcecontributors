@@ -769,13 +769,22 @@ def transform(args):
     transformer.transform_events()
 
 def load(args):
-    loader = EventLoader(args.transformed_path, args.loaded_path)
+    loader = MongoDBEventLoader(args.transformed_path, args.loaded_path)
+    loader.load()
+
+def build_db(args):
+    loader = UserDBEventLoader(args.transformed_path, args.loaded_path,
+                               args.userdb_path)
     loader.load()
 
 def process(args):
     fetch(args)
     transform(args)
     load(args)
+
+
+
+
 
 if __name__=='__main__':
 
@@ -805,6 +814,9 @@ if __name__=='__main__':
 
     load_parser = subparsers.add_parser('load')
     load_parser.set_defaults(func=load)
+
+    build_db_parser = subparsers.add_parser('build-db')
+    build_db_parser.set_defaults(func=build_db)
 
     args = parser.parse_args()
 
