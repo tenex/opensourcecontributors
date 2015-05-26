@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*-mode: python-*-
 from datetime import datetime, timezone, timedelta
 from pprint import pprint
 from termcolor import colored
@@ -48,10 +49,7 @@ def make_logger(file_dir='.'):
 log = make_logger(os.getenv('GHC_LOG_PATH'))
 
 class EventLoader(object):
-    """Loads transformed .json.gz files into MongoDB
-    This class does not load files atomically. However it will not load duplicate
-    events due to a unique index on `_event_id`. If an error is encountered with
-    this index, it will be ignored for this reason.
+    """Loads transformed .json.gz files into a database (must be subclassed)
     """
 
     def __init__(self, transformed_path, loaded_path):
@@ -61,8 +59,6 @@ class EventLoader(object):
         """
         self.transformed_path = transformed_path
         self.loaded_path = loaded_path
-        self.db = pymongo.MongoClient().contributions
-        log.debug("connected to MongoDB")
 
     def _find_loaded_inodes(self):
         loaded_files = glob.glob(os.path.join(self.loaded_path, '*.json.gz'))
@@ -90,6 +86,7 @@ class EventLoader(object):
 
         self._start_time = datetime.now()
         for source in self._sources:
+            log("loading events from [{}]".format(source))
             self.load_file(source)
             self.mark_loaded(source)
 
@@ -103,6 +100,34 @@ class EventLoader(object):
             verb, record_count, duration, record_count/duration, from_str
         ))
 
+
+    def load_file(self, events_file):
+        """Load a single events file into database
+        """
+        raise "EventLoader is abstract; I don't know how to load an events file"
+
+
+    def mark_loaded(self, events_file):
+        """Create link in "loaded" directory to file that was just loaded
+        It's okay if this doesn't get written; duplicates won't make it into the DB
+        because of the unique index on `_event_id`
+        """
+        basename = os.path.basename(events_file)
+        link_path = os.path.join(self.loaded_path, basename)
+        log.info("marking [{}] as loaded in [{}]".format(basename, link_path))
+        os.link(events_file, link_path)
+
+class MongoDBEventLoader(EventLoader):
+    """Loads transformed .json.gz files into MongoDB
+    This class does not load files atomically. However it will not load duplicate
+    events due to a unique index on `_event_id`. If an error is encountered with
+    this index, it will be ignored for this reason.
+    """
+
+    def __init__(self, transformed_path, loaded_path):
+        super().__init__(transformed_path, loaded_path)
+        self.db = pymongo.MongoClient().contributions
+        log.info("connected to MongoDB")
 
     def load_file(self, events_file):
         """Load a single events file into MongoDB
@@ -125,16 +150,114 @@ class EventLoader(object):
                 log.debug("tried to load duplicate key(s) ({})".format(e))
             self._log_stats(len(records), load_start_time, True, events_file)
 
-    def mark_loaded(self, events_file):
-        """Create link in "loaded" directory to file that was just loaded
-        It's okay if this doesn't get written; duplicates won't make it into the DB
-        because of the unique index on `_event_id`
-        """
-        basename = os.path.basename(events_file)
-        link_path = os.path.join(self.loaded_path, basename)
-        log.debug("marking [{}] as loaded in [{}]".format(basename, link_path))
-        os.link(events_file, link_path)
+class UserDBEventFileLoader(object):
+    """Used by UserDBEventLoader to do loading for a single events file
+    TODO
+    """
+    pass
 
+class UserDBEventLoader(EventLoader):
+    """Loads transformed .json.gz files into user database
+    """
+
+    def __init__(self, transformed_path, loaded_path, userdb_path):
+        self.userdb_path = userdb_path
+
+        # the scratch path contains uncompressed .json.gz files for each user
+        self.scratch_path = os.path.join(self.userdb_path, "scratch")
+        os.makedirs(self.scratch_path, exist_ok=True)
+
+        # cache of list of uncompressed json files (contains usernames)
+        self.scratch_files = set()
+
+        super().__init__(transformed_path, loaded_path)
+
+    def _assert_scratch_clean(self):
+        dentries = [os.path.join(self.scratch_path, dentry)
+                    for dentry in os.listdir(self.scratch_path)]
+        files = [dentry for dentry
+                 in dentries
+                 if os.isfile(dentry)]
+        if files:
+            raise "scratch path not empty: [{}]".format(self.scratch_path)
+
+    def _clean_scratch(self):
+        for f in glob.glob(os.path.join(self.scratch_path, "*")):
+            os.remove(f)
+        self.scratch_files.clear()
+
+    def load_file(self, events_file):
+        self._assert_scratch_clean()
+        try:
+            records = []
+            with gzip.open(events_file, 'rt') as source:
+                records = [json.loads(r) for r in source]
+                log.debug("loading {} records from {}".format(
+                    len(records), events_file
+                ))
+            self._log_stats(len(records), file_start_time, True, events_file)
+            self._build_userdbs(records)
+        finally:
+            self._clean_scratch()
+
+    def _build_userdbs(self, records):
+        """Includes records in userdb files and updates them atomically in userdb_path
+        """
+        self.scratch_files.clear()
+
+        for r in records:
+            user = r["_user_lower"]
+            self._make_user_scratch_maybe(user)
+            self._append_record(user, r)
+
+        while self.scratch_files:
+            user = self.scratch_files.pop()
+            self._commit_user_scratch(user)
+
+    def _userdb_file_path(self, user):
+        return os.path.join(self.userdb_path,
+                            "{}.json.gz".format(user))
+
+    def _userdb_scratch_file_path(self, user):
+        return os.path.join(self.scratch_path
+                            "{}.json".format(user))
+
+    def _touch(self, path):
+        with open(path, 'a'): pass
+
+    def _append_record(self, user, record):
+        record = json.dumps(record)
+        dest_path = self._userdb_scratch_file_path(user)
+        with open(dest_path, 'at') as dest:
+            print(record, file=dest)
+
+    def _make_user_scratch_maybe(self, user):
+        """userdb_path/[user].json.gz -> userdb_path/scratch/[user].json
+        """
+        if user in self.scratch_files:
+            log.debug("already have scratch file for {}".format(user))
+            return
+        log.debug("making scratch file for {}".format(user))
+        src_path = self._userdb_file_path(user)
+        if not os.path.exists(src_path): self._touch(dest_path)
+        dest_path = self._userdb_scratch_file_path(user)
+        with gzip.open(src_path, "rt") as src, open(dest_path, "wt") as dest:
+            dest.writelines(src)
+        self.scratch_files.add(user)
+
+    def _commit_user_scratch(self, user):
+        """userdb_path/scratch/[user].json -> userdb_path/scratch/[user].json.gz ->
+                                              userdb_path/[user].json.gz
+        That way it's atomic (rename())
+        """
+        log.debug("committing scratch file for {}".format(user))
+        src_path = self._userdb_scratch_file_path(user)
+        compressed_path = "{}.gz".format(self._userdb_scratch_file_path(user))
+        dest_path = self._userdb_file_path(user)
+
+        with open(src_path, "rt") as src, gzip.open(compressed_path, "wt") as dest:
+            dest.writelines(src)
+        os.rename(compressed_path, dest_path)
 
 class GithubArchiveFetcher(object):
     """Retrieves needed .json.gz files from githubarchive.org
@@ -666,6 +789,8 @@ if __name__=='__main__':
                         default=os.getenv('GHC_TRANSFORMED_PATH'))
     parser.add_argument('--loaded-path',
                         default=os.getenv('GHC_LOADED_PATH'))
+    parser.add_argument('--userdb-path',
+                        default=os.getenv('GHC_USERDB_PATH'))
 
     subparsers = parser.add_subparsers(dest='mode')
 
