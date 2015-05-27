@@ -1,0 +1,28 @@
+#!/bin/bash
+LOCKFILE_PATH="/tmp/archive-processor.lock"
+MAILTO="liambowen@gmail.com"
+WORKING_PATH="/home/liam/ghca-processor-logs"
+PROCESSOR="/home/liam/github-contributions/util/archive-processor"
+
+export GHC_EVENTS_PATH="/github-archive/2015"
+export GHC_TIMELINE_PATH="/github-archive/timeline"
+export GHC_TRANSFORMED_PATH="/github-archive/transformed"
+export GHC_LOADED_PATH="/github-archive/loaded"
+export GHC_USERDB_PATH="/github-archive/userdb"
+export GHC_LOG_PATH="/github-archive/logs"
+
+echo "GHCA Archive Processor"
+/usr/bin/uptime
+
+# Don't even try to run multiple copies
+# If we do, they'll just get queued, but then we might have a lot of processes.
+if [[ -f "${LOCKFILE_PATH}" ]];
+then
+    echo "archive-processor already running (lockfile: ${LOCKFILE_PATH})"
+    exit 1
+fi
+
+/bin/mkdir -p "${WORKING_PATH}"
+cd "${WORKING_PATH}"
+
+/home/liam/.virtualenvs/github-contributions/bin/python3 "${PROCESSOR}" 'process'
