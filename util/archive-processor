@@ -31,12 +31,13 @@ invocation_id = "ghc-{}-{}.log".format(
     datetime.now().strftime('%Y%m%d-%H%M%S'))
 
 # Setup logging
-def make_logger():
+def make_logger(file_dir='.'):
     logger = logging.getLogger('processor[{}]'.format(os.uname().nodename))
     logging.Formatter.default_msec_format = '%s.%03d'
     log_formatter = logging.Formatter(
         fmt='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
-    file_log_handler = logging.FileHandler(invocation_id)
+    file_log_handler = logging.FileHandler(os.path.join(file_dir,
+                                                        invocation_id))
     console_log_handler = logging.StreamHandler()
     file_log_handler.setFormatter(log_formatter)
     console_log_handler.setFormatter(log_formatter)
@@ -45,7 +46,7 @@ def make_logger():
     logger.setLevel(logging.INFO)
     return logger
 
-log = make_logger()
+log = make_logger(os.getenv('GHC_LOG_PATH'))
 
 class EventLoader(object):
     """Loads transformed .json.gz files into MongoDB
