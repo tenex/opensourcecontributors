@@ -1,8 +1,9 @@
 #!/bin/bash
 LOCKFILE_PATH="/tmp/archive-processor.lock"
 MAILTO="liambowen@gmail.com"
-WORKING_PATH="/home/liam/ghca-processor-logs"
-PROCESSOR="/home/liam/github-contributions/util/archive-processor"
+WORKING_PATH="/github-contributions"
+PROCESSOR="/github-contributions/util/archive-processor"
+PYTHON="/github-contributions/venv/bin/python3"
 
 export GHC_EVENTS_PATH="/github-archive/2015"
 export GHC_TIMELINE_PATH="/github-archive/timeline"
@@ -25,4 +26,4 @@ fi
 /bin/mkdir -p "${WORKING_PATH}"
 cd "${WORKING_PATH}"
 
-/home/liam/.virtualenvs/github-contributions/bin/python3 "${PROCESSOR}" 'process'
+${PYTHON} ${PROCESSOR} 'process'
