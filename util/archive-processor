@@ -86,7 +86,7 @@ class EventLoader(object):
 
         self._start_time = datetime.now()
         for source in self._sources:
-            log("loading events from [{}]".format(source))
+            log.info("loading events from [{}]".format(source))
             self.load_file(source)
             self.mark_loaded(source)
 
@@ -190,9 +190,10 @@ class UserDBEventLoader(EventLoader):
         self._assert_scratch_clean()
         try:
             records = []
+            file_start_time = datetime.now()
             with gzip.open(events_file, 'rt') as source:
                 records = [json.loads(r) for r in source]
-                log.debug("loading {} records from {}".format(
+                log.info("loading {} records from {}".format(
                     len(records), events_file
                 ))
             self._log_stats(len(records), file_start_time, True, events_file)
@@ -219,7 +220,7 @@ class UserDBEventLoader(EventLoader):
                             "{}.json.gz".format(user))
 
     def _userdb_scratch_file_path(self, user):
-        return os.path.join(self.scratch_path
+        return os.path.join(self.scratch_path,
                             "{}.json".format(user))
 
     def _touch(self, path):
@@ -235,14 +236,16 @@ class UserDBEventLoader(EventLoader):
         """userdb_path/[user].json.gz -> userdb_path/scratch/[user].json
         """
         if user in self.scratch_files:
-            log.debug("already have scratch file for {}".format(user))
             return
-        log.debug("making scratch file for {}".format(user))
+
         src_path = self._userdb_file_path(user)
-        if not os.path.exists(src_path): self._touch(dest_path)
         dest_path = self._userdb_scratch_file_path(user)
-        with gzip.open(src_path, "rt") as src, open(dest_path, "wt") as dest:
-            dest.writelines(src)
+        if os.path.exists(src_path):
+            with gzip.open(src_path, "rt") as src, open(dest_path, "wt") as dest:
+                dest.writelines(src)
+        else:
+            self._touch(dest_path)
+
         self.scratch_files.add(user)
 
     def _commit_user_scratch(self, user):
@@ -250,7 +253,7 @@ class UserDBEventLoader(EventLoader):
                                               userdb_path/[user].json.gz
         That way it's atomic (rename())
         """
-        log.debug("committing scratch file for {}".format(user))
+        #log.debug("committing scratch file for {}".format(user))
         src_path = self._userdb_scratch_file_path(user)
         compressed_path = "{}.gz".format(self._userdb_scratch_file_path(user))
         dest_path = self._userdb_file_path(user)
