@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# Works only for archives from 2015-01-01 -> Present
 from datetime import datetime, timezone, timedelta
 from pprint import pprint
 from termcolor import colored
