@@ -42,7 +42,7 @@ def make_logger():
     console_log_handler.setFormatter(log_formatter)
     logger.addHandler(file_log_handler)
     logger.addHandler(console_log_handler)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     return logger
 
 log = make_logger()
@@ -62,17 +62,17 @@ class EventLoader(object):
         self.transformed_path = transformed_path
         self.loaded_path = loaded_path
         self.db = pymongo.MongoClient().contributions
-        log.info("connected to MongoDB")
+        log.debug("connected to MongoDB")
 
     def _find_loaded_inodes(self):
         loaded_files = glob.glob(os.path.join(self.loaded_path, '*.json.gz'))
-        log.info("found {} previously loaded files".format(len(loaded_files)))
+        log.debug("found {} previously loaded files".format(len(loaded_files)))
         return set([os.stat(cf).st_ino for cf in loaded_files])
 
     def _find_sources(self):
         sources = glob.glob(os.path.join(self.transformed_path,
                                          '*.json.gz'))
-        log.info("found {} potential sources".format(len(sources)))
+        log.debug("found {} potential sources".format(len(sources)))
         sources = sorted([f for f in sources
                           if os.stat(f).st_ino
                           not in self._loaded_inodes])
@@ -112,7 +112,7 @@ class EventLoader(object):
         with gzip.open(events_file, 'rt') as source:
             records = [json.loads(r) for r in source]
             unzip_time = (datetime.now() - gzip_start_time).total_seconds()
-            log.info("unzipped {} records in {:.2f} seconds ({:.2f} r/s)".format(
+            log.debug("unzipped {} records in {:.2f} seconds ({:.2f} r/s)".format(
                 len(records), unzip_time, len(records)/unzip_time
             ))
             log.info("loading {} records from {}".format(
@@ -132,7 +132,7 @@ class EventLoader(object):
         """
         basename = os.path.basename(events_file)
         link_path = os.path.join(self.loaded_path, basename)
-        log.info("marking [{}] as loaded in [{}]".format(basename, link_path))
+        log.debug("marking [{}] as loaded in [{}]".format(basename, link_path))
         os.link(events_file, link_path)
 
 
@@ -158,7 +158,7 @@ class GithubArchiveFetcher(object):
             log.debug("considering {}".format(local_filename))
             if not os.path.isfile(local_filename):
                 sz = self.fetch_file(filename, local_filename)
-                if sz: log.info('{}: got {} bytes'.format(filename, sz))
+                if sz: log.info('{}: got {:.2f} MB'.format(filename, sz/(1024*1024)))
                 else: log.info('download canceled')
             t += timedelta(hours=1)
 
@@ -542,7 +542,7 @@ class EventSource(object):
                 if self.file_predicate(f))
 
     def _open_file(self, path, mode):
-        log.info("transforming file: {}".format(path))
+        log.debug("transforming file: {}".format(path))
         if self.notify_file_change:
             self.notify_file_change(path)
         return gzip.open(path,'rt')
