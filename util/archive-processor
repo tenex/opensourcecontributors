@@ -196,8 +196,8 @@ class UserDBEventLoader(EventLoader):
                 log.info("loading {} records from {}".format(
                     len(records), events_file
                 ))
-            self._log_stats(len(records), file_start_time, True, events_file)
             self._build_userdbs(records)
+            self._log_stats(len(records), file_start_time, True, events_file)
         finally:
             self._clean_scratch()
 
@@ -253,7 +253,6 @@ class UserDBEventLoader(EventLoader):
                                               userdb_path/[user].json.gz
         That way it's atomic (rename())
         """
-        #log.debug("committing scratch file for {}".format(user))
         src_path = self._userdb_scratch_file_path(user)
         compressed_path = "{}.gz".format(self._userdb_scratch_file_path(user))
         dest_path = self._userdb_file_path(user)
