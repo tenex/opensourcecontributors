@@ -107,18 +107,23 @@ class EventLoader(object):
     def load_file(self, events_file):
         """Load a single events file into MongoDB
         """
-        log.info("loading events from [{}]".format(events_file))
-        file_start_time = datetime.now()
+        log.info("going to load events from [{}]".format(events_file))
+        gzip_start_time = datetime.now()
         with gzip.open(events_file, 'rt') as source:
             records = [json.loads(r) for r in source]
-            log.debug("loading {} records from {}".format(
+            unzip_time = (datetime.now() - gzip_start_time).total_seconds()
+            log.info("unzipped {} records in {:.2f} seconds ({:.2f} r/s)".format(
+                len(records), unzip_time, len(records)/unzip_time
+            ))
+            log.info("loading {} records from {}".format(
                 len(records), events_file
             ))
+            load_start_time = datetime.now()
             try:
                 self.db.contributions.insert(records, continue_on_error=True)
             except pymongo.errors.DuplicateKeyError as e:
                 log.debug("tried to load duplicate key(s) ({})".format(e))
-            self._log_stats(len(records), file_start_time, True, events_file)
+            self._log_stats(len(records), load_start_time, True, events_file)
 
     def mark_loaded(self, events_file):
         """Create link in "loaded" directory to file that was just loaded
