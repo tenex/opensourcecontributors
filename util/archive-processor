@@ -136,6 +136,8 @@ class MongoDBEventLoader(EventLoader):
         gzip_start_time = datetime.now()
         with gzip.open(events_file, 'rt') as source:
             records = [json.loads(r) for r in source]
+            log.debug("sorting records by _user_lower")
+            records.sort(key=lambda e: e['_user_lower'])
             unzip_time = (datetime.now() - gzip_start_time).total_seconds()
             log.debug("unzipped {} records in {:.2f} seconds ({:.2f} r/s)".format(
                 len(records), unzip_time, len(records)/unzip_time
