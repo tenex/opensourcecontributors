@@ -168,14 +168,25 @@ class GithubArchiveFetcher(object):
 
     def fetch(self):
         t = self.START
+        # All the files should be in the GitHub Archive that are more than two hours old
+        expect_files_until = datetime.utcnow() - timedelta(hours=2)
         while t <= datetime.utcnow():
             filename = "{}.json.gz".format(t.strftime(self.TIME_FMT))
             local_filename = os.path.join(self.events_directory, filename)
             log.debug("considering {}".format(local_filename))
             if not os.path.isfile(local_filename):
-                sz = self.fetch_file(filename, local_filename)
-                if sz: log.info('{}: got {:.2f} MB'.format(filename, sz/(1024*1024)))
-                else: log.info('download canceled')
+                try:
+                    sz = self.fetch_file(filename, local_filename)
+                    if sz: log.info('{}: got {:.2f} MB'.format(filename, sz/(1024*1024)))
+                    else: log.info('download returned nothing')
+                except HTTPError as e:
+                    # It's fine if we miss the last 2 hours
+                    # the file probably just isn't uploaded yet
+                    if t >= expect_files_until:
+                        msg = "encountered expected error for recent data file: {}"
+                        log.info(msg.format(e))
+                        break
+                    else: raise e
             t += timedelta(hours=1)
 
     def fetch_file(self, filename, sink_path):
@@ -187,12 +198,8 @@ class GithubArchiveFetcher(object):
             raise RuntimeError('will not overwrite file already present')
 
         source = requests.get(url, stream=True)
-        try:
-            source.raise_for_status()
-        except HTTPError as e:
-            # TODO Special case for last file or two
-            log.error("encountered error with {} : ({})".format(url, e))
-            return 0
+        # Caught by fetch. 404 is expected for the last couple of hours' data.
+        source.raise_for_status()
         sz = 0
         with open(sink_path, 'wb') as sink:
             for chunk in source.iter_content(self.BUFFER_SIZE):
