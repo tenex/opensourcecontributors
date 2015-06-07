@@ -11,6 +11,17 @@ then
     exit 1
 fi
 
+# determine who the owner of the thing is going to be
+owner=''
+id -u 'http' > /dev/null 2>&1 && owner='http'
+id -u 'www-data'  > /dev/null 2>&1 && owner='www-data'
+if [[ -z "${owner}" ]];
+then
+    echo "neither users exist: http or www-data. not sure who should own the files."
+    exit 1
+fi
+echo "will change owner to ${owner}:${owner}"
+
 wanted_branch="master"
 current_branch="$(git rev-parse --abbrev-ref HEAD)"
 
@@ -42,7 +53,7 @@ echo "installing packages to virtualenv"
 ./venv/bin/pip install -r /tmp/deploy/requirements.txt
 
 echo "changing owner to www-data:www-data"
-chown -R www-data:www-data /tmp/deploy
+chown -R "${owner}:${owner}" /tmp/deploy
 
 echo "Emperor status:"
 systemctl status emperor.uwsgi
