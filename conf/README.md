@@ -1,5 +1,8 @@
 # Configuration and Deployment
 
+* `/github-contributions` is the production code, including process scripts (on master)
+* `/srv` is where the application is deployed via the deployment script in `util`
+
 Prerequisites:
 * install nginx
 * have systemd (not upstart!)
@@ -8,31 +11,32 @@ Prerequisites:
 as root:
 
 ```sh
-
 # code:
-mkdir /srv
-cd /srv
+mkdir /github-contributions
+cd /github-contributions
 git clone git@github.com:hut8/github-contributions .
 
-# venv:
-virtualenv venv
-. /srv/venv/bin/activate
-pip install -r requirements.txt
+# arch only
+rm -rf /srv/http /srv/ftp
 
 # perms:
-chown -R www-data:www-data .
+chown -R www-data:www-data . # or http:http in arch
 
-# nginx:
+# nginx - debian:
 rm /etc/nginx/sites-available/default
-ln -s /srv/conf/github-contributions.nginx.conf /etc/nginx/conf.d/
+ln -s /github-contributions/conf/github-contributions.nginx.conf /etc/nginx/conf.d/
 
-# uwsgi:
+# nginx - arch
+# edit /etc/nginx/nginx.conf to include conf.d/* and delete default site
+mkdir /etc/nginx/conf.d
+ln -s /github-contributions/conf/github-contributions.nginx.conf /etc/nginx/conf.d/
+
+# uwsgi / emperor:
+ln -s /github-contributions/conf/emperor.ini /etc/uwsgi
+ln -s /github-contributions/conf/emperor.uwsgi.service /etc/systemd/system # debian
+ln -s /github-contributions/conf/emperor.uwsgi.service /etc/systemd/system/multi-user.target.wants # arch
 mkdir -p /etc/uwsgi/vassals
-ln -s /srv/conf/github-contributions.uwsgi.ini /etc/uwsgi/vassals
-
-# emperor:
-ln -s /srv/conf/emperor.ini /etc/uwsgi
-ln -s /srv/conf/emperor.uwsgi.service /etc/systemd/system
+ln -s /github-contributions/conf/github-contributions.uwsgi.ini /etc/uwsgi/vassals
 
 # profit
 systemctl enable emperor.uwsgi
@@ -40,5 +44,4 @@ systemctl start emperor.uwsgi
 systemctl restart nginx
 
 # that probably didn't work so debug it
-
 ```
