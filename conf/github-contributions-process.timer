@@ -1,0 +1,9 @@
+[Unit]
+Description=Run GHC archive processor hourly
+
+[Timer]
+Persistent=true
+OnCalendar=hourly
+
+[Install]
+WantedBy=timers.target

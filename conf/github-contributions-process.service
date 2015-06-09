@@ -1,0 +1,5 @@
+[Unit]
+Description=GitHub Contributions Process Task
+
+[Service]
+ExecStart=/github-contributions/conf/process-job
