@@ -1,7 +1,7 @@
 (function() {
     var app = angular.module('ghca', ['angularMoment','truncate']);
 
-    app.controller("UserController", ["$http","$log", "moment", function($http, $log, moment) {
+    app.controller("UserController", ["$scope", "$http","$log", "moment", function($scope, $http, $log, moment) {
         // TODO Is this how you fake enums in JS?! I hate JS.
         this.tabs = {
             none: 0,
@@ -84,9 +84,9 @@
 
         this.setUser = function() {
             var userCtrl = this;
-            this.initialize();
             this.processed = false;
             this.processing = true;
+            this.eventPages = {}; // clear cache
             $http.get('/user/'+this.username, {})
                 .success(function(data) {
                     userCtrl.processing = false;
