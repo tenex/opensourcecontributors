@@ -60,7 +60,7 @@
       </div>
     </nav>
 
-    <div class="container" role="main">
+    <div class="container" role="main" ng-hide="userCtrl.processing">
       <div class="well" ng-hide="userCtrl.processed || userCtrl.username">
         <h3>Search for a user above to begin</h3>
       </div>
@@ -259,14 +259,16 @@
         </div>
       </div> <!-- /results -->
 
-      <div id="loader" ng-show="userCtrl.processing"  class="tetrominos">
-        <div class="tetromino box1"></div>
-        <div class="tetromino box2"></div>
-        <div class="tetromino box3"></div>
-        <div class="tetromino box4"></div>
-      </div>
-
     </div> <!-- /container -->
+
+    <div id="loader" ng-show="userCtrl.processing"  class="tetrominos">
+      <div class="tetromino box1"></div>
+      <div class="tetromino box2"></div>
+      <div class="tetromino box3"></div>
+      <div class="tetromino box4"></div>
+    </div>
+
+
 
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
