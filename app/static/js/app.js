@@ -31,7 +31,10 @@
             this.eventCount = 0;
             this.repos = [];
 
-            // Event-related stuff
+            this.clearEvents();
+        };
+
+        this.clearEvents = function() {
             this.eventPages = {}; // a cache of sorts
             this.eventPageCount = 0;
             this.currentEventPage = 1;
