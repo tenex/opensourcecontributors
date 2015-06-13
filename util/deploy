@@ -43,7 +43,7 @@ echo "making /tmp/deploy"
 [[ -d /tmp/deploy ]] && rm -rf /tmp/deploy
 mkdir -p /tmp/deploy
 echo "copying app to /tmp/deploy"
-cp -r ./app /tmp/deploy
+cp -rv ./app /tmp/deploy
 cp ./requirements.txt /tmp/deploy
 cd /tmp/deploy
 echo "now in $(pwd)"
@@ -52,7 +52,7 @@ virtualenv --python=/usr/bin/python3 venv
 echo "installing packages to virtualenv"
 ./venv/bin/pip install -r /tmp/deploy/requirements.txt
 
-echo "changing owner to www-data:www-data"
+echo "changing owner to ${owner}:${owner}"
 chown -R "${owner}:${owner}" /tmp/deploy
 
 echo "Emperor status:"
@@ -62,8 +62,10 @@ read -p "finalize deployment? " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-    mv -f /tmp/deploy/app /srv/app
-    mv -f /tmp/deploy/venv /srv/venv
+    mv -f /srv/app "/srv/app-$(date +%ls)"
+    mv -f /srv/venv "/srv/venv-$(date +%s)"
+    mv -f /tmp/deploy/app /srv/
+    mv -f /tmp/deploy/venv /srv/
 fi
 
 echo "restarting emperor:"
