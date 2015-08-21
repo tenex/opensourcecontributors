@@ -145,6 +145,9 @@ class MongoDBEventLoader(EventLoader):
             log.info("loading {} records from {}".format(
                 len(records), events_file
             ))
+            if len(records) == 0:
+                log.error("will not bulk load empty file. look into this.")
+                return
             load_start_time = datetime.now()
             try:
                 self.db.contributions.insert(records, continue_on_error=True)
