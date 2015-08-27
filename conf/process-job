@@ -5,7 +5,7 @@ WORKING_PATH="/github-contributions"
 PROCESSOR="/github-contributions/util/archive-processor"
 PYTHON="/github-contributions/venv/bin/python3"
 
-export GHC_EVENTS_PATH="/github-archive/2015"
+export GHC_EVENTS_PATH="/github-archive/events"
 export GHC_TIMELINE_PATH="/github-archive/timeline"
 export GHC_TRANSFORMED_PATH="/github-archive/transformed"
 export GHC_LOADED_PATH="/github-archive/loaded"
