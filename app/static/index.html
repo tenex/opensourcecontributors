@@ -108,30 +108,14 @@
             <div ng-show="userCtrl.isCurrentTab(userCtrl.tabs.eventList)">
 
               <!-- TODO PAGINATION HERE -->
-              <nav ng-show="userCtrl.multipleEventPages">
-                <ul class="pagination">
-
-                  <li ng-class="{disabled: userCtrl.currentEventPage === 1}">
-                      <a href="#" aria-label="Previous" ng-click="userCtrl.previousEventsPage()">
-                      <span aria-hidden="true">&laquo;</span>
-                    </a>
-                  </li>
-
-                  <li ng-repeat="pageNum in userCtrl.range(userCtrl.eventPageCount)"
-                      ng-class="{active: userCtrl.currentEventPage === pageNum}">
-                    <a class="pagination-link" ng-click="userCtrl.setCurrentEventsPage(pageNum)" href>
-                      {{ pageNum }}
-                    </a>
-                  </li>
-
-                  <li ng-class="{disabled: userCtrl.currentEventPage === userCtrl.eventPageCount}">
-                    <a href="#" aria-label="Next" ng-click="userCtrl.nextEventsPage()">
-                      <span aria-hidden="true">&raquo;</span>
-                    </a>
-                  </li>
-
-                </ul>
-              </nav>
+              <pagination ng-model="currentEventPage"
+                          total-items="eventCount"
+                          ng-change="eventPageChanged()"
+                          max-size="10" items-per-page="eventPageSize"
+                          boundary-links="true"
+                          previous-text="&lsaquo;" next-text="&rsaquo;"
+                          first-text="&laquo;" last-text="&raquo;">
+              </pagination>
 
               <table class="table table-striped">
                 <thead>
