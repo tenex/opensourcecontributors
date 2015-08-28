@@ -237,6 +237,15 @@
 
                 </tbody>
               </table>
+
+              <pagination ng-model="currentEventPage"
+                          total-items="eventCount"
+                          ng-change="eventPageChanged()"
+                          max-size="10" items-per-page="eventPageSize"
+                          boundary-links="true"
+                          previous-text="&lsaquo;" next-text="&rsaquo;"
+                          first-text="&laquo;" last-text="&raquo;">
+              </pagination>
             </div>
 
           </div>
