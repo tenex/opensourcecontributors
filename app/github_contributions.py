@@ -1,6 +1,6 @@
 from flask import Flask, render_template
 from flask.ext.pymongo import PyMongo, ASCENDING, DESCENDING
-from .tools import jsonify
+from tools import jsonify
 import time
 import math
 

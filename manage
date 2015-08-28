@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+import os, sys
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(os.path.join(dname, "app"))
+sys.path.insert(0, os.curdir)
+
 from flask.ext.script import Manager, Server, Shell
 from app.github_contributions import app, mongo
 
