@@ -20,6 +20,7 @@
     <script type="text/javascript" src="/static/js/angular-moment.min.js"></script>
     <script type="text/javascript" src="/static/js/truncate.js"></script>
     <script type="text/javascript" src="/static/js/app.js"></script>
+    <script type="text/javascript" src="/static/js/ui-bootstrap-tpls-0.13.3.min.js"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -28,7 +29,7 @@
     <![endif]-->
   </head>
 
-  <body role="document" ng-controller="UserController as userCtrl">
+  <body role="document" ng-controller="UserController">
 
     <!-- Fixed navbar -->
     <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -48,10 +49,10 @@
             <li><a href="http://hut8.io">Hut8.io</a></li>
             <li><a href="mailto:liambowen@gmail.com">Contact</a></li>
           </ul>
-          <form name="userForm" class="navbar-form navbar-right" ng-submit="userCtrl.setUser()">
+          <form name="userForm" class="navbar-form navbar-right" ng-submit="setUser()">
             <div class="form-group">
               <label for="query" class="sr-only">GitHub Username</label>
-              <input type="text" ng-model="userCtrl.username"
+              <input type="text" ng-model="username"
                      class="form-control" id="query" placeholder="GitHub User">
             </div>
             <button id="submit-button" type="submit" class="btn btn-primary">Search</button>
@@ -60,77 +61,61 @@
       </div>
     </nav>
 
-    <div class="container" role="main" ng-hide="userCtrl.processing">
-      <div class="well" ng-hide="userCtrl.processed || userCtrl.username">
+    <div class="container" role="main" ng-hide="processing">
+      <div class="well" ng-hide="processed || username">
         <h3>Search for a user above to begin</h3>
       </div>
 
       <div class="alert alert-danger" role="alert"
-           ng-show="userCtrl.processed && !userCtrl.hasResults">
+           ng-show="processed && !hasResults">
         <span class="glyphicon glyphicon-exclamation-sign pull-right" aria-hidden="true"></span>
-        <strong>No results for {{userCtrl.processedUsername}}.</strong>
+        <strong>No results for {{ processedUsername }}.</strong>
       </div>
 
-      <div class="well" ng-show="userCtrl.hasResults">
+      <div class="well" ng-show="hasResults">
         <h4>
           <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
-          <a href="{{userCtrl.userUrl}}">
-            <strong>{{userCtrl.processedUsername}}</strong>
+          <a href="{{userUrl}}">
+            <strong>{{processedUsername}}</strong>
           </a>
           made
-          <strong>{{userCtrl.eventCount}}</strong> contributions
+          <strong>{{eventCount}}</strong> contributions
           to
-          <strong>{{userCtrl.repos.length}}</strong> repositories
+          <strong>{{repos.length}}</strong> repositories
         </h4>
       </div>
 
-      <div id="results" ng-show="userCtrl.hasResults" class="row">
+      <div id="results" ng-show="hasResults" class="row">
         <div class="col-md-12">
           <ul class="nav nav-pills">
-            <li role="presentation" ng-class="{active: userCtrl.isCurrentTab(userCtrl.tabs.repoList)}">
-              <a ng-click="userCtrl.setCurrentTab(userCtrl.tabs.repoList)" href>Repositories</a>
+            <li role="presentation" ng-class="{active: isCurrentTab(tabs.repoList)}">
+              <a ng-click="setCurrentTab(tabs.repoList)" href>Repositories</a>
             </li>
-            <li role="presentation" ng-class="{active: userCtrl.isCurrentTab(userCtrl.tabs.eventList)}">
-              <a ng-click="userCtrl.setCurrentTab(userCtrl.tabs.eventList)" href>Events</a>
+            <li role="presentation" ng-class="{active: isCurrentTab(tabs.eventList)}">
+              <a ng-click="setCurrentTab(tabs.eventList)" href>Events</a>
             </li>
           </ul>
 
           <div style="margin-top:.5em">
             <!-- Repositories -->
-            <ul class="list-group" ng-show="userCtrl.isCurrentTab(userCtrl.tabs.repoList)">
-              <li class="list-group-item" ng-repeat="repo in userCtrl.repos">
+            <ul class="list-group" ng-show="isCurrentTab(tabs.repoList)">
+              <li class="list-group-item" ng-repeat="repo in repos">
                 <a href="https://github.com/{{repo}}">{{ repo }}</a>
               </li>
             </ul>
 
             <!-- Events result table -->
-            <div ng-show="userCtrl.isCurrentTab(userCtrl.tabs.eventList)">
+            <div ng-show="isCurrentTab(tabs.eventList)">
 
               <!-- TODO PAGINATION HERE -->
-              <nav ng-show="userCtrl.multipleEventPages">
-                <ul class="pagination">
-
-                  <li ng-class="{disabled: userCtrl.currentEventPage === 1}">
-                      <a href="#" aria-label="Previous" ng-click="userCtrl.previousEventsPage()">
-                      <span aria-hidden="true">&laquo;</span>
-                    </a>
-                  </li>
-
-                  <li ng-repeat="pageNum in userCtrl.range(userCtrl.eventPageCount)"
-                      ng-class="{active: userCtrl.currentEventPage === pageNum}">
-                    <a class="pagination-link" ng-click="userCtrl.setCurrentEventsPage(pageNum)" href>
-                      {{ pageNum }}
-                    </a>
-                  </li>
-
-                  <li ng-class="{disabled: userCtrl.currentEventPage === userCtrl.eventPageCount}">
-                    <a href="#" aria-label="Next" ng-click="userCtrl.nextEventsPage()">
-                      <span aria-hidden="true">&raquo;</span>
-                    </a>
-                  </li>
-
-                </ul>
-              </nav>
+              <pagination ng-model="currentEventPage"
+                          total-items="eventCount"
+                          ng-change="eventPageChanged()"
+                          max-size="10" items-per-page="eventPageSize"
+                          boundary-links="true"
+                          previous-text="&lsaquo;" next-text="&rsaquo;"
+                          first-text="&laquo;" last-text="&raquo;">
+              </pagination>
 
               <table class="table table-striped">
                 <thead>
@@ -152,7 +137,7 @@
                 </thead>
                 <tbody>
 
-                  <tr ng-repeat="event in userCtrl.events">
+                  <tr ng-repeat="event in events">
                     <td>
                       <span event-octicon ng-model="event.type"></span>
                     </td>
@@ -165,7 +150,7 @@
                       </a>
                     </td>
                     <td>
-                      <a href="{{userCtrl.userUrl}}">{{userCtrl.processedUsername}}</a>
+                      <a href="{{userUrl}}">{{processedUsername}}</a>
                     </td>
                     <td ng-switch on="event.type">
 
@@ -252,6 +237,15 @@
 
                 </tbody>
               </table>
+
+              <pagination ng-model="currentEventPage"
+                          total-items="eventCount"
+                          ng-change="eventPageChanged()"
+                          max-size="10" items-per-page="eventPageSize"
+                          boundary-links="true"
+                          previous-text="&lsaquo;" next-text="&rsaquo;"
+                          first-text="&laquo;" last-text="&raquo;">
+              </pagination>
             </div>
 
           </div>
@@ -261,7 +255,7 @@
 
     </div> <!-- /container -->
 
-    <div id="loader" ng-show="userCtrl.processing"  class="tetrominos">
+    <div id="loader" ng-show="processing"  class="tetrominos">
       <div class="tetromino box1"></div>
       <div class="tetromino box2"></div>
       <div class="tetromino box3"></div>

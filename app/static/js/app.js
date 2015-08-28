@@ -1,113 +1,104 @@
 (function() {
-    var app = angular.module('ghca', ['angularMoment','truncate']);
+    var app = angular.module('ghca', ['angularMoment','truncate','ui.bootstrap']);
 
     app.controller("UserController", ["$scope", "$http","$log", "moment", function($scope, $http, $log, moment) {
+        $scope.eventPageSize = 50; // constant
+
         // TODO Is this how you fake enums in JS?! I hate JS.
-        this.tabs = {
+        $scope.tabs = {
             none: 0,
             repoList: 1,
             eventList: 2
         };
-        this.range = function(x) {
+        $scope.range = function(x) {
             return Array.apply(null, Array(x)).map(function (_, i) {return i+1;});
         };
 
 
-        this.currentTab = this.tabs.repoList;
-        this.isCurrentTab = function(t) {
-            return this.currentTab === t;
+        $scope.currentTab = $scope.tabs.repoList;
+        $scope.isCurrentTab = function(t) {
+            return $scope.currentTab === t;
         };
-        this.setCurrentTab = function(t) {
-            this.currentTab = t;
-            if(t == this.tabs.eventList) {
-                this.getGHEvents();
+        $scope.setCurrentTab = function(t) {
+            $scope.currentTab = t;
+            if(t == $scope.tabs.eventList) {
+                $scope.getGHEvents();
             }
         };
 
-        this.initialize = function() {
-            this.username = "";
-            this.processedUsername = ""; // The data below is for...
-            this.userUrl = "";
-            this.eventCount = 0;
-            this.repos = [];
+        $scope.initialize = function() {
+            $scope.username = "";
+            $scope.processedUsername = ""; // The data below is for...
+            $scope.userUrl = "";
+            $scope.eventCount = 0;
+            $scope.repos = [];
 
-            this.clearEvents();
+            $scope.clearEvents();
         };
 
-        this.clearEvents = function() {
-            this.eventPages = {}; // a cache of sorts
-            this.eventPageCount = 0;
-            this.currentEventPage = 1;
-            this.events = []; // the current page
-            this.eventPageSize = 50; // constant
-            this.eventCount = 0;
+        $scope.clearEvents = function() {
+            $scope.eventPages = {}; // a cache of sorts
+            $scope.eventPageCount = 0;
+            $scope.currentEventPage = 1;
+            $scope.events = []; // the current page
+            $scope.eventCount = 0;
         };
 
-        this.initialize();
+        $scope.initialize();
 
         // Have we retrieved the user's information (except a list of their events)?
-        this.processed = false;
-        this.processing = false;
-        this.hasResults = false;
+        $scope.processed = false;
+        $scope.processing = false;
+        $scope.hasResults = false;
 
-        this.setCurrentEventsPage = function(i) {
-            this.currentEventPage = i;
-            this.getGHEvents();
+        $scope.setCurrentEventsPage = function(i) {
+            $scope.currentEventPage = i;
+            $scope.getGHEvents();
         };
 
-        this.nextEventsPage = function() {
-            if (this.currentEventPage !== this.eventPageCount) {
-                this.setCurrentEventsPage(this.currentEventPage+1);
-            }
+        $scope.eventPageChanged = function() {
+            $scope.setCurrentEventsPage($scope.currentEventPage);
         };
 
-        this.previousEventsPage = function() {
-            if (this.currentEventPage !== 1) {
-                this.setCurrentEventsPage(this.currentEventPage-1);
-            }
-        };
-
-        this.getGHEvents = function() {
+        $scope.getGHEvents = function() {
             // Cache :)
-            if (this.eventPages[this.currentEventPage]) {
-                this.events = this.eventPages[this.currentEventPage];
+            if ($scope.eventPages[$scope.currentEventPage]) {
+                $scope.events = $scope.eventPages[$scope.currentEventPage];
                 return;
             }
 
-            var userCtrl = this;
-            $http.get('/user/'+this.processedUsername+'/events/'+this.currentEventPage, {})
+            $http.get('/user/'+$scope.processedUsername+'/events/'+$scope.currentEventPage, {})
                 .success(function(data) {
-                    userCtrl.eventPages[userCtrl.currentEventPage] = data.events;
-                    userCtrl.events = data.events;
+                    $scope.eventPages[$scope.currentEventPage] = data.events;
+                    $scope.events = data.events;
                 })
                 .error(function(data) {
                     $log.error(data);
                 });
         };
 
-        this.setUser = function() {
-            var userCtrl = this;
-            this.processed = false;
-            this.processing = true;
-            this.eventPages = {}; // clear cache
-            $http.get('/user/'+this.username, {})
+        $scope.setUser = function() {
+            $scope.processed = false;
+            $scope.processing = true;
+            $scope.eventPages = {}; // clear cache
+            $http.get('/user/'+$scope.username, {})
                 .success(function(data) {
-                    userCtrl.processing = false;
-                    userCtrl.eventCount = data.eventCount;
-                    userCtrl.hasResults = data.eventCount ? true : false;
-                    userCtrl.eventPageCount = Math.ceil(
-                        data.eventCount / userCtrl.eventPageSize);
-                    userCtrl.multipleEventPages = (
-                        userCtrl.eventCount > userCtrl.eventPageSize);
-                    userCtrl.repos = data.repos;
-                    userCtrl.userUrl = "https://github.com/"+data.username;
-                    userCtrl.processedUsername = data.username;
-                    userCtrl.processed = true;
-                    userCtrl.processing = false;
+                    $scope.processing = false;
+                    $scope.eventCount = data.eventCount;
+                    $scope.hasResults = data.eventCount ? true : false;
+                    $scope.eventPageCount = Math.ceil(
+                        data.eventCount / $scope.eventPageSize);
+                    $scope.multipleEventPages = (
+                        $scope.eventCount > $scope.eventPageSize);
+                    $scope.repos = data.repos;
+                    $scope.userUrl = "https://github.com/"+data.username;
+                    $scope.processedUsername = data.username;
+                    $scope.processed = true;
+                    $scope.processing = false;
                 })
                 .error(function(data) {
                     $log.error(data);
-                    userCtrl.processing = false;
+                    $scope.processing = false;
                 });
 
         };
@@ -155,10 +146,5 @@
         };
 
     });
-
-    app.controller("EventController", ["$http","$log", function($http,$log) {
-
-
-    }]);
 
 })();
