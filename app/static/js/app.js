@@ -79,28 +79,27 @@
         };
 
         $scope.setUser = function() {
-            var userCtrl = this;
             $scope.processed = false;
             $scope.processing = true;
             $scope.eventPages = {}; // clear cache
             $http.get('/user/'+$scope.username, {})
                 .success(function(data) {
-                    userCtrl.processing = false;
+                    $scope.processing = false;
                     $scope.eventCount = data.eventCount;
-                    userCtrl.hasResults = data.eventCount ? true : false;
-                    userCtrl.eventPageCount = Math.ceil(
+                    $scope.hasResults = data.eventCount ? true : false;
+                    $scope.eventPageCount = Math.ceil(
                         data.eventCount / $scope.eventPageSize);
-                    userCtrl.multipleEventPages = (
+                    $scope.multipleEventPages = (
                         $scope.eventCount > $scope.eventPageSize);
-                    userCtrl.repos = data.repos;
-                    userCtrl.userUrl = "https://github.com/"+data.username;
-                    userCtrl.processedUsername = data.username;
-                    userCtrl.processed = true;
-                    userCtrl.processing = false;
+                    $scope.repos = data.repos;
+                    $scope.userUrl = "https://github.com/"+data.username;
+                    $scope.processedUsername = data.username;
+                    $scope.processed = true;
+                    $scope.processing = false;
                 })
                 .error(function(data) {
                     $log.error(data);
-                    userCtrl.processing = false;
+                    $scope.processing = false;
                 });
 
         };
@@ -148,10 +147,5 @@
         };
 
     });
-
-    app.controller("EventController", ["$http","$log", function($http,$log) {
-
-
-    }]);
 
 })();
