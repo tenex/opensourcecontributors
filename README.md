@@ -4,7 +4,7 @@ This is a utility to find a list of all contributions a user has made to any pub
 
 The data from 2015-01-01 - present is found on [GitHub Archive](https://www.githubarchive.org). The data from before this uses a different schema and was obtained from Google's BigQuery (see below)
 
-As of 2015-06-03, it tracks a total of
+As of 2015-08-28, it tracks a total of
 ```sh
 % cd /github-archive/processed
 % gzip -l *.json.gz | awk 'END{print $2}' | numfmt --to=iec-i --suffix=B --format="%3f"
@@ -17,7 +17,24 @@ events.
 `db.contributions.stats()`:
 
 ```json
-
+{
+  "ns" : "contributions.contributions",
+  "count" : 284048099,
+  "size" : 113714359272,
+  "avgObjSize" : 400,
+  "storageSize" : 47820357632,
+  "capped" : false,
+  // ... WiredTiger stats omitted ...
+  "nindexes" : 4,
+  "totalIndexSize" : 8810385408,
+  "indexSizes" : {
+    "_id_" : 2804744192,
+    "_user_lower_1" : 2275647488,
+    "_event_id_1" : 1029251072,
+    "created_at_1" : 2700742656
+  },
+  "ok" : 1
+}
 ```
 
 ### Processing data archives
