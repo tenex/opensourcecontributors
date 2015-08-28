@@ -67,11 +67,10 @@
                 return;
             }
 
-            var userCtrl = this;
             $http.get('/user/'+$scope.processedUsername+'/events/'+$scope.currentEventPage, {})
                 .success(function(data) {
-                    userCtrl.eventPages[$scope.currentEventPage] = data.events;
-                    userCtrl.events = data.events;
+                    $scope.eventPages[$scope.currentEventPage] = data.events;
+                    $scope.events = data.events;
                 })
                 .error(function(data) {
                     $log.error(data);
