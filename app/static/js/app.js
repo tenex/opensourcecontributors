@@ -2,8 +2,8 @@
     var app = angular.module('ghca', ['angularMoment','truncate','ui.bootstrap', 'ghcaServices']);
 
     app.controller("UserController",
-        ["$scope", "$http","$log", "moment", "User", "Event",
-        function($scope, $http, $log, moment, User, Event) {
+        ["$scope", "$log", "moment", "User", "Event",
+        function($scope, $log, moment, User, Event) {
         $scope.eventPageSize = 50; // constant
 
         $scope.tabs = {
@@ -11,10 +11,6 @@
             repoList: 1,
             eventList: 2
         };
-        $scope.range = function(x) {
-            return Array.apply(null, Array(x)).map(function (_, i) {return i+1;});
-        };
-
 
         $scope.currentTab = $scope.tabs.repoList;
         $scope.isCurrentTab = function(t) {
@@ -33,7 +29,6 @@
             $scope.userUrl = "";
             $scope.eventCount = 0;
             $scope.repos = [];
-
             $scope.clearEvents();
         };
 
@@ -97,15 +92,6 @@
                 $scope.processed = true;
                 $scope.processing = false;
             });
-            // $http.get('/user/'+$scope.username, {})
-            //     .success(function(data) {
-
-            //     })
-            //     .error(function(data) {
-            //         $log.error(data);
-            //         $scope.processing = false;
-            //     });
-
         };
     }]);
 
