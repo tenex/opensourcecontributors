@@ -80,7 +80,8 @@
         $scope.setUser = function() {
             $scope.processed = false;
             $scope.processing = true;
-            $scope.eventPages = {}; // clear cache
+            $scope.setCurrentTab($scope.tabs.repoList);
+            $scope.clearEvents();
             $http.get('/user/'+$scope.username, {})
                 .success(function(data) {
                     $scope.processing = false;

@@ -24,7 +24,6 @@ events.
   "avgObjSize" : 400,
   "storageSize" : 47820357632,
   "capped" : false,
-  // ... WiredTiger stats omitted ...
   "nindexes" : 4,
   "totalIndexSize" : 8810385408,
   "indexSizes" : {
@@ -36,6 +35,7 @@ events.
   "ok" : 1
 }
 ```
+(WiredTiger stats omitted)
 
 ### Processing data archives
 
