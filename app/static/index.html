@@ -109,7 +109,6 @@
             <!-- Events result table -->
             <div ng-show="isCurrentTab(tabs.eventList)">
 
-              <!-- TODO PAGINATION HERE -->
               <pagination ng-model="currentEventPage"
                           total-items="eventCount"
                           ng-change="eventPageChanged()"
@@ -119,7 +118,11 @@
                           first-text="&laquo;" last-text="&raquo;">
               </pagination>
 
-              <table class="table table-striped">
+              <div style="text-align:center" ng-show="loadingEvents">
+                <img src="/static/img/gps.svg" />
+              </div>
+
+              <table ng-hide="loadingEvents" class="table table-striped">
                 <thead>
                   <th>
                     <!-- event type -->
@@ -276,8 +279,7 @@
      ga('send', 'pageview', {
          'dimension1': clientAddr
      });
-
-      </script>
+    </script>
 
   </body>
 </html>

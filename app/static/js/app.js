@@ -45,6 +45,7 @@
             $scope.processed = false;
             $scope.processing = false;
             $scope.hasResults = false;
+            $scope.loadingEvents = true;
 
             $scope.setCurrentEventsPage = function(i) {
                 $scope.currentEventPage = i;
@@ -62,12 +63,15 @@
                     return;
                 }
 
+                $scope.loadingEvents = true;
+
                 $scope.eventData = Event.get({
                     username: $scope.processedUsername,
                     page: $scope.currentEventPage
                 }, function(eventData) {
                     $scope.eventPages[$scope.currentEventPage] = eventData.events;
                     $scope.events = eventData.events;
+                    $scope.loadingEvents = false;
                 });
             };
 
