@@ -1,10 +1,11 @@
 (function() {
-    var app = angular.module('ghca', ['angularMoment','truncate','ui.bootstrap']);
+    var app = angular.module('ghca', ['angularMoment','truncate','ui.bootstrap', 'ghcaServices']);
 
-    app.controller("UserController", ["$scope", "$http","$log", "moment", function($scope, $http, $log, moment) {
+    app.controller("UserController",
+        ["$scope", "$http","$log", "moment", "User", "Event",
+        function($scope, $http, $log, moment, User, Event) {
         $scope.eventPageSize = 50; // constant
 
-        // TODO Is this how you fake enums in JS?! I hate JS.
         $scope.tabs = {
             none: 0,
             repoList: 1,
@@ -67,14 +68,13 @@
                 return;
             }
 
-            $http.get('/user/'+$scope.processedUsername+'/events/'+$scope.currentEventPage, {})
-                .success(function(data) {
-                    $scope.eventPages[$scope.currentEventPage] = data.events;
-                    $scope.events = data.events;
-                })
-                .error(function(data) {
-                    $log.error(data);
-                });
+            $scope.eventData = Event.get({ 
+                username: $scope.processedUsername,
+                page: $scope.currentEventPage
+            }, function(eventData) {
+                $scope.eventPages[$scope.currentEventPage] = eventData.events;
+                $scope.events = eventData.events;
+            });
         };
 
         $scope.setUser = function() {
@@ -82,25 +82,29 @@
             $scope.processing = true;
             $scope.setCurrentTab($scope.tabs.repoList);
             $scope.clearEvents();
-            $http.get('/user/'+$scope.username, {})
-                .success(function(data) {
-                    $scope.processing = false;
-                    $scope.eventCount = data.eventCount;
-                    $scope.hasResults = data.eventCount ? true : false;
-                    $scope.eventPageCount = Math.ceil(
-                        data.eventCount / $scope.eventPageSize);
-                    $scope.multipleEventPages = (
-                        $scope.eventCount > $scope.eventPageSize);
-                    $scope.repos = data.repos;
-                    $scope.userUrl = "https://github.com/"+data.username;
-                    $scope.processedUsername = data.username;
-                    $scope.processed = true;
-                    $scope.processing = false;
-                })
-                .error(function(data) {
-                    $log.error(data);
-                    $scope.processing = false;
-                });
+
+            $scope.user = User.get({ username: $scope.username }, function(user) {
+                $scope.processing = false;
+                $scope.eventCount = user.eventCount;
+                $scope.hasResults = user.eventCount ? true : false;
+                $scope.eventPageCount = Math.ceil(
+                    user.eventCount / $scope.eventPageSize);
+                $scope.multipleEventPages = (
+                    $scope.eventCount > $scope.eventPageSize);
+                $scope.repos = user.repos;
+                $scope.userUrl = "https://github.com/"+user.username;
+                $scope.processedUsername = user.username;
+                $scope.processed = true;
+                $scope.processing = false;
+            });
+            // $http.get('/user/'+$scope.username, {})
+            //     .success(function(data) {
+
+            //     })
+            //     .error(function(data) {
+            //         $log.error(data);
+            //         $scope.processing = false;
+            //     });
 
         };
     }]);
