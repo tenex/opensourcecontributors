@@ -62,7 +62,7 @@ read -p "finalize deployment? " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-    mv -f /srv/app "/srv/app-$(date +%ls)"
+    mv -f /srv/app "/srv/app-$(date +%s)"
     mv -f /srv/venv "/srv/venv-$(date +%s)"
     mv -f /tmp/deploy/app /srv/
     mv -f /tmp/deploy/venv /srv/
