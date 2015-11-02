@@ -1,6 +1,8 @@
 from flask import Flask, render_template
 from flask.ext.pymongo import PyMongo, ASCENDING, DESCENDING
 from tools import jsonify
+from datetime import datetime, timezone
+import dateutil.parser
 import time
 import math
 
@@ -16,7 +18,16 @@ def index():
 
 @app.route('/stats')
 def stats():
+    c = mongo.db.contributions
+    latest_event = c.find().sort('created_at', DESCENDING).limit(1)
+    latest_event = [e['created_at'] for e in latest_event].pop()
+    latest_event_dt = dateutil.parser.parse(latest_event)
+    latest_event_age = datetime.now(timezone.utc) - latest_event_dt
+    latest_event_age = int(latest_event_age.total_seconds())
     summary = {
+        "eventCount": c.count(),
+        "latestEvent": latest_event,
+        "latestEventAge": latest_event_age
     }
     return jsonify(**summary)
 
