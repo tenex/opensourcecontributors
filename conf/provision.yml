@@ -63,8 +63,11 @@
                   line='AllowAgentForwarding yes'
       notify: restart sshd
 
-    - name: configure ssh keys
+    - name: configure ssh keys for root
       authorized_key: user=root key=https://github.com/hut8.keys
+
+    - name: configure ssh keys for ghc
+      authorized_key: user=ghc key=https://github.com/hut8.keys
 
   handlers:
     - name: restart sshd
