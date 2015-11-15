@@ -28,11 +28,9 @@
         - nodejs
         - ntp
         - pcregrep
-        - php5-fpm
-        - php5-mysql
         - python-dev
-        - python-mysqldb
         - python-pip
+        - python-virtualenv
         - python3-dev
         - python3-pip
         - rsync
@@ -42,6 +40,7 @@
         - tig
         - tmux
         - toilet
+        - virtualenvwrapper
         - wget
         - zsh
 
