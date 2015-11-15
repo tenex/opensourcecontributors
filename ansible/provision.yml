@@ -1,0 +1,67 @@
+---
+- name: provision server
+  hosts: all
+  user: root
+
+  tasks:
+    - name: set hostname
+      hostname: name={{ hostname }}
+
+    - name: update installed packages
+      apt: upgrade=dist update_cache=yes
+
+    - name: install server base packages
+      apt: name={{ item }} state=latest update_cache=yes
+      with_items:
+        - apt-file
+        - apticron
+        - build-essential
+        - cowsay
+        - curl
+        - dnsutils
+        - emacs24
+        - git
+        - htop
+        - iotop
+        - jq
+        - mc
+        - nodejs
+        - ntp
+        - pcregrep
+        - php5-fpm
+        - php5-mysql
+        - python-dev
+        - python-mysqldb
+        - python-pip
+        - python3-dev
+        - python3-pip
+        - rsync
+        - silversearcher-ag
+        - speedometer
+        - ssmtp
+        - tig
+        - tmux
+        - toilet
+        - wget
+        - zsh
+
+    - name: set tmp permissions
+      file: path=/tmp mode=a+w
+
+    - name: enable agent forwarding
+      lineinfile: dest=/etc/ssh/sshd_config
+                  state=present
+                  regexp='^AllowAgentForwarding'
+                  line='AllowAgentForwarding yes'
+      notify: restart sshd
+
+    - name: configure ssh keys
+      authorized_key: user=root key=https://github.com/hut8.keys
+
+    - name: make swapfile
+      roles:
+        - { role: kamaln7.swapfile, swapfile_use_dd: True, swapfile_size: 2048 }
+
+  handlers:
+    - name: restart sshd
+      service: name=ssh state=restarted
