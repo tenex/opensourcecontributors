@@ -10,6 +10,15 @@
     - name: update installed packages
       apt: upgrade=dist update_cache=yes
 
+    - name: create ghc user
+      user: name=ghc generate_ssh_key=yes
+
+    - name: add mongodb key
+      apt_key: keyserver=keyserver.ubuntu.com id=7F0CEB10
+
+    - name: add mongodb repo
+      apt_repository: repo='deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.0 multiverse' state=present
+
     - name: install server base packages
       apt: name={{ item }} state=latest update_cache=yes
       with_items:
@@ -22,9 +31,11 @@
         - emacs24
         - git
         - htop
+        - iftop
         - iotop
         - jq
         - mc
+        - mongodb-org
         - nodejs
         - ntp
         - pcregrep
@@ -35,8 +46,6 @@
         - python3-pip
         - rsync
         - silversearcher-ag
-        - speedometer
-        - ssmtp
         - tig
         - tmux
         - toilet
@@ -57,10 +66,26 @@
     - name: configure ssh keys
       authorized_key: user=root key=https://github.com/hut8.keys
 
-    - name: make swapfile
-      roles:
-        - { role: kamaln7.swapfile, swapfile_use_dd: True, swapfile_size: 2048 }
-
   handlers:
     - name: restart sshd
       service: name=ssh state=restarted
+
+- name: make swapfile
+  user: root
+  hosts: all
+  roles:
+    - { role: kamaln7.swapfile, swapfile_use_dd: True, swapfile_size: 2048 }
+
+- name: make archive structure
+  user: root
+  hosts: all
+  tasks:
+    - name: root archive
+      file: path={{ item }} state=directory owner=ghc
+      with_items:
+        - /github-archive
+        - /github-archive/events
+        - /github-archive/loaded
+        - /github-archive/logs
+        - /github-archive/timeline
+        - /github-archive/transformed
