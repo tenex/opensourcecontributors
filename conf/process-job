@@ -3,7 +3,7 @@ LOCKFILE_PATH="/tmp/archive-processor.lock"
 MAILTO="liambowen@gmail.com"
 WORKING_PATH="/github-contributions"
 PROCESSOR="/github-contributions/util/archive-processor"
-PYTHON="/github-contributions/venv/bin/python3"
+PYTHON="/srv/venv/bin/python3"
 
 export GHC_EVENTS_PATH="/github-archive/events"
 export GHC_TIMELINE_PATH="/github-archive/timeline"
