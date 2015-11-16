@@ -138,22 +138,20 @@ class MongoDBEventLoader(EventLoader):
         gzip_start_time = datetime.now()
         with gzip.open(events_file, 'rt') as source:
             records = (json.loads(r) for r in source)
-            unzip_time = (datetime.now() - gzip_start_time).total_seconds()
-            log.debug("unzipped {} records in {:.2f} seconds ({:.2f} r/s)".format(
-                len(records), unzip_time, len(records)/unzip_time
-            ))
-            log.info("loading {} records from {}".format(
+            log.info("loading records from {}".format(
                 len(records), events_file
             ))
-            if len(records) == 0:
+            if not bool(records):
                 log.error("will not bulk load empty file. look into this.")
                 return
             load_start_time = datetime.now()
+            count = 0
 
             while bool(records):
                 try:
                     # 1_000 at a time
-                    records_chunk = records[:1000]
+                    records_chunk = list(records[:1000])
+                    count += len(records_chunk)
                     self.db.contributions.insert(records_chunk,
                                                  continue_on_error=True)
                 except pymongo.errors.DuplicateKeyError as e:
