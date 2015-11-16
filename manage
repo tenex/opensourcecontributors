@@ -15,7 +15,25 @@ def _make_context():
 
 manager = Manager(app)
 manager.add_command('runserver', Server(host='0.0.0.0', use_debugger=True))
-manager.add_command('shell', Shell(make_context=_make_context))
+manager.add_command('shell', Shell(
+    make_context=_make_context,
+    use_ipython=True,
+    banner='GitHub Contributions Shell'
+))
+
+@manager.command
+def ensure_indexes():
+    """ ensure contributions are indexed
+    """
+    collection = mongo.db.contributions
+    print("indexing _event_id")
+    collection.create_index("_event_id",
+                            sparse=True,
+                            unique=True)
+    print("indexing _user_lower")
+    collection.create_index("_user_lower")
+    print("indexing created_at")
+    collection.create_index("created_at")
 
 if __name__=='__main__':
     manager.run()
