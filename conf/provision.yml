@@ -111,15 +111,10 @@
         - /github-archive/timeline
         - /github-archive/transformed
         - /github-contributions
+        - /var/log/uwsgi
 
     - name: fix permissions on /srv
-      file: path=/srv owner=ghc group=www-data
-
-    - name: uwsgi log directory and permission
-      file: path=/var/log/uwsgi
-            state=directory
-            owner=www-data
-            group=www-data
+      file: path=/srv owner=ghc group=ghc
 
 - name: install uwsgi configuration
   user: root
