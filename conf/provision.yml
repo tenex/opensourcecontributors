@@ -11,7 +11,7 @@
       apt: upgrade=dist update_cache=yes
 
     - name: create ghc user
-      user: name=ghc generate_ssh_key=yes
+      user: name=ghc generate_ssh_key=yes shell=/bin/bash
 
     - name: add mongodb key
       apt_key: keyserver=keyserver.ubuntu.com id=7F0CEB10
@@ -112,6 +112,9 @@
         - /github-archive/transformed
         - /github-contributions
 
+    - name: fix permissions on /srv
+      file: path=/srv owner=www-data group=www-data
+
 - name: install application
   user: ghc
   hosts: all
@@ -119,5 +122,4 @@
     - name: clone ghc repository
       git: repo=ssh://git@github.com/hut8/github-contributions.git
            dest=/github-contributions
-
-# TODO: Link configs
+           accept_hostkey=yes
