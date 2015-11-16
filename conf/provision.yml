@@ -36,6 +36,7 @@
         - jq
         - mc
         - mongodb-org
+        - nginx-extras
         - nodejs
         - ntp
         - pcregrep
@@ -79,7 +80,7 @@
   roles:
     - { role: kamaln7.swapfile, swapfile_use_dd: True, swapfile_size: 2048 }
 
-- name: make archive structure
+- name: make archive and application directory structures
   user: root
   hosts: all
   tasks:
@@ -92,3 +93,14 @@
         - /github-archive/logs
         - /github-archive/timeline
         - /github-archive/transformed
+        - /github-contributions
+
+- name: install application
+  user: ghc
+  hosts: all
+  tasks:
+    - name: clone ghc repository
+      git: repo=ssh://git@github.com/hut8/github-contributions.git
+           dest=/github-contributions
+
+# TODO: Link configs
