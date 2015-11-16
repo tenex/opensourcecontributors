@@ -113,17 +113,12 @@
         - /github-contributions
 
     - name: fix permissions on /srv
-      file: path=/srv owner=www-data group=www-data
+      file: path=/srv owner=ghc group=www-data
 
-- name: install application
-  user: ghc
+- name: install uwsgi configuration
+  user: root
   hosts: all
   tasks:
-    - name: clone ghc repository
-      git: repo=ssh://git@github.com/hut8/github-contributions.git
-           dest=/github-contributions
-           accept_hostkey=yes
-
     - name: make uwsgi config directory structure
       file: path={{ item }} state=directory owner=root group=root
       with_items:
