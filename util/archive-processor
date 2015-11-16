@@ -148,13 +148,12 @@ class MongoDBEventLoader(EventLoader):
             while bool(records):
                 try:
                     # 1_000 at a time
-                    records_chunk = list(records[:1000])
+                    records_chunk = list(itertools.islice(records, 1000))
                     count += len(records_chunk)
                     self.db.contributions.insert(records_chunk,
                                                  continue_on_error=True)
                 except pymongo.errors.DuplicateKeyError as e:
                     log.debug("tried to load duplicate key(s) ({})".format(e))
-                records = records[1000:]
 
             self._log_stats(len(records), load_start_time, True, events_file)
 
