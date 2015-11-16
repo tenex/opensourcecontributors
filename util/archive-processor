@@ -156,7 +156,7 @@ class MongoDBEventLoader(EventLoader):
                 except pymongo.errors.DuplicateKeyError as e:
                     log.debug("tried to load duplicate key(s) ({})".format(e))
 
-            self._log_stats(len(records), load_start_time, True, events_file)
+            self._log_stats(count, load_start_time, True, events_file)
 
 class GithubArchiveFetcher(object):
     """Retrieves needed .json.gz files from githubarchive.org
