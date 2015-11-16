@@ -123,3 +123,22 @@
       git: repo=ssh://git@github.com/hut8/github-contributions.git
            dest=/github-contributions
            accept_hostkey=yes
+
+    - name: make uwsgi config directory structure
+      file: path={{ item }} state=directory owner=root group=root
+      with_items:
+        - /etc/uwsgi
+        - /etc/uwsgi/vassals
+
+    - name: install uwsgi emperor configuration
+      template: src=emperor.ini
+                dest=/etc/uwsgi/emperor.ini
+
+    - name: install uwsgi upstart script
+      template: src=uwsgi.conf
+                dest=/etc/init/uwsgi.conf
+      notify: reload upstart
+
+  handlers:
+    - name: reload upstart
+      shell: initctl reload-configuration
