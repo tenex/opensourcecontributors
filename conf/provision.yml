@@ -137,3 +137,43 @@
   handlers:
     - name: reload upstart
       shell: initctl reload-configuration
+
+- name: deploy application
+  user: ghc
+  hosts: all
+  tasks:
+    - name: pull ghc repository
+      git: repo=ssh://git@github.com/hut8/github-contributions.git
+           dest=/github-contributions
+           accept_hostkey=yes
+
+    - name: identify release
+      command: git rev-parse --short HEAD
+      register: current_commit
+      args:
+        chdir: /github-contributions
+
+    - debug: msg="deploying ghc at {{ current_commit.stdout }}"
+
+    - name: install dependencies
+      pip: requirements=/github-contributions/requirements.txt
+           virtualenv=/srv/venv-{{ current_commit.stdout }}
+           virtualenv_command="virtualenv --python=/usr/bin/python3"
+           #virtualenv_python=/usr/bin/python3 FIXME with Ansible 2.0
+
+    - name: commit venv
+      file: path=/srv/venv
+            src=/srv/venv-{{ current_commit.stdout }}
+            state=link
+
+    - name: commit app
+      file: path=/srv/app
+            src=/github-contributions/app
+            state=link
+
+- name: set service states
+  user: root
+  hosts: all
+  tasks:
+    - name: ensure uwsgi is running
+      service: name=uwsgi state=started
