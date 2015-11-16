@@ -80,12 +80,29 @@
   roles:
     - { role: kamaln7.swapfile, swapfile_use_dd: True, swapfile_size: 2048 }
 
+- name: configure nginx
+  user: root
+  hosts: all
+  tasks:
+    - name: uninstall default site config
+      file: path=/etc/nginx/sites-enabled/default
+            state=absent
+
+    - name: install nginx.conf
+      template: src=github-contributions.nginx.conf
+                dest=/etc/nginx/sites-enabled/github-contributions.nginx.conf
+      notify: restart nginx
+
+  handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted
+
 - name: make archive and application directory structures
   user: root
   hosts: all
   tasks:
     - name: root archive
-      file: path={{ item }} state=directory owner=ghc
+      file: path={{ item }} state=directory owner=ghc group=ghc
       with_items:
         - /github-archive
         - /github-archive/events
