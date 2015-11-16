@@ -116,7 +116,7 @@ class EventLoader(object):
         """
         basename = os.path.basename(events_file)
         link_path = os.path.join(self.loaded_path, basename)
-        log.info("marking [{}] as loaded in [{}]".format(basename, link_path))
+        log.info("marking [{}] as loaded".format(basename))
         os.link(events_file, link_path)
 
 class MongoDBEventLoader(EventLoader):
