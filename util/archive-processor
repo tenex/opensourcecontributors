@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# coding: utf-8
+
 # -*-mode: python-*-
 from datetime import datetime, timezone, timedelta
 from pprint import pprint
@@ -135,9 +137,7 @@ class MongoDBEventLoader(EventLoader):
         log.info("going to load events from [{}]".format(events_file))
         gzip_start_time = datetime.now()
         with gzip.open(events_file, 'rt') as source:
-            records = [json.loads(r) for r in source]
-            log.debug("sorting records by _user_lower")
-            records.sort(key=lambda e: e['_user_lower'])
+            records = (json.loads(r) for r in source)
             unzip_time = (datetime.now() - gzip_start_time).total_seconds()
             log.debug("unzipped {} records in {:.2f} seconds ({:.2f} r/s)".format(
                 len(records), unzip_time, len(records)/unzip_time
@@ -149,10 +149,17 @@ class MongoDBEventLoader(EventLoader):
                 log.error("will not bulk load empty file. look into this.")
                 return
             load_start_time = datetime.now()
-            try:
-                self.db.contributions.insert(records, continue_on_error=True)
-            except pymongo.errors.DuplicateKeyError as e:
-                log.debug("tried to load duplicate key(s) ({})".format(e))
+
+            while bool(records):
+                try:
+                    # 1_000 at a time
+                    records_chunk = records[:1000]
+                    self.db.contributions.insert(records_chunk,
+                                                 continue_on_error=True)
+                except pymongo.errors.DuplicateKeyError as e:
+                    log.debug("tried to load duplicate key(s) ({})".format(e))
+                records = records[1000:]
+
             self._log_stats(len(records), load_start_time, True, events_file)
 
 class GithubArchiveFetcher(object):
