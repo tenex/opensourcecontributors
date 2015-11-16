@@ -115,6 +115,12 @@
     - name: fix permissions on /srv
       file: path=/srv owner=ghc group=www-data
 
+    - name: uwsgi log directory and permission
+      file: path=/var/log/uwsgi
+            state=directory
+            owner=www-data
+            group=www-data
+
 - name: install uwsgi configuration
   user: root
   hosts: all
@@ -128,6 +134,10 @@
     - name: install uwsgi emperor configuration
       template: src=emperor.ini
                 dest=/etc/uwsgi/emperor.ini
+
+    - name: install vassal for ghc
+      template: src=github-contributions.uwsgi.ini
+                dest=/etc/uwsgi/vassals/github-contributions.uwsgi.ini
 
     - name: install uwsgi upstart script
       template: src=uwsgi.conf
