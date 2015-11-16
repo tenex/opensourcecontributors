@@ -80,6 +80,25 @@
   roles:
     - { role: kamaln7.swapfile, swapfile_use_dd: True, swapfile_size: 2048 }
 
+- name: configure mongodb
+  user: root
+  hosts: all
+  tasks:
+    - name: configure data directory
+      file: path=/srv/db
+            state=directory
+            owner=mongodb
+            group=daemon
+
+    - name: install config file
+      copy: src=mongod.conf
+            dest=/etc/mongod.conf
+      notify: restart mongodb
+
+  handlers:
+    - name: restart mongodb
+      service: name=mongod state=restarted
+
 - name: configure nginx
   user: root
   hosts: all
