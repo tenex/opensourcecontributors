@@ -145,10 +145,11 @@ class MongoDBEventLoader(EventLoader):
             load_start_time = datetime.now()
             count = 0
 
-            while bool(records):
+            while True:
                 try:
                     # 1_000 at a time
                     records_chunk = list(itertools.islice(records, 1000))
+                    if not records_chunk: break
                     count += len(records_chunk)
                     self.db.contributions.insert(records_chunk,
                                                  continue_on_error=True)
