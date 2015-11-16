@@ -138,9 +138,7 @@ class MongoDBEventLoader(EventLoader):
         gzip_start_time = datetime.now()
         with gzip.open(events_file, 'rt') as source:
             records = (json.loads(r) for r in source)
-            log.info("loading records from {}".format(
-                len(records), events_file
-            ))
+            log.info("loading records from {}".format(events_file))
             if not bool(records):
                 log.error("will not bulk load empty file. look into this.")
                 return
