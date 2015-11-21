@@ -183,7 +183,6 @@
       pip: requirements=/github-contributions/requirements.txt
            virtualenv=/srv/venv-{{ current_commit.stdout }}
            virtualenv_command="virtualenv --python=/usr/bin/python3"
-           #virtualenv_python=/usr/bin/python3 FIXME with Ansible 2.0
 
     - name: commit venv
       file: path=/srv/venv
@@ -201,3 +200,13 @@
   tasks:
     - name: ensure uwsgi is running
       service: name=uwsgi state=started
+
+- name: install cron job
+  user: root
+  hosts: all
+  tasks:
+    - name: github archive processor cron job
+      cron: job=/github-contributions/conf/process-job
+            name=archive-processor
+            minute=5
+            user=ghc
