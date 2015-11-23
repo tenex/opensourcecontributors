@@ -582,7 +582,7 @@ class EventSource(object):
         log.debug("transforming file: {}".format(path))
         if self.notify_file_change:
             self.notify_file_change(path)
-        return gzip.open(path,'rt')
+        return gzip.open(path, 'rt', encoding='utf-8')
 
 class EventEventSource(EventSource):
     """
