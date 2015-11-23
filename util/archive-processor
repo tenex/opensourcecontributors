@@ -99,6 +99,7 @@ class EventLoader(object):
         verb = { False: "loading in progress", True: "loaded" }[done]
         from_str = ""
         if source_path: from_str = " from [{}]".format(source_path)
+        if duration == 0: duration = sys.float_info.min
         log.info("{}: {} records in {:.2f} seconds ({:.2f} r/s){}".format(
             verb, record_count, duration, record_count/duration, from_str
         ))
