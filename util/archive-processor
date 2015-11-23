@@ -165,6 +165,7 @@ class GithubArchiveFetcher(object):
 
     START = datetime(2015, 1, 1, 0)
     TIME_FMT = '%Y-%m-%d-%-H'
+    TIME_FMT_W32 = '%Y-%m-%d-%#H'
     BUFFER_SIZE = 1024 * 1024
     URL_TEMPLATE = "http://data.githubarchive.org/{}"
 
@@ -173,12 +174,18 @@ class GithubArchiveFetcher(object):
             raise RuntimeError('no events directory specified')
         self.events_directory = events_directory
 
+    def time_format(self, t):
+        time_fmt = self.TIME_FMT
+        if platform.system() == 'Windows':
+            time_fmt = self.TIME_FMT_W32
+        return t.strftime(time_fmt)
+
     def fetch(self):
         t = self.START
         # All the files should be in the GitHub Archive that are more than two hours old
         expect_files_until = datetime.utcnow() - timedelta(hours=2)
         while t <= datetime.utcnow():
-            filename = "{}.json.gz".format(t.strftime(self.TIME_FMT))
+            filename = "{}.json.gz".format(self.time_format(t))
             local_filename = os.path.join(self.events_directory, filename)
             log.debug("considering {}".format(local_filename))
             if not os.path.isfile(local_filename):
