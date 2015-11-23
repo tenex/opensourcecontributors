@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import os.path
+import platform
 import pymongo
 import re
 import requests
@@ -26,15 +27,15 @@ import urllib.parse
 
 __version__ = '0.3.0'
 
-LOCKFILE_PATH = "/tmp/archive-processor.lock"
+LOCKFILE_PATH = "archive-processor.lock"
+NODENAME = platform.uname().node
 
-invocation_id = "ghc-{}-{}.log".format(
-    os.uname().nodename,
+invocation_id = "ghc-{}-{}.log".format(NODENAME,
     datetime.now().strftime('%Y%m%d-%H%M%S'))
 
 # Setup logging
 def make_logger(file_dir='.'):
-    logger = logging.getLogger('processor[{}]'.format(os.uname().nodename))
+    logger = logging.getLogger('processor[{}]'.format(NODENAME))
     logging.Formatter.default_msec_format = '%s.%03d'
     log_formatter = logging.Formatter(
         fmt='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
