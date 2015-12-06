@@ -1,5 +1,15 @@
 (function() {
-    var app = angular.module('ghca', ['angularMoment', 'truncate', 'ui.bootstrap', 'ghcaServices']);
+    var app = angular.module('ghca', [
+        'angularMoment', 'truncate', 'ui.bootstrap', 'ghcaServices'
+    ]);
+
+    app.controller(
+        "StatisticsController",
+        ["$scope", "$log", "moment", "Statistic",
+         function($scope, $log, moment, Statistic) {
+         }
+        ]
+    );
 
     app.controller("UserController", ["$scope", "$log", "moment", "User", "Event",
         function($scope, $log, moment, User, Event) {
