@@ -4,7 +4,6 @@
 # -*-mode: python-*-
 from datetime import datetime, timezone, timedelta
 from pprint import pprint
-from termcolor import colored
 from requests.exceptions import HTTPError
 import argparse
 import csv
@@ -27,7 +26,6 @@ import urllib.parse
 
 __version__ = '0.3.0'
 
-LOCKFILE_PATH = "archive-processor.lock"
 NODENAME = platform.uname().node
 
 invocation_id = "ghc-{}-{}.log".format(NODENAME,
@@ -535,13 +533,11 @@ class EventTransformer(object):
             self.total_record_count += 1
 
         stats = self._make_stats()
-        log.info(colored("transforming: {} records in {:.2f} seconds ({:.2f} r/s): {}s {}i {}e".format(
-            *stats), 'green'))
-        log.info(colored("invalid records: {}".format(self.invalid_record_count),
-                      'yellow'))
-        log.info(colored("transformation errors: {}".format(self.transform_error_count),
-                      'red'))
-
+        stat_fmt = "transforming: {} records in {:.2f} s ({:.2f} r/s):"
+        stat_fmt += " {}s {}i {}e"
+        log.info(stat_fmt.format(*stats))
+        log.info("invalid records: {}".format(self.invalid_record_count))
+        log.info("transformation errors: {}".format(self.transform_error_count))
 
     def transform_event(self, raw_event, source_fmt):
         try:
@@ -557,10 +553,9 @@ class EventTransformer(object):
             except ValidationError as e:
                 # This is very bad.
                 msg = "{} ({}):\n\t{}\n\t{}".format(
-                    colored('Invalid Event', 'red', attrs=['bold']),
-                    colored(str(e), 'red'),
+                    'Invalid Event', str(e),
                     json.dumps(event.__dict__).strip(),
-                    json.dumps(raw_event).strip(),
+                    json.dumps(raw_event).strip()
                 )
                 log.error(msg)
                 self.transform_error_count += 1
@@ -704,6 +699,8 @@ if __name__=='__main__':
                         default=os.getenv('GHC_TRANSFORMED_PATH'))
     parser.add_argument('--loaded-path',
                         default=os.getenv('GHC_LOADED_PATH'))
+    parser.add_argument('--lock-file',
+                        default=os.getenv('GHC_LOCKFILE_PATH'))
 
     subparsers = parser.add_subparsers(dest='mode')
 
@@ -725,7 +722,7 @@ if __name__=='__main__':
         parser.print_help()
         sys.exit(1)
 
-    lock = filelock.FileLock(LOCKFILE_PATH)
+    lock = filelock.FileLock(args.lock_file)
     with lock:
         try:
             args.func(args)

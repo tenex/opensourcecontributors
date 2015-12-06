@@ -1,10 +1,10 @@
 #!/bin/bash
-LOCKFILE_PATH="/tmp/archive-processor.lock"
 MAILTO="liambowen@gmail.com"
 WORKING_PATH="/github-contributions"
 PROCESSOR="/github-contributions/util/archive-processor"
 PYTHON="/srv/venv/bin/python3"
 
+export GHC_LOCKFILE_PATH="/tmp/archive-processor.lock"
 export GHC_EVENTS_PATH="/github-archive/events"
 export GHC_TIMELINE_PATH="/github-archive/timeline"
 export GHC_TRANSFORMED_PATH="/github-archive/transformed"
@@ -14,11 +14,25 @@ export GHC_LOG_PATH="/github-archive/logs"
 echo "GHCA Archive Processor"
 /usr/bin/uptime
 
+# All loaded files should be hard links to files in
+# ${GHC_TRANSFORMED_PATH}. If they are not, it will cause
+# the archive processor to be unable to figure out what to load.
+LOADED_UNLINKED=$(find "${GHC_LOADED_PATH}" -type f -links 1)
+if [[ -n $LOADED_UNLINKED ]]
+then
+    ERR="files found in ${GHC_LOADED_PATH} which are orphaned:"
+    ERR="${ERR}\n${LOADED_UNLINKED}"
+    echo "${ERR}"
+    echo "${ERR}" | mail -s "GHC: ERROR: Orphaned loaded events!" "${MAILTO}"
+    exit 1
+fi
+
+
 # Don't even try to run multiple copies
 # If we do, they'll just get queued, but then we might have a lot of processes.
-if [[ -f "${LOCKFILE_PATH}" ]];
+if [[ -f "${GHC_LOCKFILE_PATH}" ]];
 then
-    echo "archive-processor already running (lockfile: ${LOCKFILE_PATH})"
+    echo "archive-processor already running (lockfile: ${GHC_LOCKFILE_PATH})"
     exit 1
 fi
 
@@ -26,3 +40,5 @@ fi
 cd "${WORKING_PATH}"
 
 ${PYTHON} ${PROCESSOR} 'process'
+
+/usr/bin/uptime
