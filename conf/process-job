@@ -14,6 +14,20 @@ export GHC_LOG_PATH="/github-archive/logs"
 echo "GHCA Archive Processor"
 /usr/bin/uptime
 
+# All loaded files should be hard links to files in
+# ${GHC_TRANSFORMED_PATH}. If they are not, it will cause
+# the archive processor to be unable to figure out what to load.
+LOADED_UNLINKED=$(find "${GHC_LOADED_PATH}" -type f -links 1)
+if [[ -n $LOADED_UNLINKED ]]
+then
+    ERR="files found in ${GHC_LOADED_PATH} which are orphaned:"
+    ERR="${ERR}\n${LOADED_UNLINKED}"
+    echo "${ERR}"
+    echo "${ERR}" | mail -s "GHC: ERROR: Orphaned loaded events!" "${MAILTO}"
+    exit 1
+fi
+
+
 # Don't even try to run multiple copies
 # If we do, they'll just get queued, but then we might have a lot of processes.
 if [[ -f "${GHC_LOCKFILE_PATH}" ]];
@@ -26,3 +40,5 @@ fi
 cd "${WORKING_PATH}"
 
 ${PYTHON} ${PROCESSOR} 'process'
+
+/usr/bin/uptime
