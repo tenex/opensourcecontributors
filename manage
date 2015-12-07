@@ -22,6 +22,27 @@ manager.add_command('shell', Shell(
 ))
 
 @manager.command
+def usernames():
+    """ generate list of distinct usernames from transformed data
+    """
+    import glob
+    import gzip
+    import json
+
+    users = set()
+    files = list(glob.glob(r'D:\\github-archive\\transformed\\*.json.gz'))
+    print("looking in", len(files), "files")
+    for ix, path in enumerate(files):
+        with gzip.open(path, 'rt', encoding='utf-8') as f:
+            events = (json.loads(line) for line in f)
+            users |= set((e.get('_user_lower') for e in events))
+        print(ix, "\t", len(files))
+    with open('users.txt', 'wt') as f:
+        f.writelines(list(users).sort())
+
+    print("there are", len(users), "users")
+
+@manager.command
 def ensure_indexes():
     """ ensure contributions are indexed
     """
