@@ -136,7 +136,7 @@ class MongoDBEventLoader(EventLoader):
         """
         log.info("going to load events from [{}]".format(events_file))
         gzip_start_time = datetime.now()
-        with gzip.open(events_file, 'rt') as source:
+        with gzip.open(events_file, 'rt', encoding='utf-8') as source:
             records = (json.loads(r) for r in source)
             log.info("loading records from {}".format(events_file))
             if not bool(records):
@@ -147,12 +147,13 @@ class MongoDBEventLoader(EventLoader):
 
             while True:
                 try:
-                    # 1_000 at a time
-                    records_chunk = list(itertools.islice(records, 1000))
+                    # 1_000 at a time breaks on Windows
+                    records_chunk = list(itertools.islice(records, 500))
                     if not records_chunk: break
                     count += len(records_chunk)
-                    self.db.contributions.insert(records_chunk,
-                                                 continue_on_error=True)
+                    self.db.contributions.insert(
+                        records_chunk, continue_on_error=True
+                    )
                 except pymongo.errors.DuplicateKeyError as e:
                     log.debug("tried to load duplicate key(s) ({})".format(e))
 
