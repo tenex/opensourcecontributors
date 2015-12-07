@@ -44,7 +44,7 @@ def make_logger(file_dir='.'):
     console_log_handler.setFormatter(log_formatter)
     logger.addHandler(file_log_handler)
     logger.addHandler(console_log_handler)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     return logger
 
 log = make_logger(os.getenv('GHC_LOG_PATH'))
