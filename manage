@@ -37,8 +37,12 @@ def usernames():
             events = (json.loads(line) for line in f)
             users |= set((e.get('_user_lower') for e in events))
         print(ix, "\t", len(files))
+
+    users = sorted(users)
+
     with open('users.txt', 'wt') as f:
-        f.writelines(list(users).sort())
+        for u in users:
+            print(u, file=f)
 
     print("there are", len(users), "users")
 
