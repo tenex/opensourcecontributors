@@ -44,7 +44,7 @@ def make_logger(file_dir='.'):
     console_log_handler.setFormatter(log_formatter)
     logger.addHandler(file_log_handler)
     logger.addHandler(console_log_handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     return logger
 
 log = make_logger(os.getenv('GHC_LOG_PATH'))
@@ -145,17 +145,13 @@ class MongoDBEventLoader(EventLoader):
             load_start_time = datetime.now()
             count = 0
 
-            while True:
-                try:
-                    # 1_000 at a time breaks on Windows
-                    records_chunk = list(itertools.islice(records, 500))
-                    if not records_chunk: break
-                    count += len(records_chunk)
-                    self.db.contributions.insert(
-                        records_chunk, continue_on_error=True
-                    )
-                except pymongo.errors.DuplicateKeyError as e:
-                    log.debug("tried to load duplicate key(s) ({})".format(e))
+            try:
+                ins_res = self.db.contributions.insert_many(
+                    records, ordered=False
+                )
+                count = len(ins_res.inserted_ids)
+            except pymongo.errors.BulkWriteError as e:
+                log.info("bulk write error:{0}".format(e))
 
             self._log_stats(count, load_start_time, True, events_file)
 
