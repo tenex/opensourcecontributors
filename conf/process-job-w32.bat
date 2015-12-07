@@ -21,4 +21,4 @@ IF EXIST %GHC_LOCKFILE_PATH% (
 
 CD %WORKING_PATH%
 
-python %PROCESSOR% process
+python -Wd %PROCESSOR% process
