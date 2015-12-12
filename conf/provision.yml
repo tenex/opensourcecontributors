@@ -167,12 +167,13 @@
   user: root
   hosts: all
   tasks:
+    - include_vars: secrets.yml
+
     - name: copy revaliases
       template: src=ssmtp-revaliases dest=/etc/ssmtp/revaliases
 
     - name: copy ssmtp.conf
       template: src=ssmtp.conf dest=/etc/ssmtp/ssmtp.conf mode=0600
-
 
 - name: deploy application
   user: ghc
@@ -221,4 +222,14 @@
       cron: job=/github-contributions/conf/process-job
             name=archive-processor
             minute=5
+            user=ghc
+
+- name: install monitor cron job
+  user: root
+  hosts: all
+  tasks:
+    - name: github archive archive processor monitor cron job
+      cron: job=/github-contributions/conf/server-monitor.sh
+            name=server-monitor
+            minute=55
             user=ghc
