@@ -47,6 +47,7 @@
         - python3-pip
         - rsync
         - silversearcher-ag
+        - ssmtp
         - tig
         - tmux
         - toilet
@@ -161,6 +162,17 @@
   handlers:
     - name: reload upstart
       shell: initctl reload-configuration
+
+- name: configure ssmtp
+  user: root
+  hosts: all
+  tasks:
+    - name: copy revaliases
+      template: src=ssmtp-revaliases dest=/etc/ssmtp/revaliases
+
+    - name: copy ssmtp.conf
+      template: src=ssmtp.conf dest=/etc/ssmtp/ssmtp.conf mode=0600
+
 
 - name: deploy application
   user: ghc
