@@ -5,11 +5,15 @@
 
     app.controller(
         "StatisticsController",
-        ["$scope", "$log", "moment", "Statistic",
-         function($scope, $log, moment, Statistic) {
-         }
-        ]
-    );
+        ["$scope", "$log", "moment", "Statistics",
+         function($scope, $log, moment, Statistics) {
+             $scope.stats = Statistics.get(
+                 {}, function(statsData) {
+                     $log.debug(JSON.stringify(statsData));
+                     $scope.retrieved = true;
+                 }
+             );
+         }]);
 
     app.controller("UserController", ["$scope", "$log", "moment", "User", "Event",
         function($scope, $log, moment, User, Event) {

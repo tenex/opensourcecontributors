@@ -272,10 +272,20 @@
       <div class="tetromino box4"></div>
     </div>
 
-    <footer class="footer">
-      <h3></h3>
-    </footer>
+    <nav class="navbar navbar-inverse navbar-fixed-bottom"
+         ng-controller="StatisticsController">
+      <div class="container" ng-show="retrieved">
+        <p class="navbar-text">
+          Tracking {{ stats.eventCount | number }} events
+        </p>
+        <p class="navbar-text navbar-right">
+            Latest GitHub event indexed was on
+            {{ stats.latestEvent | date : 'longDate' }} at
+            {{ stats.latestEvent | date : 'mediumTime' }}
+        </p>
 
+      </div>
+    </nav>
     <script type="text/javascript" src="http://l2.io/ip.js?var=clientAddr">
     </script>
     <script>
