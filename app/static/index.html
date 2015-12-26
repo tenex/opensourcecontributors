@@ -37,7 +37,11 @@
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <button type="button" class="navbar-toggle collapsed"
+                  data-toggle="collapse"
+                  data-target="#navbar"
+                  aria-expanded="false"
+                  aria-controls="navbar">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
@@ -48,8 +52,29 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="/">Home</a></li>
-            <li><a href="http://hut8.io">Hut8.io</a></li>
-            <li><a href="mailto:liambowen@gmail.com">Contact</a></li>
+            <li>
+              <a href="http://hut8.io">Hut8.io</a>
+            </li>
+            <li>
+              <a href="mailto:liambowen@gmail.com">Contact</a>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle"
+                 data-toggle="dropdown"
+                 role="button"
+                 aria-haspopup="true"
+                 aria-expanded="false">
+                Raw Data <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a href="/archive/events/">Events (2015-Now)</a>
+                </li>
+                <li>
+                  <a href="/archive/timeline">Timeline (2011-2014)</a>
+                </li>
+              </ul>
+            </li>
             <li>
               <a href="https://www.statuscake.com" title="Website Uptime Monitoring">
                 <img src="https://www.statuscake.com/App/button/index.php?Track=PW0ll86coj&Days=30&Design=6" />
