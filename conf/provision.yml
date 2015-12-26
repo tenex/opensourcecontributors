@@ -103,6 +103,8 @@
 - name: configure nginx
   user: root
   hosts: all
+  tags:
+    - deploy
   tasks:
     - name: uninstall default site config
       file: path=/etc/nginx/sites-enabled/default
@@ -120,6 +122,8 @@
 - name: make archive and application directory structures
   user: root
   hosts: all
+  tags:
+    - deploy
   tasks:
     - name: root archive
       file: path={{ item }} state=directory owner=ghc group=ghc
@@ -178,6 +182,8 @@
 - name: deploy application
   user: ghc
   hosts: all
+  tags:
+    - deploy
   tasks:
     - name: pull ghc repository
       git: repo=ssh://git@github.com/hut8/github-contributions.git
@@ -210,6 +216,8 @@
 - name: set service states
   user: root
   hosts: all
+  tags:
+    - deploy
   tasks:
     - name: ensure uwsgi is running
       service: name=uwsgi state=started
@@ -217,6 +225,8 @@
 - name: install cron job
   user: root
   hosts: all
+  tags:
+    - deploy
   tasks:
     - name: github archive processor cron job
       cron: job=/github-contributions/conf/process-job
@@ -227,6 +237,8 @@
 - name: install monitor cron job
   user: root
   hosts: all
+  tags:
+    - deploy
   tasks:
     - name: github archive archive processor monitor cron job
       cron: job=/github-contributions/conf/server-monitor.sh
