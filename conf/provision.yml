@@ -2,11 +2,10 @@
 - name: provision server
   hosts: all
   user: root
+  roles:
+    - { role: holms.fqdn, fqdn: "{{ inventory_hostname }}", hostname: "{{ inventory_hostname_short }}" }
 
   tasks:
-    - name: set hostname
-      hostname: name={{ hostname }}
-
     - name: update installed packages
       apt: upgrade=dist update_cache=yes
 
@@ -34,6 +33,7 @@
         - iftop
         - iotop
         - jq
+        - mailutils
         - mc
         - mongodb-org
         - nginx-extras
