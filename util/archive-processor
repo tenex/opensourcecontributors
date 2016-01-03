@@ -135,7 +135,6 @@ class MongoDBEventLoader(EventLoader):
         """Load a single events file into MongoDB
         """
         log.info("going to load events from [{}]".format(events_file))
-        gzip_start_time = datetime.now()
         with gzip.open(events_file, 'rt', encoding='utf-8') as source:
             records = (json.loads(r) for r in source)
             log.info("loading records from {}".format(events_file))
@@ -152,6 +151,8 @@ class MongoDBEventLoader(EventLoader):
                 count = len(ins_res.inserted_ids)
             except pymongo.errors.BulkWriteError as e:
                 log.info("bulk write error:{0}".format(e))
+            except pymongo.errors.InvalidOperation as e:
+                log.error("invalid operation error:{0}".format(e))
 
             self._log_stats(count, load_start_time, True, events_file)
 
