@@ -1,12 +1,29 @@
-html {
-    overflow: -moz-scrollbars-vertical;
-    overflow: scroll;
-    min-height: 100%;
-    position:relative;
+html
+{
+  overflow: -moz-scrollbars-vertical;
+  overflow: scroll;
+  min-height: 100%;
+  position:relative;
 }
 
-body {
-    margin-top:60px;
-    margin-bottom:60px;
-    padding-bottom: 70px;
+body
+{
+  margin-top:60px;
+  margin-bottom:60px;
+  padding-bottom: 70px;
+}
+
+.bsod
+{
+  font-family: 'VT323';
+  background-color: #0000aa;
+  color: #ffffff;
+  font-size: 1.2em;
+  padding: 20px;
+}
+
+.bsod-title
+{
+  background-color: #aaaaaa;
+  color: #0000aa;
 }
