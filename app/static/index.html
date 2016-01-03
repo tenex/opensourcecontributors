@@ -7,6 +7,7 @@
 
     <title>GitHub Contributions Archive</title>
 
+    <link href='https://fonts.googleapis.com/css?family=VT323' rel='stylesheet' type='text/css'>
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/css/bootstrap-theme.min.css" rel="stylesheet">
     <link href="/static/octicons/octicons.css" rel="stylesheet">
@@ -22,7 +23,7 @@
     <script type="text/javascript" src="/static/js/truncate.js"></script>
     <script type="text/javascript" src="/static/js/app.js"></script>
     <script type="text/javascript" src="/static/js/services.js"></script>
-    <script type="text/javascript" src="/static/js/ui-bootstrap-tpls-0.13.3.min.js"></script>
+    <script type="text/javascript" src="/static/js/ui-bootstrap-tpls-0.14.3.min.js"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -32,7 +33,6 @@
   </head>
 
   <body role="document" ng-controller="UserController">
-
     <!-- Fixed navbar -->
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container">
@@ -325,5 +325,22 @@
      });
     </script>
 
+    <script type="text/ng-template" id="bsod.html">
+      <div class="bsod">
+        <div style="text-align: center">
+          <span class="bsod-title">Windows</span>
+        </div>
+        <p>An error has occured. To continue:</p>
+        <p>Press Enter to return to Windows, or</p>
+        <p>Press CTRL_ALT_DEL to restart your computer. If you do this, you will lose any unsaved information in all open applications.</p>
+        <p>Error: {{ $root.errorDescription }}</p>
+        <div>Press any key to continue</div>
+        <div class="text-right">
+          <button class="btn-primary" type="button" ng-click="ok()">
+            Any Key
+          </button>
+        </div>
+      </div>
+    </script>
   </body>
 </html>

@@ -31,6 +31,18 @@ def stats():
     }
     return jsonify(**summary)
 
+@app.route('/error')
+def error():
+    time.sleep(3)
+    raise RuntimeError('Here is an error, as you requested.')
+
+@app.errorhandler(Exception)
+def runtime_error_handler(err):
+    err_data = {
+        'error': str(err)
+    }
+    return jsonify(err_data), 500
+
 @app.route('/user/<username>')
 def user(username):
     collection = mongo.db.contributions

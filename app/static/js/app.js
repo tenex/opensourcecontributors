@@ -1,7 +1,41 @@
 (function() {
     var app = angular.module('ghca', [
-        'angularMoment', 'truncate', 'ui.bootstrap', 'ghcaServices'
+        'ghcaServices',
+        'angularMoment',
+        'truncate',
+        'ui.bootstrap'
     ]);
+
+    app.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.interceptors.push(function($q, $rootScope, $log, $injector) {
+             return {
+                 'responseError': function(rejection) {
+                     $log.debug(rejection);
+                     $rootScope.errorDescription = rejection.data.error;
+                     $injector.get('$uibModal').open({
+                         templateUrl: 'bsod.html',
+                         controller: 'BsodInstanceCtrl',
+                         keyboard: true,
+                         windowClass: 'bsod',
+                         size: 'lg',
+                         resolve: {
+                             errorDescription: function() {
+                                 return rejection.data.error;
+                             }
+                         }
+                     });
+                     return $q.reject(rejection);
+                 }
+             };
+         });
+    }]);
+
+    app.controller('BsodInstanceCtrl', function($scope, $uibModalInstance, errorDescription) {
+        $scope.errorDescription = errorDescription;
+        $scope.ok = function() {
+            $uibModalInstance.close();
+        };
+    });
 
     app.controller(
         "StatisticsController",
@@ -9,14 +43,13 @@
          function($scope, $log, moment, Statistics) {
              $scope.stats = Statistics.get(
                  {}, function(statsData) {
-                     $log.debug(JSON.stringify(statsData));
                      $scope.retrieved = true;
                  }
              );
          }]);
 
-    app.controller("UserController", ["$scope", "$log", "moment", "User", "Event",
-        function($scope, $log, moment, User, Event) {
+    app.controller("UserController", ["$scope", "$rootScope", "$log", "moment", "User", "Event", function($scope, $rootScope, $log, moment, User, Event) {
+        $rootScope.errorDescription = '';
             $scope.eventPageSize = 50; // constant
 
             $scope.tabs = {
@@ -71,7 +104,6 @@
             };
 
             $scope.getGHEvents = function() {
-                // Cache :)
                 if ($scope.eventPages[$scope.currentEventPage]) {
                     $scope.events = $scope.eventPages[$scope.currentEventPage];
                     return;
