@@ -139,14 +139,14 @@
             <!-- Events result table -->
             <div ng-show="isCurrentTab(tabs.eventList)">
 
-              <pagination ng-model="currentEventPage"
+              <uib-pagination ng-model="currentEventPage"
                           total-items="eventCount"
                           ng-change="eventPageChanged()"
                           max-size="10" items-per-page="eventPageSize"
                           boundary-links="true"
                           previous-text="&lsaquo;" next-text="&rsaquo;"
                           first-text="&laquo;" last-text="&raquo;">
-              </pagination>
+              </uib-pagination>
 
               <div style="text-align:center" ng-show="loadingEvents">
                 <img src="/static/img/gps.svg" />
@@ -273,14 +273,14 @@
                 </tbody>
               </table>
 
-              <pagination ng-model="currentEventPage"
+              <uib-pagination ng-model="currentEventPage"
                           total-items="eventCount"
                           ng-change="eventPageChanged()"
                           max-size="10" items-per-page="eventPageSize"
                           boundary-links="true"
                           previous-text="&lsaquo;" next-text="&rsaquo;"
                           first-text="&laquo;" last-text="&raquo;">
-              </pagination>
+              </uib-pagination>
             </div>
 
           </div>
