@@ -141,20 +141,25 @@ class MongoDBEventLoader(EventLoader):
             if not bool(records):
                 log.error("will not bulk load empty file. look into this.")
                 return
-            load_start_time = datetime.now()
             count = 0
 
-            try:
-                ins_res = self.db.contributions.insert_many(
-                    records, ordered=False
-                )
-                count = len(ins_res.inserted_ids)
-            except pymongo.errors.BulkWriteError as e:
-                log.info("bulk write error:{0}".format(e))
-            except pymongo.errors.InvalidOperation as e:
-                log.error("invalid operation error:{0}".format(e))
-
-            self._log_stats(count, load_start_time, True, events_file)
+            while True:
+                records_chunk = [
+                    r for r in itertools.islice(records, 32768)
+                    if r is not None
+                ]
+                if not records_chunk: break
+                load_start_time = datetime.now()
+                try:
+                    ins_res = self.db.contributions.insert_many(
+                        records_chunk, ordered=False
+                    )
+                    count = len(ins_res.inserted_ids)
+                except pymongo.errors.BulkWriteError as e:
+                    log.info("bulk write error:{0}".format(e))
+                except pymongo.errors.InvalidOperation as e:
+                    log.error("invalid operation error:{0}".format(e))
+                self._log_stats(count, load_start_time, True, events_file)
 
 class GithubArchiveFetcher(object):
     """Retrieves needed .json.gz files from githubarchive.org
