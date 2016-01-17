@@ -70,7 +70,15 @@ func (c *GHCController) UserEvents(rw http.ResponseWriter, r *http.Request) {
 
 // UserSummary is a controller action for /user/{username}
 func (c *GHCController) UserSummary(rw http.ResponseWriter, r *http.Request) {
-	// TODO
+	username := mux.Vars(r)["username"]
+	summary, err := c.userSummary(username)
+	if err != nil {
+		panic(err) // TODO: Fix
+	}
+	err = serveJSON(rw, summary)
+	if err != nil {
+		panic(err) // TODO: Fix
+	}
 }
 
 // Stats is a controller action for /stats
