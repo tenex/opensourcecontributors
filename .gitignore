@@ -1,2 +1,3 @@
-*.pyc
-venv
+ghc-app/bindata.go
+ghc-app/ghc-app
+*.exe
