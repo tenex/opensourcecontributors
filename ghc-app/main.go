@@ -4,22 +4,24 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"math/rand"
 	"net/http"
+	"os"
 	"time"
 
-	"os"
-
+	log "github.com/Sirupsen/logrus"
 	"github.com/thoas/stats"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	logDest := os.Getenv("GHC_APP_LOG_PATH")
 	if logDest == "" {
 		logDest = "/var/log/ghc/ghc.log"
 	}
+	fmt.Printf("logging to %s\n", logDest)
 	log.SetOutput(&lumberjack.Logger{
 		Filename: logDest,
 		MaxSize:  100, // MB
@@ -28,17 +30,34 @@ func init() {
 
 func printStatsLoop(s *stats.Stats) {
 	for {
-		fmt.Printf("%v\n", s.Data())
+		fmt.Printf("%#v\n", s.Data())
 		time.Sleep(30 * time.Second)
 	}
 
 }
 
+func makeRequestID() string {
+	return fmt.Sprintf("%08X", rand.Uint32())
+}
+
 func logHandler(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Before")
+		rID := makeRequestID()
+		log.WithFields(log.Fields{
+			"requestID":  rID,
+			"referer":    r.Referer(),
+			"remoteAddr": r.RemoteAddr,
+			"url":        r.URL.String(),
+			"userAgent":  r.UserAgent(),
+			"method":     r.Method,
+		}).Info("request")
+		startTime := time.Now()
 		fn(w, r)
-		log.Println("After")
+		elapsedTime := time.Now().Sub(startTime).Seconds()
+		log.WithFields(log.Fields{
+			"requestID": rID,
+			"elapsed":   elapsedTime,
+		}).Info("response")
 	}
 }
 
