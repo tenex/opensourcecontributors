@@ -69,6 +69,21 @@
     - name: restart sshd
       service: name=ssh state=restarted
 
+- name: install go
+  hosts: all
+  user: root
+  tasks:
+    - name: download go binary distribution
+      get_url: >-
+        dest='/tmp'
+        url='https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz'
+
+    - name: extract tarball
+      unarchive: >-
+        src=/tmp/go1.5.2.linux-amd64.tar.gz
+        dest=/usr/local/
+        copy=no
+
 - name: install and configure mongodb
   user: root
   hosts: database
