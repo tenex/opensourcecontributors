@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"bytes"
+
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
 )
@@ -23,13 +25,34 @@ func NewGHCController(contributions *mgo.Collection) *GHCController {
 		userContributions: UserContributionsFactory(contributions),
 		userSummary:       UserSummaryFactory(contributions),
 		ghcStats:          GHCStatsFactory(contributions),
+		Router:            mux.NewRouter(),
 	}
-	router := mux.NewRouter()
-	router.Handle("/", controller)
-	router.HandleFunc("/user/{username}", controller.UserSummary)
-	router.HandleFunc("/user/{username}/events", controller.UserEvents)
-	router.HandleFunc("/stats", controller.Stats)
+	controller.HandleFunc("/", controller.serveRoot)
+
+	controller.PathPrefix("/static/").Handler(
+		http.StripPrefix("/static/",
+			http.HandlerFunc(controller.serveStatic)))
+	controller.HandleFunc("/user/{username}", controller.UserSummary)
+	controller.HandleFunc("/user/{username}/events", controller.UserEvents)
+	controller.HandleFunc("/stats", controller.Stats)
 	return controller
+}
+
+func (c *GHCController) serveRoot(rw http.ResponseWriter, _ *http.Request) {
+	content, _ := Asset("index.html")
+	rw.Write(content)
+}
+
+func (c *GHCController) serveStatic(rw http.ResponseWriter, r *http.Request) {
+	fi, err := AssetInfo(r.URL.Path)
+	if err != nil {
+		panic(err)
+	}
+	assetReader := bytes.NewReader(MustAsset(r.URL.Path))
+	http.ServeContent(rw, r,
+		fi.Name(),
+		fi.ModTime(),
+		assetReader)
 }
 
 // UserEvents is a controller action for /user/{username}/events
