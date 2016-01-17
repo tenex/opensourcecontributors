@@ -77,8 +77,27 @@ type GHCStatsFunc func() (*GHCStats, error)
 // to reteurn statistics about the project
 func GHCStatsFactory(c *mgo.Collection) GHCStatsFunc {
 	return func() (*GHCStats, error) {
-		// TODO: Implement
-		return &GHCStats{}, nil
+		ct, err := c.Count()
+		if err != nil {
+			return nil, err
+		}
+
+		var latestEvt bson.M
+		err = c.Find(nil).Sort("-created_at").One(&latestEvt)
+		if err != nil {
+			return nil, err
+		}
+		latestEvtTime, err := time.Parse(
+			time.RFC3339,
+			latestEvt["created_at"].(string))
+		latestEvtAge := int64(
+			time.Now().UTC().Sub(latestEvtTime).Seconds())
+
+		return &GHCStats{
+			EventCount:     ct,
+			LatestEvent:    latestEvtTime,
+			LatestEventAge: latestEvtAge,
+		}, nil
 	}
 
 }
