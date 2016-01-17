@@ -65,9 +65,9 @@ func UserSummaryFactory(c *mgo.Collection) UserSummaryFunc {
 
 // GHCStats describes statistics about the project's database
 type GHCStats struct {
-	EventCount     int64
-	LatestEvent    time.Time
-	LatestEventAge int
+	EventCount     int       `json:"eventCount"`
+	LatestEvent    time.Time `json:"latestEvent"`
+	LatestEventAge int64     `json:"latestEventAge"`
 }
 
 // GHCStatsFunc returns the latest statistics
