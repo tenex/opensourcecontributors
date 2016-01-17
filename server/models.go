@@ -9,22 +9,27 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+// PageSize set the size of the result set where applicable
+const PageSize = 50
+
 // UserContributionsFunc returns raw BSON records of a user's contributions
-type UserContributionsFunc func(string) ([]bson.M, error)
+type UserContributionsFunc func(string, int) ([]bson.M, error)
 
 // UserContributionsFactory returns a UserContributionsFunc that can be used
-// to retrieve a user's contributions given their username
+// to retrieve a user's contributions given their username and a zero-based skip
 func UserContributionsFactory(c *mgo.Collection) UserContributionsFunc {
-	return func(username string) ([]bson.M, error) {
+	return func(username string, skip int) ([]bson.M, error) {
 		username = strings.ToLower(username)
-		var maps []bson.M
-		err := c.Find(
-			bson.M{"_user_lower": username},
-		).All(&maps)
+
+		var events []bson.M
+		query := c.Find(bson.M{"_user_lower": username})
+		query = query.Sort("-created_at")
+		query = query.Skip(skip).Limit(PageSize)
+		err := query.All(&events)
 		if err != nil {
 			return nil, err
 		}
-		return maps, nil
+		return events, nil
 	}
 }
 
