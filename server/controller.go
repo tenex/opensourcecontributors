@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
-
-	"bytes"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // GHCController is the master controller for this application
@@ -33,7 +34,11 @@ func NewGHCController(contributions *mgo.Collection) *GHCController {
 		http.StripPrefix("/static/",
 			http.HandlerFunc(controller.serveStatic)))
 	controller.HandleFunc("/user/{username}", controller.UserSummary)
-	controller.HandleFunc("/user/{username}/events", controller.UserEvents)
+	controller.HandleFunc("/user/{username}/events",
+		controller.UserEvents)
+	controller.HandleFunc("/user/{username}/events/{page:[0-9]+}",
+		controller.UserEvents)
+
 	controller.HandleFunc("/stats", controller.Stats)
 	return controller
 }
@@ -55,14 +60,39 @@ func (c *GHCController) serveStatic(rw http.ResponseWriter, r *http.Request) {
 		assetReader)
 }
 
-// UserEvents is a controller action for /user/{username}/events
+// UserEventsPage includes <= PageSize number of events and metadata about
+// all of the events corresponding to the user
+type UserEventsPage struct {
+	Events      []bson.M `json:"events"`
+	Start       int      `json:"start"`
+	End         int      `json:"end"`
+	CurrentPage int      `json:"currentPage"`
+	PageCount   int      `json:"size"`
+}
+
+// UserEvents is a controller action for:
+// /user/{username}/events
+// /user/{username}/events/[page]
 func (c *GHCController) UserEvents(rw http.ResponseWriter, r *http.Request) {
-	username := mux.Vars(r)["username"]
-	contributionBSON, err := c.userContributions(username)
+	v := mux.Vars(r)
+	username := v["username"]
+	page, err := strconv.Atoi(v["page"])
+	if err != nil {
+		page = 1
+	}
+	skip := (page - 1) * PageSize
+	contributionBSON, err := c.userContributions(username, skip)
 	if err != nil {
 		panic(err) // TODO: Fix
 	}
-	err = serveJSON(rw, contributionBSON)
+	eventsPage := UserEventsPage{
+		Events:      contributionBSON,
+		Start:       skip,
+		End:         len(contributionBSON) + skip,
+		CurrentPage: page,
+		PageCount:   len(contributionBSON),
+	}
+	err = serveJSON(rw, eventsPage)
 	if err != nil {
 		panic(err) // TODO: Fix
 	}
