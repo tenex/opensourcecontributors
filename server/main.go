@@ -1,8 +1,7 @@
 package main
 
 import (
-	"net/http"
-
+	"github.com/codegangsta/negroni"
 	"gopkg.in/mgo.v2"
 )
 
@@ -14,6 +13,9 @@ func main() {
 	defer session.Close()
 	session.SetMode(mgo.Monotonic, true)
 	collection := session.DB("contributions").C("contributions")
+
 	controller := NewGHCController(collection)
-	http.ListenAndServe(":5000", controller)
+	n := negroni.Classic()
+	n.UseHandler(controller)
+	n.Run(":5000")
 }
