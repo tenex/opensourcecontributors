@@ -1,7 +1,10 @@
 package main
 
 import (
-	"github.com/codegangsta/negroni"
+	"net/http"
+	"os"
+
+	"github.com/gorilla/handlers"
 	"gopkg.in/mgo.v2"
 )
 
@@ -15,7 +18,7 @@ func main() {
 	collection := session.DB("contributions").C("contributions")
 
 	controller := NewGHCController(collection)
-	n := negroni.Classic()
-	n.UseHandler(controller)
-	n.Run(":5000")
+	loggedHandler := handlers.CombinedLoggingHandler(os.Stdout, controller)
+	recoveryHandler := handlers.RecoveryHandler()(loggedHandler)
+	http.ListenAndServe(":5000", recoveryHandler)
 }
