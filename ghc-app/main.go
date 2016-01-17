@@ -1,10 +1,14 @@
 package main
 
+//go:generate go-bindata -prefix static/ static/...
+
 import (
 	"fmt"
 	"log"
 	"net/http"
 	"time"
+
+	"os"
 
 	"github.com/thoas/stats"
 	"gopkg.in/mgo.v2"
@@ -12,8 +16,12 @@ import (
 )
 
 func init() {
+	logDest := os.Getenv("GHC_APP_LOG_PATH")
+	if logDest == "" {
+		logDest = "/var/log/ghc/ghc.log"
+	}
 	log.SetOutput(&lumberjack.Logger{
-		Filename: "/var/log/ghc/ghc.log",
+		Filename: logDest,
 		MaxSize:  100, // MB
 	})
 }
