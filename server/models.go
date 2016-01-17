@@ -1,8 +1,8 @@
 package main
 
 import (
+	"sort"
 	"strings"
-
 	"time"
 
 	"gopkg.in/mgo.v2"
@@ -34,9 +34,9 @@ func UserContributionsFactory(c *mgo.Collection) UserContributionsFunc {
 
 // UserSummary describes a brief summary of a user's contributions
 type UserSummary struct {
-	Username          string
-	Repositories      []string
-	ContributionCount int
+	Username     string   `json:"username"`
+	Repositories []string `json:"repos"`
+	EventCount   int      `json:"eventCount"`
 }
 
 // UserSummaryFunc returns an instance of UserSummary
@@ -48,13 +48,24 @@ type UserSummaryFunc func(string) (*UserSummary, error)
 func UserSummaryFactory(c *mgo.Collection) UserSummaryFunc {
 	return func(username string) (*UserSummary, error) {
 		username = strings.ToLower(username)
-		// summary = {
-		// 	"username": username,
-		// 	"eventCount": event_count,
-		// 	"repos": repos,
-		// }
+		query := c.Find(bson.M{"_user_lower": username})
+
+		repoList := []string{}
+		err := query.Distinct("repo", &repoList)
+		if err != nil {
+			return nil, err
+		}
+		sort.Strings(repoList)
+
+		ct, err := query.Count()
+		if err != nil {
+			return nil, err
+		}
+
 		return &UserSummary{
-			Username: username,
+			Username:     username,
+			Repositories: repoList,
+			EventCount:   ct,
 		}, nil
 	}
 }
