@@ -10,7 +10,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/thoas/stats"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -28,20 +27,12 @@ func init() {
 	})
 }
 
-func printStatsLoop(s *stats.Stats) {
-	for {
-		fmt.Printf("%#v\n", s.Data())
-		time.Sleep(30 * time.Second)
-	}
-
-}
-
 func makeRequestID() string {
 	return fmt.Sprintf("%08X", rand.Uint32())
 }
 
-func logHandler(fn http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func logHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rID := makeRequestID()
 		log.WithFields(log.Fields{
 			"requestID":  rID,
@@ -52,13 +43,13 @@ func logHandler(fn http.HandlerFunc) http.HandlerFunc {
 			"method":     r.Method,
 		}).Info("request")
 		startTime := time.Now()
-		fn(w, r)
+		h.ServeHTTP(w, r)
 		elapsedTime := time.Now().Sub(startTime).Seconds()
 		log.WithFields(log.Fields{
 			"requestID": rID,
 			"elapsed":   elapsedTime,
 		}).Info("response")
-	}
+	})
 }
 
 func main() {
@@ -71,9 +62,6 @@ func main() {
 	collection := session.DB("contributions").C("contributions")
 	controller := NewGHCController(collection)
 
-	s := stats.New()
-	go printStatsLoop(s)
 	http.ListenAndServe(":5000",
-		logHandler(
-			s.Handler(controller).ServeHTTP))
+		logHandler(controller))
 }
