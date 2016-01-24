@@ -3,20 +3,18 @@
   hosts: all
   user: root
   roles:
-    - { role: holms.fqdn, fqdn: "{{ inventory_hostname }}", hostname: "{{ inventory_hostname_short }}" }
-
+    - role: holms.fqdn
+      fqdn: "{{ inventory_hostname }}"
+      hostname: "{{ inventory_hostname_short }}"
+    - role: kamaln7.swapfile
+      swapfile_use_dd: True
+      swapfile_size: 2048
   tasks:
     - name: update installed packages
       apt: upgrade=dist update_cache=yes
 
     - name: create ghc user
       user: name=ghc generate_ssh_key=yes shell=/bin/bash
-
-    - name: add mongodb key
-      apt_key: keyserver=keyserver.ubuntu.com id=7F0CEB10
-
-    - name: add mongodb repo
-      apt_repository: repo='deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.0 multiverse' state=present
 
     - name: install server base packages
       apt: name={{ item }} state=latest update_cache=yes
@@ -35,7 +33,7 @@
         - jq
         - mailutils
         - mc
-        - mongodb-org
+        - ncdu
         - nginx-extras
         - nodejs
         - ntp
