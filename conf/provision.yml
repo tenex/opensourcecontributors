@@ -183,7 +183,7 @@
 
 - name: configure ssmtp
   user: root
-  hosts: all
+  hosts: github-contributions
   tasks:
     - include_vars: secrets.yml
 
@@ -195,7 +195,7 @@
 
 - name: deploy application
   user: ghc
-  hosts: all
+  hosts: github-contributions
   tags:
     - deploy
   tasks:
@@ -229,7 +229,7 @@
 
 - name: set service states
   user: root
-  hosts: all
+  hosts: web
   tags:
     - deploy
   tasks:
@@ -238,7 +238,7 @@
 
 - name: install cron job
   user: root
-  hosts: all
+  hosts: database
   tags:
     - deploy
   tasks:
@@ -250,7 +250,7 @@
 
 - name: install monitor cron job
   user: root
-  hosts: all
+  hosts: database
   tags:
     - deploy
   tasks:
