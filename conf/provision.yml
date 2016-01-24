@@ -122,13 +122,11 @@
     - name: restart nginx
       service: name=nginx state=restarted
 
-- name: make archive and application directory structures
+- name: make archive directory structures
   user: root
-  hosts: all
-  tags:
-    - deploy
+  hosts: database
   tasks:
-    - name: root archive
+    - name: archive directories
       file: path={{ item }} state=directory owner=ghc group=ghc
       with_items:
         - /github-archive
@@ -137,16 +135,29 @@
         - /github-archive/logs
         - /github-archive/timeline
         - /github-archive/transformed
+
+- name: make common directory structures
+  user: root
+  hosts: github-contributions
+  tags:
+    - deploy
+  tasks:
+    - name: archive directories
+      file: path={{ item }} state=directory owner=ghc group=ghc
+      with_items:
         - /github-contributions
-        - /var/log/uwsgi
+        - /srv
 
     - name: fix permissions on /srv
-      file: path=/srv owner=ghc group=ghc
+      file: path=/srv state=directory owner=ghc group=ghc
 
 - name: install uwsgi configuration
   user: root
-  hosts: all
+  hosts: web
   tasks:
+    - name: uwsgi logs path
+      file: path=/var/log/uwsgi state=directory owner=ghc group=ghc
+
     - name: make uwsgi config directory structure
       file: path={{ item }} state=directory owner=root group=root
       with_items:
