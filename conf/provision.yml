@@ -73,16 +73,19 @@
     - name: restart sshd
       service: name=ssh state=restarted
 
-- name: make swapfile
+- name: install and configure mongodb
   user: root
-  hosts: all
-  roles:
-    - { role: kamaln7.swapfile, swapfile_use_dd: True, swapfile_size: 2048 }
-
-- name: configure mongodb
-  user: root
-  hosts: all
+  hosts: database
   tasks:
+    - name: add mongodb key
+      apt_key: keyserver=keyserver.ubuntu.com id=7F0CEB10
+
+    - name: add mongodb repo
+      apt_repository: repo='deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.0 multiverse' state=present
+
+    - name: install mongodb
+      apt: name=mongodb-org state=latest update_cache=yes
+
     - name: configure data directory
       file: path=/srv/db
             state=directory
