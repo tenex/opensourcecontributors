@@ -3,9 +3,6 @@
   hosts: all
   user: root
   roles:
-    - role: holms.fqdn
-      fqdn: "{{ inventory_hostname }}"
-      hostname: "{{ inventory_hostname_short }}"
     - role: kamaln7.swapfile
       swapfile_use_dd: True
       swapfile_size: 2048
