@@ -34,7 +34,6 @@
         - mailutils
         - mc
         - ncdu
-        - nginx-extras
         - nodejs
         - ntp
         - pcregrep
@@ -101,12 +100,15 @@
     - name: restart mongodb
       service: name=mongod state=restarted
 
-- name: configure nginx
+- name: install and configure nginx
   user: root
-  hosts: all
+  hosts: web
   tags:
     - deploy
   tasks:
+    - name: install nginx
+      apt: name=nginx-extras state=latest update_cache=yes
+
     - name: uninstall default site config
       file: path=/etc/nginx/sites-enabled/default
             state=absent
