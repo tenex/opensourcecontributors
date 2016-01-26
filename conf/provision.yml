@@ -197,7 +197,7 @@
     - deploy
   tasks:
     - name: pull ghc repository
-      git: repo=ssh://git@github.com/hut8/github-contributions.git
+      git: repo=ssh://git@github.com/tenex/github-contributions.git
            dest=/github-contributions
            accept_hostkey=yes
 
