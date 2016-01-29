@@ -1,7 +1,7 @@
 #!/bin/bash
 HOST="http://githubcontributions.io/stats"
-MAX_AGE="7300" # seconds
-SCAPEGOAT="liambowen@gmail.com"
+MAX_AGE="7500" # seconds
+SCAPEGOAT="engineers@tenex.tech"
 
 function notify_failure()
 {
