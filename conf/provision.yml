@@ -188,7 +188,7 @@
       template: src=ssmtp-revaliases dest=/etc/ssmtp/revaliases
 
     - name: copy ssmtp.conf
-      template: src=ssmtp.conf dest=/etc/ssmtp/ssmtp.conf mode=0600
+      template: src=ssmtp.conf dest=/etc/ssmtp/ssmtp.conf mode=0644
 
 - name: deploy application
   user: ghc
