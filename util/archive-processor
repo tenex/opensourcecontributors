@@ -183,9 +183,7 @@ class GithubArchiveFetcher(object):
         return t.strftime(time_fmt)
 
     def is_known_missing(self, t):
-        if (t.year, t.month, t.day) == (2016, 1, 28):
-            if t.hour in range(1, 3): return True
-        return False
+        return (t.year, t.month, t.day, t.hour) == (2016, 1, 28, 1)
 
     def fetch(self):
         t = self.START
