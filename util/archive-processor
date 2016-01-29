@@ -195,8 +195,7 @@ class GithubArchiveFetcher(object):
             filename = "{}.json.gz".format(self.time_format(t))
             local_filename = os.path.join(self.events_directory, filename)
             log.debug("considering {}".format(local_filename))
-            if not os.path.isfile(local_filename):
-                if self.is_known_missing(t): continue
+            if not os.path.isfile(local_filename) and not self.is_known_missing(t):
                 try:
                     sz = self.fetch_file(filename, local_filename)
                     if sz: log.info('{}: got {:.2f} MB'.format(filename, sz/(1024*1024)))
