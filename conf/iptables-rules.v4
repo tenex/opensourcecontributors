@@ -1,0 +1,14 @@
+*filter
+:INPUT ACCEPT [100:6731]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [125:46180]
+:LOG_DROP - [0:0]
+-A INPUT -i lo -j ACCEPT
+-A INPUT -s 104.236.86.218/32 -p tcp -m tcp --dport 27017 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A INPUT -s 127.0.0.1/32 -p tcp -m tcp --dport 27017 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A INPUT -s 162.243.11.137/32 -p tcp -m tcp --dport 27017 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A INPUT -s 104.238.128.74/32 -p tcp -m tcp --dport 27017 -m state --state NEW,ESTABLISHED -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 27017 -m state --state NEW,ESTABLISHED -j LOG_DROP
+-A LOG_DROP -j LOG --log-prefix "iptables:input:drop " --log-level 7
+-A LOG_DROP -j REJECT --reject-with icmp-port-unreachable
+COMMIT

@@ -27,9 +27,11 @@
         - htop
         - iftop
         - iotop
+        - iptables-persistent
         - jq
         - mailutils
         - mc
+        - mongodb-clients
         - ncdu
         - nodejs
         - ntp
@@ -96,6 +98,22 @@
   handlers:
     - name: restart mongodb
       service: name=mongod state=restarted
+
+- name: configure firewall for whitelist to mongodb access
+  user: root
+  hosts: database
+  tags:
+    - firewall
+  tasks:
+    - name: install iptables rules
+      copy: src=iptables-rules.v4
+            dest=/etc/iptables/rules.v4
+      notify: reload iptables
+
+  handlers:
+    - name: reload iptables
+      service: name=iptables-persistent state=reloaded
+
 
 - name: install and configure nginx
   user: root
