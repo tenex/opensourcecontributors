@@ -69,6 +69,21 @@
     - name: restart sshd
       service: name=ssh state=restarted
 
+- name: install go
+  hosts: all
+  user: root
+  tasks:
+    - name: download go binary distribution
+      get_url: >-
+        dest='/tmp'
+        url='https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz'
+
+    - name: extract tarball
+      unarchive: >-
+        src=/tmp/go1.5.2.linux-amd64.tar.gz
+        dest=/usr/local/
+        copy=no
+
 - name: install and configure mongodb
   user: root
   hosts: database
@@ -148,30 +163,13 @@
     - name: fix permissions on /srv
       file: path=/srv state=directory owner=ghc group=ghc
 
-- name: install uwsgi configuration
+- name: install ghc server configuration
   user: root
   hosts: web
   tasks:
-    - name: uwsgi logs path
-      file: path=/var/log/uwsgi state=directory owner=ghc group=ghc
-
-    - name: make uwsgi config directory structure
-      file: path={{ item }} state=directory owner=root group=root
-      with_items:
-        - /etc/uwsgi
-        - /etc/uwsgi/vassals
-
-    - name: install uwsgi emperor configuration
-      template: src=emperor.ini
-                dest=/etc/uwsgi/emperor.ini
-
-    - name: install vassal for ghc
-      template: src=github-contributions.uwsgi.ini
-                dest=/etc/uwsgi/vassals/github-contributions.uwsgi.ini
-
-    - name: install uwsgi upstart script
-      template: src=uwsgi.conf
-                dest=/etc/init/uwsgi.conf
+    - name: install ghc upstart script
+      template: src=github-contributions.conf
+                dest=/etc/init/github-contributions.conf
       notify: reload upstart
 
   handlers:
