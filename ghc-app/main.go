@@ -20,11 +20,11 @@ func init() {
 	if logDest == "" {
 		logDest = "/var/log/ghc/ghc.log"
 	}
-	fmt.Printf("logging to %s\n", logDest)
 	log.SetOutput(&lumberjack.Logger{
 		Filename: logDest,
 		MaxSize:  100, // MB
 	})
+	log.SetFormatter(&log.JSONFormatter{})
 }
 
 func makeRequestID() string {
