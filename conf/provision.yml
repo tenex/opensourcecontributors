@@ -196,7 +196,7 @@
   tags:
     - deploy
   vars:
-    git_branch: "{{ GIT_BRANCH|default(master) }}"
+    git_branch: master
   tasks:
     - name: pull ghc repository
       git: repo=ssh://git@github.com/tenex/github-contributions.git
