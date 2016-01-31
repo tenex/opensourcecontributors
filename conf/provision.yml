@@ -8,13 +8,13 @@
       swapfile_size: 2048
   tasks:
     - name: update installed packages
-      apt: upgrade=dist update_cache=yes
+      apt: upgrade=dist update_cache=yes cache_valid_time=3600
 
     - name: create ghc user
       user: name=ghc generate_ssh_key=yes shell=/bin/bash
 
     - name: install server base packages
-      apt: name={{ item }} state=latest update_cache=yes
+      apt: name={{ item }} state=latest update_cache=yes cache_valid_time=3600
       with_items:
         - apt-file
         - apticron
@@ -68,6 +68,22 @@
   handlers:
     - name: restart sshd
       service: name=ssh state=restarted
+
+- name: install go
+  hosts: all
+  user: root
+  tasks:
+    - name: set go version
+      set_fact: go_version="1.5.2.linux-amd64"
+
+    - name: download go binary distribution
+      get_url: dest=/tmp
+               url="https://storage.googleapis.com/golang/go{{go_version}}.tar.gz"
+
+    - name: extract tarball
+      unarchive: src="/tmp/go{{go_version}}.tar.gz"
+                 dest=/usr/local/
+                 copy=no
 
 - name: install and configure mongodb
   user: root
@@ -144,34 +160,18 @@
       with_items:
         - /github-contributions
         - /srv
+        - /srv/bin
+        - /home/ghc/go
+        - /home/ghc/go/src
+        - /var/log/ghc
 
-    - name: fix permissions on /srv
-      file: path=/srv state=directory owner=ghc group=ghc
-
-- name: install uwsgi configuration
+- name: install ghc server configuration
   user: root
   hosts: web
   tasks:
-    - name: uwsgi logs path
-      file: path=/var/log/uwsgi state=directory owner=ghc group=ghc
-
-    - name: make uwsgi config directory structure
-      file: path={{ item }} state=directory owner=root group=root
-      with_items:
-        - /etc/uwsgi
-        - /etc/uwsgi/vassals
-
-    - name: install uwsgi emperor configuration
-      template: src=emperor.ini
-                dest=/etc/uwsgi/emperor.ini
-
-    - name: install vassal for ghc
-      template: src=github-contributions.uwsgi.ini
-                dest=/etc/uwsgi/vassals/github-contributions.uwsgi.ini
-
-    - name: install uwsgi upstart script
-      template: src=uwsgi.conf
-                dest=/etc/init/uwsgi.conf
+    - name: install ghc upstart script
+      template: src=github-contributions.conf
+                dest=/etc/init/github-contributions.conf
       notify: reload upstart
 
   handlers:
@@ -190,16 +190,19 @@
     - name: copy ssmtp.conf
       template: src=ssmtp.conf dest=/etc/ssmtp/ssmtp.conf mode=0644
 
-- name: deploy application
+- name: build and deploy app and archive-processor
   user: ghc
   hosts: github-contributions
   tags:
     - deploy
+  vars:
+    git_branch: "{{ GIT_BRANCH|default(master) }}"
   tasks:
     - name: pull ghc repository
       git: repo=ssh://git@github.com/tenex/github-contributions.git
            dest=/github-contributions
            accept_hostkey=yes
+           version="{{ git_branch }}"
 
     - name: identify release
       command: git rev-parse --short HEAD
@@ -209,20 +212,28 @@
 
     - debug: msg="deploying ghc at {{ current_commit.stdout }}"
 
-    - name: install dependencies
+    - name: install python dependencies
       pip: requirements=/github-contributions/requirements.txt
            virtualenv=/srv/venv-{{ current_commit.stdout }}
            virtualenv_command="virtualenv --python=/usr/bin/python3"
 
-    - name: commit venv
+    - name: commit python venv
       file: path=/srv/venv
             src=/srv/venv-{{ current_commit.stdout }}
             state=link
 
-    - name: commit app
+    - name: commit archive-processor
       file: path=/srv/app
             src=/github-contributions/app
             state=link
+
+    - name: gopath trick
+      file: path=/home/ghc/go/src/ghc-app
+            src=/github-contributions/ghc-app
+            state=link
+
+    - name: build ghc-app
+      script: build-ghc-app.sh
 
 - name: set service states
   user: root
@@ -230,8 +241,8 @@
   tags:
     - deploy
   tasks:
-    - name: ensure uwsgi is running
-      service: name=uwsgi state=started
+    - name: ensure server is running
+      service: name=github-contributions state=started
 
 - name: install cron job
   user: root
