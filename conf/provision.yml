@@ -242,7 +242,7 @@
     - deploy
   tasks:
     - name: ensure server is running
-      service: name=github-contributions state=started
+      service: name=github-contributions state=restarted
 
 - name: install cron job
   user: root
