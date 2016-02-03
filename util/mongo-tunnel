@@ -1,5 +1,5 @@
 #!/bin/bash
-SERVER="githubcontributions.io"
+SERVER="ibm704.githubcontributions.io"
 PORT="27017"
 echo "Tunneling to production MongoDB"
 ssh -N -v "-L${PORT}:localhost:${PORT}" "${SERVER}"
