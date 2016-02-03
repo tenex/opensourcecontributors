@@ -24,6 +24,8 @@ type Digest struct {
 	Date  time.Time `json:"date"`
 }
 
+// DigestFile will return a valid Digest instance based on a file,
+// using a cached digest if available
 func DigestFile(eventFilePath string) (*Digest, error) {
 	digestFilePath := fmt.Sprintf("%v.digest.json", eventFilePath)
 	df, err := os.OpenFile(digestFilePath,
@@ -105,6 +107,23 @@ func makePath(basename string) string {
 		basename)
 }
 
+func makeSummary(digests DigestSlice) {
+	digests = DigestSlice(digests).SortBy(func(x, y *Digest) bool {
+		return x.Date.Unix() < y.Date.Unix()
+	})
+
+	digestSummary, err := os.Create(
+		makePath("summary.json"))
+	if err != nil {
+		panic(err)
+	}
+
+	err = json.NewEncoder(digestSummary).Encode(digests)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
 	eventFiles, err := filepath.Glob(
 		makePath("*.json.gz"))
@@ -124,18 +143,5 @@ func main() {
 		digests = append(digests, d)
 	}
 
-	digests = DigestSlice(digests).SortBy(func(x, y *Digest) bool {
-		return x.Date.Unix() < y.Date.Unix()
-	})
-
-	digestSummary, err := os.Create(
-		makePath("summary.json"))
-	if err != nil {
-		panic(err)
-	}
-
-	err = json.NewEncoder(digestSummary).Encode(digests)
-	if err != nil {
-		panic(err)
-	}
+	makeSummary(digests)
 }
