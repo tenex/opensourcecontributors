@@ -42,9 +42,12 @@ func logHandler(h http.Handler) http.Handler {
 			"userAgent":  r.UserAgent(),
 			"method":     r.Method,
 		}).Info("request")
+		w.Header().Add("X-GHC-Request-ID", rID)
+
 		startTime := time.Now()
 		h.ServeHTTP(w, r)
 		elapsedTime := time.Now().Sub(startTime).Seconds()
+
 		log.WithFields(log.Fields{
 			"requestID": rID,
 			"elapsed":   elapsedTime,
@@ -64,6 +67,15 @@ func recoverHandler(h http.Handler) http.Handler {
 	})
 }
 
+func mainHandler(globalSession *mgo.Session) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		session := globalSession.Copy()
+		defer session.Close()
+		collection := session.DB("contributions").C("contributions")
+		NewGHCController(collection).ServeHTTP(rw, r)
+	})
+}
+
 func main() {
 	session, err := mgo.Dial("localhost")
 	if err != nil {
@@ -71,8 +83,7 @@ func main() {
 	}
 	defer session.Close()
 	session.SetMode(mgo.Monotonic, true)
-	collection := session.DB("contributions").C("contributions")
-	controller := NewGHCController(collection)
 
-	http.ListenAndServe(":5000", logHandler(recoverHandler(controller)))
+	handler := logHandler(recoverHandler(mainHandler(session)))
+	http.ListenAndServe(":5000", handler)
 }
