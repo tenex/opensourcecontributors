@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"errors"
+
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -33,13 +35,16 @@ func NewGHCController(contributions *mgo.Collection) *GHCController {
 	controller.PathPrefix("/static/").Handler(
 		http.StripPrefix("/static/",
 			http.HandlerFunc(controller.serveStatic)))
-	controller.HandleFunc("/user/{username}", controller.UserSummary)
+	controller.HandleFunc("/user/{username}",
+		controller.UserSummary)
 	controller.HandleFunc("/user/{username}/events",
 		controller.UserEvents)
 	controller.HandleFunc("/user/{username}/events/{page:[0-9]+}",
 		controller.UserEvents)
-
-	controller.HandleFunc("/stats", controller.Stats)
+	controller.HandleFunc("/stats",
+		controller.Stats)
+	controller.HandleFunc("/error",
+		controller.Error)
 	return controller
 }
 
@@ -58,6 +63,10 @@ func (c *GHCController) serveStatic(rw http.ResponseWriter, r *http.Request) {
 		fi.Name(),
 		fi.ModTime(),
 		assetReader)
+}
+
+func (c *GHCController) Error(_ http.ResponseWriter, _ *http.Request) {
+	panic(errors.New("error successful"))
 }
 
 // UserEventsPage includes <= PageSize number of events and metadata about

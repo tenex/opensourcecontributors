@@ -52,6 +52,18 @@ func logHandler(h http.Handler) http.Handler {
 	})
 }
 
+func recoverHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.WithField("error", err).Error("panic")
+				http.Error(rw, fmt.Sprintf("%#v", err), 500)
+			}
+		}()
+		h.ServeHTTP(rw, r)
+	})
+}
+
 func main() {
 	session, err := mgo.Dial("localhost")
 	if err != nil {
@@ -62,6 +74,5 @@ func main() {
 	collection := session.DB("contributions").C("contributions")
 	controller := NewGHCController(collection)
 
-	http.ListenAndServe(":5000",
-		logHandler(controller))
+	http.ListenAndServe(":5000", logHandler(recoverHandler(controller)))
 }
