@@ -168,6 +168,8 @@
 - name: install ghc server configuration
   user: root
   hosts: web
+  tags:
+    - deploy
   tasks:
     - name: install ghc upstart script
       template: src=github-contributions.conf
