@@ -3,10 +3,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"net/http"
-	"strconv"
-
 	"errors"
+	"io"
+	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2"
@@ -45,6 +46,8 @@ func NewGHCController(contributions *mgo.Collection) *GHCController {
 		controller.Stats)
 	controller.HandleFunc("/error",
 		controller.Error)
+	controller.HandleFunc("/aggregates",
+		controller.Aggregates)
 	return controller
 }
 
@@ -67,6 +70,16 @@ func (c *GHCController) serveStatic(rw http.ResponseWriter, r *http.Request) {
 
 func (c *GHCController) Error(_ http.ResponseWriter, _ *http.Request) {
 	panic(errors.New("error successful"))
+}
+
+func (c *GHCController) Aggregates(rw http.ResponseWriter, r *http.Request) {
+	f, err := os.Open(`D:\github-archive\events\summary.json`)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	rw.WriteHeader(http.StatusOK)
+	_, err = io.Copy(rw, f)
 }
 
 // UserEventsPage includes <= PageSize number of events and metadata about
