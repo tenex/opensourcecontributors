@@ -10,12 +10,24 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/heroku/rollrus"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
+var (
+	// AppEnv is: production, staging, development
+	AppEnv string
+)
+
 func init() {
+	// This is used to generate Request IDs
 	rand.Seed(time.Now().UnixNano())
+
+	AppEnv = os.Getenv("GHC_ENV")
+	if AppEnv == "" {
+		AppEnv = "development"
+	}
 	logDest := os.Getenv("GHC_APP_LOG_PATH")
 	if logDest == "" {
 		logDest = "/var/log/ghc/ghc.log"
@@ -24,6 +36,11 @@ func init() {
 		Filename: logDest,
 		MaxSize:  100, // MB
 	})
+	if AppEnv == "production" {
+		rollrus.SetupLogging(os.Getenv("GHC_ROLLBAR_TOKEN"), AppEnv)
+	}
+	// PUT THIS AFTER ROLLRUS!
+	// https://github.com/heroku/rollrus/issues/4
 	log.SetFormatter(&log.JSONFormatter{})
 }
 
