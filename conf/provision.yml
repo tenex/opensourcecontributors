@@ -171,6 +171,8 @@
   tags:
     - deploy
   tasks:
+    - include_vars: secrets.yml
+
     - name: install ghc upstart script
       template: src=github-contributions.conf
                 dest=/etc/init/github-contributions.conf
