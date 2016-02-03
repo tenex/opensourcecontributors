@@ -1,8 +1,9 @@
 (function() {
     angular.module('ghca', [
-        'ghcaServices',
+        'ghca.services',
         'angularMoment',
         'truncate',
-        'ui.bootstrap'
+        'ui.bootstrap',
+        'ui.router'
     ]);
 })();

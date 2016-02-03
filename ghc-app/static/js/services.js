@@ -1,5 +1,5 @@
 (function() {
-  var app = angular.module('ghcaServices', ['ngResource']);
+  var app = angular.module('ghca.services', ['ngResource']);
   app.factory('User', ['$resource', function($resource) {
     return $resource('/user/:username');
   }]);
