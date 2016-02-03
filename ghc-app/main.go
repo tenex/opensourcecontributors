@@ -82,6 +82,7 @@ func main() {
 		panic(err)
 	}
 	defer session.Close()
+	session.SetSafe(nil) // we never write
 	session.SetMode(mgo.Monotonic, true)
 
 	handler := logHandler(recoverHandler(mainHandler(session)))
