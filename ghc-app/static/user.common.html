@@ -1,30 +1,31 @@
-<div class="well" ng-show="hasResults">
+<div class="well" ng-show="userVm.user.repos">
   <h4>
     <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
-    <a href="{{userUrl}}">
-      <strong>{{processedUsername}}</strong>
+    <a href="{{userVm.userUrl}}">
+      <strong>{{userVm.user.username}}</strong>
     </a>
     made
-    <strong>{{eventCount}}</strong> contributions
+    <strong>{{userVm.user.eventCount}}</strong> contributions
     to
-    <strong>{{repos.length}}</strong> repositories
+    <strong>{{userVm.user.repos.length}}</strong> repositories
   </h4>
 </div>
 
-<div class="row">
+<div class="row" style="margin-bottom:15px">
   <div class="col-md-12">
     <ul class="nav nav-pills">
-      <li role="presentation">
+      <li role="presentation" ui-sref-active="active">
         <a ui-sref="user.repositories">
           Repositories
         </a>
       </li>
-      <li role="presentation">
+      <li role="presentation" ui-sref-active="active">
         <a ui-sref="user.events">
           Events
         </a>
       </li>
     </ul>
+  </div>
 </div>
 
 <div ui-view></div>
