@@ -12,9 +12,11 @@
         var vm = this;
 
         // User stuff
+        vm.processing = true;
         vm.username = username;
         vm.userUrl = "";
         vm.user = User.get({username: username}, function(user) {
+            vm.processing = false;
             vm.userUrl = "https://github.com/" + user.username;
         });
 
