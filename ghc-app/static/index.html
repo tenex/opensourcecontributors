@@ -30,6 +30,7 @@
     <script type="text/javascript" src="/static/js/routes.js"></script>
     <script type="text/javascript" src="/static/js/error-handler.js"></script>
     <script type="text/javascript" src="/static/js/bsod.controller.js"></script>
+    <script type="text/javascript" src="/static/js/search.controller.js"></script>
     <script type="text/javascript" src="/static/js/stats.controller.js"></script>
     <script type="text/javascript" src="/static/js/user.controller.js"></script>
     <script type="text/javascript" src="/static/js/services.js"></script>
@@ -43,7 +44,7 @@
     <![endif]-->
   </head>
 
-  <body role="document" ng-controller="UserController">
+  <body role="document">
     <!-- "Fork me" ribbon -->
     <div class="github-fork-ribbon-wrapper right">
       <div class="github-fork-ribbon">
@@ -96,19 +97,32 @@
               </ul>
             </li>
           </ul>
-          <form name="userForm" class="navbar-form navbar-right" ng-submit="setUser()">
+          <form class="navbar-form navbar-right"
+                ng-controller="SearchController as search"
+                ng-submit="search.doSearch()"
+          >
             <div class="form-group">
               <label for="query" class="sr-only">GitHub Username</label>
-              <input type="text" ng-model="username"
-                     class="form-control" id="query" placeholder="GitHub User">
+              <input type="text"
+                     ng-model="search.username"
+                     class="form-control" id="query"
+                     placeholder="GitHub User">
             </div>
-            <button id="submit-button" type="submit" class="btn btn-primary">Search</button>
+            <button id="submit-button" type="submit"
+                    class="btn btn-primary">
+              Search
+            </button>
           </form>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
 
-    <div class="container" role="main" ng-hide="processing"  ng-cloak>
+    <div class="container"
+         role="main"
+         ng-controller="UserController"
+         ng-hide="processing"
+         ng-cloak>
+      <div ui-view></div>
       <div class="well" ng-hide="processed || username">
         <h3>Search for a user above to begin</h3>
       </div>
@@ -144,160 +158,8 @@
           </ul>
 
           <div style="margin-top:.5em">
-            <!-- Repositories -->
-            <ul class="list-group" ng-show="isCurrentTab(tabs.repoList)">
-              <li class="list-group-item" ng-repeat="repo in repos">
-                <a href="https://github.com/{{repo}}">{{ repo }}</a>
-              </li>
-            </ul>
 
             <!-- Events result table -->
-            <div ng-show="isCurrentTab(tabs.eventList)">
-
-              <uib-pagination ng-model="currentEventPage"
-                          total-items="eventCount"
-                          ng-change="eventPageChanged()"
-                          max-size="10" items-per-page="eventPageSize"
-                          boundary-links="true"
-                          previous-text="&lsaquo;" next-text="&rsaquo;"
-                          first-text="&laquo;" last-text="&raquo;">
-              </uib-pagination>
-
-              <div style="text-align:center" ng-show="loadingEvents">
-                <img src="/static/img/gps.svg" />
-              </div>
-
-              <table ng-hide="loadingEvents" class="table table-striped">
-                <thead>
-                  <th>
-                    <!-- event type -->
-                  </th>
-                  <th>
-                    <span class="octicon octicon-calendar"></span>
-                  </th>
-                  <th>
-                    <span class="octicon octicon-repo"></span>
-                  </th>
-                  <th>
-                    <span class="octicon octicon-person"></span>
-                  </th>
-                  <th>
-                    <!-- description -->
-                  </th>
-                </thead>
-                <tbody>
-
-                  <tr ng-repeat="event in events">
-                    <td>
-                      <span event-octicon ng-model="event.type"></span>
-                    </td>
-                    <td title="">
-                      <time am-time-ago="event.created_at"></time>
-                    </td>
-                    <td style="white-space:nowrap">
-                      <a href="https://github.com/{{event.repo}}">
-                        {{ event.repo }}
-                      </a>
-                    </td>
-                    <td>
-                      <a href="{{userUrl}}">{{processedUsername}}</a>
-                    </td>
-                    <td ng-switch on="event.type">
-
-                      <span ng-switch-when="GollumEvent">
-                        <span ng-if="event.pages.length > 1">
-                          edited multiple Wiki pages:
-                          <ul>
-                            <li ng-repeat="page in event.pages">
-                              {{ page.action }} the page
-                              <a href="{{page.html_url}}">{{page.title}}</a>
-                              (<a href="{{page.html_url}}/_history">history</a>)
-                            </li>
-                          </ul>
-                        </span>
-                        <span ng-if="event.pages.length == 1">
-                          {{ event.pages[0].action }} the page
-                          <a href="{{event.pages[0].html_url}}">{{event.pages[0].title}}</a>
-                          (<a href="{{event.pages[0].html_url}}/_history">
-                            history
-                          </a>)
-                        </span>
-                      </span>
-
-                      <span ng-switch-when="IssuesEvent">
-                        {{ event.action }}
-                        <a href="https://github.com/{{event.repo}}/issues/{{event.issue_number}}">
-                          issue {{ event.issue_number }}
-                        </a>
-                      </span>
-
-                      <span ng-switch-when="PushEvent">
-                        pushed
-                        <ng-pluralize count="event.distinct_commit_count"
-                                      when="{'1': 'a commit', 'other': '{} commits'}">
-                        </ng-pluralize>
-                        to
-                        <a href="https://github.com/{{event.repo}}/commits/{{event.head}}">{{event.ref}} ({{ event.head | limitTo : 7 }})</a>
-                      </span>
-
-                      <span ng-switch-when="CommitCommentEvent">
-                        <a href="{{event.html_url}}">commented</a>
-                        on
-                        <a href="https://github.com/{{event.repo}}/commits/{{event.commit_id}}">
-                          commit {{ event.commit_id | limitTo : 7 }}
-                        </a>
-                        {{event.path}}:
-                        <a href="{{event.html_url}}">
-                          {{event.body | characters:20: false}}
-                        </a>
-                      </span>
-
-                      <span ng-switch-when="ReleaseEvent">
-                        released tag
-                        <a href="https://github.com/{{event.repo}}/releases/tag/{{event.tag_name}}">
-                          {{ event.tag_name }}
-                        </a>
-                      </span>
-
-                      <span ng-switch-when="PublicEvent">
-                        open-sourced <a href="https://github.com/{{event.repo}}">{{event.repo}}</a>!
-                      </span>
-
-                      <span ng-switch-when="MemberEvent">
-                        {{ event.target_action }}
-                        <a href="https://github.com/{{event.target_user}}">
-                          {{event.target_user}}
-                        </a> to
-                        <a href="https://github.com/{{event.repo}}">
-                          {{event.repo}}
-                        </a>
-                      </span>
-
-                      <span ng-switch-when="IssueCommentEvent">
-                        <a href="{{event.comment_url}}">commented</a>
-                        on
-                        <a href="{{event.issue_url}}">issue {{event.issue_number}}</a>
-                      </span>
-
-                      <span ng-switch-default>
-                       {{ event.type }} WTF?
-                      </span>
-                    </td>
-                  </tr>
-
-                </tbody>
-              </table>
-
-              <uib-pagination ng-model="currentEventPage"
-                          total-items="eventCount"
-                          ng-change="eventPageChanged()"
-                          max-size="10" items-per-page="eventPageSize"
-                          boundary-links="true"
-                          previous-text="&lsaquo;" next-text="&rsaquo;"
-                          first-text="&laquo;" last-text="&raquo;">
-              </uib-pagination>
-            </div>
-
           </div>
 
         </div>
@@ -338,24 +200,6 @@
      ga('send', 'pageview', {
          'dimension1': clientAddr
      });
-    </script>
-
-    <script type="text/ng-template" id="bsod.html">
-      <div class="bsod">
-        <div style="text-align: center">
-          <span class="bsod-title">Windows</span>
-        </div>
-        <p>An error has occured. To continue:</p>
-        <p>Press Enter to return to Windows, or</p>
-        <p>Press CTRL_ALT_DEL to restart your computer. If you do this, you will lose any unsaved information in all open applications.</p>
-        <p>Error: {{ $root.errorDescription }}</p>
-        <div>Press any key to continue</div>
-        <div class="text-right">
-          <button class="btn-primary" type="button" ng-click="ok()">
-            Any Key
-          </button>
-        </div>
-      </div>
     </script>
   </body>
 </html>

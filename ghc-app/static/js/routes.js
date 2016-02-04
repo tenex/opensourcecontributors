@@ -15,11 +15,13 @@
                 url: '/user/{username}',
                 abstract: true
             })
-            .state('user.summary', {
-                url: '/'
+            .state('user.repositories', {
+                url: '/',
+                templateUrl: '/static/user.repositories.html'
             })
             .state('user.events', {
-                url: '/events/'
+                url: '/events/{page}',
+                templateUrl: '/static/user.events.html'
             });
     }
 })();
