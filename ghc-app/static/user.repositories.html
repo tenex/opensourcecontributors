@@ -1,11 +1,15 @@
-<div class="alert alert-danger" role="alert"
-     ng-show="processed && !hasResults">
-  <span class="glyphicon glyphicon-exclamation-sign pull-right" aria-hidden="true"></span>
-  <strong>No results for {{ processedUsername }}.</strong>
+<div class="alert alert-danger"
+     role="alert"
+     ng-show="userVm.user.repos != null && userVm.user.repos.length == 0">
+  <span class="glyphicon glyphicon-exclamation-sign pull-right"
+        aria-hidden="true"></span>
+  <strong>
+    No results for {{ userVm.username }}.
+  </strong>
 </div>
 
 <ul class="list-group">
-  <li class="list-group-item" ng-repeat="repo in repos">
+  <li class="list-group-item" ng-repeat="repo in userVm.user.repos">
     <a href="https://github.com/{{repo}}">{{ repo }}</a>
   </li>
 </ul>
