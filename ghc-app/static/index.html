@@ -32,7 +32,8 @@
     <script type="text/javascript" src="/static/js/bsod.controller.js"></script>
     <script type="text/javascript" src="/static/js/search.controller.js"></script>
     <script type="text/javascript" src="/static/js/stats.controller.js"></script>
-    <script type="text/javascript" src="/static/js/user.controller.js"></script>
+    <script type="text/javascript" src="/static/js/user.events.controller.js"></script>
+    <script type="text/javascript" src="/static/js/user.repositories.controller.js"></script>
     <script type="text/javascript" src="/static/js/services.js"></script>
     <script type="text/javascript" src="/static/js/event-octicon.js"></script>
     <script type="text/javascript" src="/static/js/ui-bootstrap-tpls-0.14.3.min.js"></script>
@@ -119,52 +120,8 @@
 
     <div class="container"
          role="main"
-         ng-controller="UserController"
-         ng-hide="processing"
          ng-cloak>
       <div ui-view></div>
-      <div class="well" ng-hide="processed || username">
-        <h3>Search for a user above to begin</h3>
-      </div>
-
-      <div class="alert alert-danger" role="alert"
-           ng-show="processed && !hasResults">
-        <span class="glyphicon glyphicon-exclamation-sign pull-right" aria-hidden="true"></span>
-        <strong>No results for {{ processedUsername }}.</strong>
-      </div>
-
-      <div class="well" ng-show="hasResults">
-        <h4>
-          <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
-          <a href="{{userUrl}}">
-            <strong>{{processedUsername}}</strong>
-          </a>
-          made
-          <strong>{{eventCount}}</strong> contributions
-          to
-          <strong>{{repos.length}}</strong> repositories
-        </h4>
-      </div>
-
-      <div id="results" ng-show="hasResults" class="row">
-        <div class="col-md-12">
-          <ul class="nav nav-pills">
-            <li role="presentation" ng-class="{active: isCurrentTab(tabs.repoList)}">
-              <a ng-click="setCurrentTab(tabs.repoList)" href>Repositories</a>
-            </li>
-            <li role="presentation" ng-class="{active: isCurrentTab(tabs.eventList)}">
-              <a ng-click="setCurrentTab(tabs.eventList)" href>Events</a>
-            </li>
-          </ul>
-
-          <div style="margin-top:.5em">
-
-            <!-- Events result table -->
-          </div>
-
-        </div>
-      </div> <!-- /results -->
-
     </div> <!-- /container -->
 
     <div id="loader" ng-show="processing"  class="tetrominos"  ng-cloak>

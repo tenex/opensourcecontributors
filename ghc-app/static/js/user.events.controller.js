@@ -1,32 +1,15 @@
 (function() {
     angular
         .module('ghca')
-        .controller("UserController", UserController);
+        .controller("UserEventsController", UserEventsController);
 
-    UserController.$inject = [
+    UserEventsController.$inject = [
         "$scope", "$rootScope", "$log", "moment", "User", "Event"
     ];
 
-    function UserController($scope, $rootScope, $log, moment, User, Event) {
+    function UserEventsController($scope, $rootScope, $log, moment, User, Event) {
         $rootScope.errorDescription = '';
         $scope.eventPageSize = 50; // constant
-
-        $scope.tabs = {
-            none: 0,
-            repoList: 1,
-            eventList: 2
-        };
-
-        $scope.currentTab = $scope.tabs.repoList;
-        $scope.isCurrentTab = function(t) {
-            return $scope.currentTab === t;
-        };
-        $scope.setCurrentTab = function(t) {
-            $scope.currentTab = t;
-            if (t == $scope.tabs.eventList) {
-                $scope.getGHEvents();
-            }
-        };
 
         $scope.initialize = function() {
             $scope.username = "";
@@ -81,15 +64,8 @@
         };
 
         $scope.setUser = function() {
-            $state.go('user.summary',{
-                username: $scope.username
-            });
-            return;
-
             $scope.processed = false;
             $scope.processing = true;
-            $scope.setCurrentTab($scope.tabs.repoList);
-            $scope.clearEvents();
 
             $scope.user = User.get({
                 username: $scope.username

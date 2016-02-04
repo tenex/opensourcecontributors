@@ -15,7 +15,7 @@
         //////////
 
         function doSearch() {
-            $state.go('user.summary', {
+            $state.go('user.repositories', {
                 username: vm.username
             });
         }

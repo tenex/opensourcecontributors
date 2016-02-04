@@ -1,0 +1,30 @@
+<div class="well" ng-show="hasResults">
+  <h4>
+    <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
+    <a href="{{userUrl}}">
+      <strong>{{processedUsername}}</strong>
+    </a>
+    made
+    <strong>{{eventCount}}</strong> contributions
+    to
+    <strong>{{repos.length}}</strong> repositories
+  </h4>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <ul class="nav nav-pills">
+      <li role="presentation">
+        <a ui-sref="user.repositories">
+          Repositories
+        </a>
+      </li>
+      <li role="presentation">
+        <a ui-sref="user.events">
+          Events
+        </a>
+      </li>
+    </ul>
+</div>
+
+<div ui-view></div>
