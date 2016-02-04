@@ -1,4 +1,4 @@
-<div class="well" ng-show="userVm.user.repos">
+<div class="well" ng-show="!userVm.processing && userVm.user.eventCount > 0">
   <h4>
     <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
     <a href="{{userVm.userUrl}}">
@@ -11,7 +11,17 @@
   </h4>
 </div>
 
-<div class="row" style="margin-bottom:15px">
+<div class="alert alert-danger"
+     role="alert"
+     ng-show="!userVm.processing && userVm.user.eventCount === 0">
+  <span class="glyphicon glyphicon-exclamation-sign pull-right"
+        aria-hidden="true"></span>
+  <strong>
+    No results for {{ userVm.username }}.
+  </strong>
+</div>
+
+<div ng-show="!userVm.processing && userVm.user.eventCount > 0" class="row" style="margin-bottom:15px">
   <div class="col-md-12">
     <ul class="nav nav-pills">
       <li role="presentation" ui-sref-active="active">
@@ -29,3 +39,13 @@
 </div>
 
 <div ui-view></div>
+
+<div id="loader"
+     class="tetrominos"
+     ng-show="userVm.processing"
+     ng-cloak>
+  <div class="tetromino box1"></div>
+  <div class="tetromino box2"></div>
+  <div class="tetromino box3"></div>
+  <div class="tetromino box4"></div>
+</div>
