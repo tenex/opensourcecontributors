@@ -81,6 +81,11 @@
         };
 
         $scope.setUser = function() {
+            $state.go('user.summary',{
+                username: $scope.username
+            });
+            return;
+
             $scope.processed = false;
             $scope.processing = true;
             $scope.setCurrentTab($scope.tabs.repoList);
