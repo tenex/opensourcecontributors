@@ -33,7 +33,6 @@
     <script type="text/javascript" src="/static/js/search.controller.js"></script>
     <script type="text/javascript" src="/static/js/stats.controller.js"></script>
     <script type="text/javascript" src="/static/js/user.controller.js"></script>
-    <script type="text/javascript" src="/static/js/user.events.controller.js"></script>
     <script type="text/javascript" src="/static/js/services.js"></script>
     <script type="text/javascript" src="/static/js/event-octicon.js"></script>
     <script type="text/javascript" src="/static/js/ui-bootstrap-tpls-0.14.3.min.js"></script>
@@ -123,13 +122,6 @@
          ng-cloak>
       <div ui-view></div>
     </div> <!-- /container -->
-
-    <div id="loader" ng-show="processing"  class="tetrominos"  ng-cloak>
-      <div class="tetromino box1"></div>
-      <div class="tetromino box2"></div>
-      <div class="tetromino box3"></div>
-      <div class="tetromino box4"></div>
-    </div>
 
     <nav class="navbar navbar-inverse navbar-fixed-bottom"
          ng-controller="StatisticsController"  ng-cloak>
