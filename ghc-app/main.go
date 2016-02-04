@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -101,7 +102,12 @@ func main() {
 	defer session.Close()
 	session.SetSafe(nil) // we never write
 	session.SetMode(mgo.Monotonic, true)
-
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "5000"
+	}
 	handler := logHandler(recoverHandler(mainHandler(session)))
-	http.ListenAndServe(":5000", handler)
+	http.ListenAndServe(
+		net.JoinHostPort("", port),
+		handler)
 }
