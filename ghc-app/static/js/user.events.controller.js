@@ -4,17 +4,16 @@
         .controller("UserEventsController", UserEventsController);
 
     UserEventsController.$inject = [
-        "$scope", "$rootScope", "$log", "moment", "User", "Event"
+        "$scope", "$rootScope", "$log", "User", "Event"
     ];
 
-    function UserEventsController($scope, $rootScope, $log, moment, User, Event) {
+    function UserEventsController($scope, $rootScope, $log, User, Event) {
         $rootScope.errorDescription = '';
         $scope.eventPageSize = 50; // constant
 
         $scope.initialize = function() {
             $scope.username = "";
             $scope.processedUsername = ""; // The data below is for...
-            $scope.userUrl = "";
             $scope.eventCount = 0;
             $scope.repos = [];
             $scope.clearEvents();
