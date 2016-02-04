@@ -100,7 +100,8 @@ func main() {
 		panic(err)
 	}
 	defer session.Close()
-	session.SetSafe(nil) // we never write
+	session.SetSafe(nil)                       // we never write
+	session.SetSocketTimeout(15 * time.Minute) // cheaper than SSDs
 	session.SetMode(mgo.Monotonic, true)
 	port := os.Getenv("PORT")
 	if port == "" {
