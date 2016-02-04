@@ -1,0 +1,51 @@
+<div class="well" ng-show="!userVm.processing && userVm.user.eventCount > 0">
+  <h4>
+    <span class="mega-octicon octicon-person"></span>&nbsp;&nbsp;
+    <a href="{{userVm.userUrl}}">
+      <strong>{{userVm.user.username}}</strong>
+    </a>
+    made
+    <strong>{{userVm.user.eventCount}}</strong> contributions
+    to
+    <strong>{{userVm.user.repos.length}}</strong> repositories
+  </h4>
+</div>
+
+<div class="alert alert-danger"
+     role="alert"
+     ng-show="!userVm.processing && userVm.user.eventCount === 0">
+  <span class="glyphicon glyphicon-exclamation-sign pull-right"
+        aria-hidden="true"></span>
+  <strong>
+    No results for {{ userVm.username }}.
+  </strong>
+</div>
+
+<div ng-show="!userVm.processing && userVm.user.eventCount > 0" class="row" style="margin-bottom:15px">
+  <div class="col-md-12">
+    <ul class="nav nav-pills">
+      <li role="presentation" ui-sref-active="active">
+        <a ui-sref="user.repositories">
+          Repositories
+        </a>
+      </li>
+      <li role="presentation" ui-sref-active="active">
+        <a ui-sref="user.events({page: 1})">
+          Events
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div ui-view></div>
+
+<div id="loader"
+     class="tetrominos"
+     ng-show="userVm.processing"
+     ng-cloak>
+  <div class="tetromino box1"></div>
+  <div class="tetromino box2"></div>
+  <div class="tetromino box3"></div>
+  <div class="tetromino box4"></div>
+</div>
