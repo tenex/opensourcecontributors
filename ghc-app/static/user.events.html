@@ -1,0 +1,146 @@
+<div>
+  <uib-pagination ng-model="userVm.currentEventPage"
+                  total-items="userVm.user.eventCount"
+                  ng-change="userVm.eventPageChanged()"
+                  items-per-page="userVm.eventPageSize"
+                  max-size="10"
+                  boundary-links="true"
+                  previous-text="&lsaquo;" next-text="&rsaquo;"
+                  first-text="&laquo;" last-text="&raquo;">
+  </uib-pagination>
+
+  <div style="text-align:center" ng-show="userVm.loadingEvents">
+    <img src="/static/img/gps.svg" />
+  </div>
+
+  <table ng-hide="userVm.loadingEvents" class="table table-striped">
+    <thead>
+      <th>
+        <!-- event type -->
+      </th>
+      <th>
+        <span class="octicon octicon-calendar"></span>
+      </th>
+      <th>
+        <span class="octicon octicon-repo"></span>
+      </th>
+      <th>
+        <span class="octicon octicon-person"></span>
+      </th>
+      <th>
+        <!-- description -->
+      </th>
+    </thead>
+    <tbody>
+
+      <tr ng-repeat="event in userVm.eventData.events">
+        <td>
+          <span event-octicon ng-model="event.type"></span>
+        </td>
+        <td title="">
+          <time am-time-ago="event.created_at"></time>
+        </td>
+        <td style="white-space:nowrap">
+          <a href="https://github.com/{{event.repo}}">
+            {{ event.repo }}
+          </a>
+        </td>
+        <td>
+          <a href="{{userUrl}}">{{processedUsername}}</a>
+        </td>
+        <td ng-switch on="event.type">
+
+          <span ng-switch-when="GollumEvent">
+            <span ng-if="event.pages.length > 1">
+              edited multiple Wiki pages:
+              <ul>
+                <li ng-repeat="page in event.pages">
+                  {{ page.action }} the page
+                  <a href="{{page.html_url}}">{{page.title}}</a>
+                  (<a href="{{page.html_url}}/_history">history</a>)
+                </li>
+              </ul>
+            </span>
+            <span ng-if="event.pages.length == 1">
+              {{ event.pages[0].action }} the page
+              <a href="{{event.pages[0].html_url}}">{{event.pages[0].title}}</a>
+              (<a href="{{event.pages[0].html_url}}/_history">
+                history
+              </a>)
+            </span>
+          </span>
+
+          <span ng-switch-when="IssuesEvent">
+            {{ event.action }}
+            <a href="https://github.com/{{event.repo}}/issues/{{event.issue_number}}">
+              issue {{ event.issue_number }}
+            </a>
+          </span>
+
+          <span ng-switch-when="PushEvent">
+            pushed
+            <ng-pluralize count="event.distinct_commit_count"
+                          when="{'1': 'a commit', 'other': '{} commits'}">
+            </ng-pluralize>
+            to
+            <a href="https://github.com/{{event.repo}}/commits/{{event.head}}">{{event.ref}} ({{ event.head | limitTo : 7 }})</a>
+          </span>
+
+          <span ng-switch-when="CommitCommentEvent">
+            <a href="{{event.html_url}}">commented</a>
+            on
+            <a href="https://github.com/{{event.repo}}/commits/{{event.commit_id}}">
+              commit {{ event.commit_id | limitTo : 7 }}
+            </a>
+            {{event.path}}:
+            <a href="{{event.html_url}}">
+              {{event.body | characters:20: false}}
+            </a>
+          </span>
+
+          <span ng-switch-when="ReleaseEvent">
+            released tag
+            <a href="https://github.com/{{event.repo}}/releases/tag/{{event.tag_name}}">
+              {{ event.tag_name }}
+            </a>
+          </span>
+
+          <span ng-switch-when="PublicEvent">
+            open-sourced <a href="https://github.com/{{event.repo}}">{{event.repo}}</a>!
+          </span>
+
+          <span ng-switch-when="MemberEvent">
+            {{ event.target_action }}
+            <a href="https://github.com/{{event.target_user}}">
+              {{event.target_user}}
+            </a> to
+            <a href="https://github.com/{{event.repo}}">
+              {{event.repo}}
+            </a>
+          </span>
+
+          <span ng-switch-when="IssueCommentEvent">
+            <a href="{{event.comment_url}}">commented</a>
+            on
+            <a href="{{event.issue_url}}">issue {{event.issue_number}}</a>
+          </span>
+
+          <span ng-switch-default>
+            {{ event.type }} WTF?
+          </span>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <uib-pagination ng-model="userVm.currentEventPage"
+                  total-items="userVm.user.eventCount"
+                  ng-change="userVm.eventPageChanged()"
+                  items-per-page="userVm.eventPageSize"
+                  max-size="10"
+                  boundary-links="true"
+                  previous-text="&lsaquo;" next-text="&rsaquo;"
+                  first-text="&laquo;" last-text="&raquo;">
+  </uib-pagination>
+</div>

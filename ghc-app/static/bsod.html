@@ -1,0 +1,15 @@
+<div class="bsod">
+  <div style="text-align: center">
+    <span class="bsod-title">Windows</span>
+  </div>
+  <p>An error has occured. To continue:</p>
+  <p>Press Enter to return to Windows, or</p>
+  <p>Press CTRL_ALT_DEL to restart your computer. If you do this, you will lose any unsaved information in all open applications.</p>
+  <p>Error: {{ $root.errorDescription }}</p>
+  <div>Press any key to continue</div>
+  <div class="text-right">
+    <button class="btn-primary" type="button" ng-click="ok()">
+      Any Key
+    </button>
+  </div>
+</div>
