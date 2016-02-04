@@ -30,7 +30,6 @@
             })
             .state('user.events', {
                 url: '/events/{page:int}',
-                controller: 'UserEventsController',
                 templateUrl: '/static/user.events.html'
             });
             // .state('wtf', {
