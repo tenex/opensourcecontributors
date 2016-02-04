@@ -1,19 +1,19 @@
 <div>
-
-  <uib-pagination ng-model="currentEventPage"
-                  total-items="eventCount"
-                  ng-change="eventPageChanged()"
-                  max-size="10" items-per-page="eventPageSize"
+  <uib-pagination ng-model="userVm.currentEventPage"
+                  total-items="userVm.user.eventCount"
+                  ng-change="userVm.eventPageChanged()"
+                  items-per-page="userVm.eventPageSize"
+                  max-size="10"
                   boundary-links="true"
                   previous-text="&lsaquo;" next-text="&rsaquo;"
                   first-text="&laquo;" last-text="&raquo;">
   </uib-pagination>
 
-  <div style="text-align:center" ng-show="loadingEvents">
+  <div style="text-align:center" ng-show="userVm.loadingEvents">
     <img src="/static/img/gps.svg" />
   </div>
 
-  <table ng-hide="loadingEvents" class="table table-striped">
+  <table ng-hide="userVm.loadingEvents" class="table table-striped">
     <thead>
       <th>
         <!-- event type -->
@@ -33,7 +33,7 @@
     </thead>
     <tbody>
 
-      <tr ng-repeat="event in events">
+      <tr ng-repeat="event in userVm.eventData.events">
         <td>
           <span event-octicon ng-model="event.type"></span>
         </td>
@@ -134,10 +134,11 @@
     </tbody>
   </table>
 
-  <uib-pagination ng-model="currentEventPage"
-                  total-items="eventCount"
-                  ng-change="eventPageChanged()"
-                  max-size="10" items-per-page="eventPageSize"
+  <uib-pagination ng-model="userVm.currentEventPage"
+                  total-items="userVm.user.eventCount"
+                  ng-change="userVm.eventPageChanged()"
+                  items-per-page="userVm.eventPageSize"
+                  max-size="10"
                   boundary-links="true"
                   previous-text="&lsaquo;" next-text="&rsaquo;"
                   first-text="&laquo;" last-text="&raquo;">
