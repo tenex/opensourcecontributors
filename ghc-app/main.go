@@ -117,8 +117,12 @@ func main() {
 	if port == "" {
 		port = "5000"
 	}
-	handler := logHandler(recoverHandler(mainHandler(session)))
-	http.ListenAndServe(
-		net.JoinHostPort("", port),
-		handler)
+	bindEndpoint := net.JoinHostPort("", port)
+
+	handler := mainHandler(session)
+	handler = recoverHandler(handler)
+	handler = logHandler(handler)
+	handler = remoteAddrHandler(handler)
+
+	http.ListenAndServe(bindEndpoint, handler)
 }
