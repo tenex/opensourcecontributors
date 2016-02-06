@@ -271,3 +271,12 @@
             name=server-monitor
             minute=55
             user=ghc
+
+- name: install lets-encrypt certificate cron job
+  user: root
+  hosts: web
+  tasks:
+    - name: lets-encrypt certificate renewal cron job
+      cron: job=/github-contributions/conf/lets-encrypt-renew-certificate.sh
+            special_time=weekly
+            name=renew-certificate
