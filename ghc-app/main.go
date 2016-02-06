@@ -85,6 +85,16 @@ func recoverHandler(h http.Handler) http.Handler {
 	})
 }
 
+func remoteAddrHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		remoteAddr := r.Header.Get("X-Forwarded-For")
+		if remoteAddr != "" {
+			r.RemoteAddr = remoteAddr
+		}
+		h.ServeHTTP(rw, r)
+	})
+}
+
 func mainHandler(globalSession *mgo.Session) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		session := globalSession.Copy()
