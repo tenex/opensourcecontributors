@@ -1,7 +1,7 @@
 #!/bin/bash
 
 web_service='nginx'
-config_file='/usr/local/etc/lets-encrypt-config.ini'
+config_file='/github-contributions/conf/lets-encrypt-config.ini'
 le_path='/opt/letsencrypt'
 exp_limit=30;
 
