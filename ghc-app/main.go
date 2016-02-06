@@ -85,6 +85,16 @@ func recoverHandler(h http.Handler) http.Handler {
 	})
 }
 
+func remoteAddrHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		remoteAddr := r.Header.Get("X-Forwarded-For")
+		if remoteAddr != "" {
+			r.RemoteAddr = remoteAddr
+		}
+		h.ServeHTTP(rw, r)
+	})
+}
+
 func mainHandler(globalSession *mgo.Session) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		session := globalSession.Copy()
@@ -107,8 +117,12 @@ func main() {
 	if port == "" {
 		port = "5000"
 	}
-	handler := logHandler(recoverHandler(mainHandler(session)))
-	http.ListenAndServe(
-		net.JoinHostPort("", port),
-		handler)
+	bindEndpoint := net.JoinHostPort("", port)
+
+	handler := mainHandler(session)
+	handler = recoverHandler(handler)
+	handler = logHandler(handler)
+	handler = remoteAddrHandler(handler)
+
+	http.ListenAndServe(bindEndpoint, handler)
 }
