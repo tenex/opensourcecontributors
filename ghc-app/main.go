@@ -98,8 +98,9 @@ func recoverHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := xanax(recover()); err != nil {
-				log.Error(err.Error())
-				http.Error(rw, fmt.Sprintf("%#v", err), 500)
+				rawStr := fmt.Sprintf("%#v", err)
+				log.WithField("raw", rawStr).Error(err.Error())
+				http.Error(rw, rawStr, 500)
 			}
 		}()
 		h.ServeHTTP(rw, r)
