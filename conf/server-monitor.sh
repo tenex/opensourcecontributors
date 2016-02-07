@@ -1,5 +1,5 @@
 #!/bin/bash
-HOST="http://githubcontributions.io/stats"
+HOST="githubcontributions.io/stats"
 MAX_AGE="7500" # seconds
 SCAPEGOAT="engineers@tenex.tech"
 
@@ -16,5 +16,5 @@ function notify_failure()
     printf "${msg}" | mail -s "ERROR: GitHub Contributions" "${SCAPEGOAT}"
 }
 
-age="$(curl "${HOST}" 2>/dev/null | jq '.latestEventAge')"
+age="$(curl --location "${HOST}" 2>/dev/null | jq '.latestEventAge')"
 (($age > $MAX_AGE)) && notify_failure "${age}"
