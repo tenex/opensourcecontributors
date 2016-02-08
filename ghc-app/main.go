@@ -83,11 +83,13 @@ func xanax(v interface{}) error {
 	}
 	var err error
 	switch cause := v.(type) {
-	case error:
-		err = cause
+	case *net.OpError:
+		err = cause.Err
 		if err == syscall.EPIPE {
 			err = nil
 		}
+	case error:
+		err = cause
 	default:
 		err = fmt.Errorf("%v", v)
 	}
@@ -100,7 +102,7 @@ func recoverHandler(h http.Handler) http.Handler {
 			if err := xanax(recover()); err != nil {
 				rawStr := fmt.Sprintf("%#v", err)
 				log.WithField("raw", rawStr).Error(err.Error())
-				http.Error(rw, rawStr, 500)
+				http.Error(rw, err.Error(), 500)
 			}
 		}()
 		h.ServeHTTP(rw, r)
