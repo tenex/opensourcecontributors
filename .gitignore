@@ -1,5 +1,6 @@
 ghc-app/bindata.go
 ghc-app/ghc-app
+/event-digest/event-digest
 *.exe
 *.pyc
 venv
