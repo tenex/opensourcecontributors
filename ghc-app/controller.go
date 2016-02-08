@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -72,8 +73,11 @@ func (c *GHCController) Error(_ http.ResponseWriter, _ *http.Request) {
 	panic(errors.New("error successful"))
 }
 
+// Aggregates serves /aggregates
 func (c *GHCController) Aggregates(rw http.ResponseWriter, r *http.Request) {
-	f, err := os.Open(`D:\github-archive\events\summary.json`)
+	summaryPath := filepath.Join(
+		os.Getenv("GHC_EVENTS_PATH"), "summary.json")
+	f, err := os.Open(summaryPath)
 	if err != nil {
 		panic(err)
 	}
