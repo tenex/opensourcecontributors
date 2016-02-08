@@ -84,8 +84,8 @@ func xanax(v interface{}) error {
 	var err error
 	switch cause := v.(type) {
 	case *net.OpError:
-		err = cause.Err
-		if err == syscall.EPIPE {
+		err = cause
+		if cause.Err == syscall.EPIPE {
 			err = nil
 		}
 	case error:
