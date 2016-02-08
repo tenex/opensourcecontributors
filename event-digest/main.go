@@ -30,7 +30,7 @@ func DigestFile(eventFilePath string) (*Digest, error) {
 	digestFilePath := fmt.Sprintf("%v.digest.json", eventFilePath)
 	df, err := os.OpenFile(digestFilePath,
 		os.O_EXCL|os.O_CREATE|os.O_RDWR,
-		os.ModeExclusive)
+		0664)
 	if err != nil {
 		if os.IsExist(err) {
 			fmt.Printf("already computed: %v\n", digestFilePath)
