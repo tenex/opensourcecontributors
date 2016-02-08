@@ -36,9 +36,14 @@ func DigestFile(eventFilePath string) (*Digest, error) {
 			fmt.Printf("already computed: %v\n", digestFilePath)
 			return readDigest(digestFilePath)
 		}
+		return nil, err
 	}
 	defer df.Close()
 
+	return doDigestFile(eventFilePath, df)
+}
+
+func doDigestFile(eventFilePath string, digestFile *os.File) (*Digest, error) {
 	f, err := os.Open(eventFilePath)
 	if err != nil {
 		return nil, err
@@ -64,7 +69,7 @@ func DigestFile(eventFilePath string) (*Digest, error) {
 		return nil, err
 	}
 
-	err = json.NewEncoder(df).Encode(digest)
+	err = json.NewEncoder(digestFile).Encode(digest)
 	return digest, err
 }
 
