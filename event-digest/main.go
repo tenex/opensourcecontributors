@@ -53,7 +53,7 @@ func doDigestFile(eventFilePath string, digestFile *os.File) (*Digest, error) {
 	c, err := lineCounter(f)
 	dateParts := eventFilenameRE.FindStringSubmatch(
 		filepath.Base(eventFilePath))
-	fmt.Printf("%#v\n", dateParts)
+
 	year, _ := strconv.Atoi(dateParts[1])
 	month, _ := strconv.Atoi(dateParts[2])
 	day, _ := strconv.Atoi(dateParts[3])
@@ -139,12 +139,10 @@ func main() {
 	digests := make([]*Digest, 0, len(eventFiles))
 
 	for _, f := range eventFiles {
-		fmt.Printf("digesting %v: ", f)
 		d, err := DigestFile(f)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("%v\n", d.Count)
 		digests = append(digests, d)
 	}
 
