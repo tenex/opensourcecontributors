@@ -34,7 +34,6 @@ func DigestFile(eventFilePath string) (*Digest, error) {
 		0664)
 	if err != nil {
 		if os.IsExist(err) {
-			fmt.Printf("already computed: %v\n", digestFilePath)
 			return readDigest(digestFilePath)
 		}
 		return nil, err
@@ -74,6 +73,7 @@ func doDigestFile(eventFilePath string, digestFile *os.File) (*Digest, error) {
 		return nil, err
 	}
 
+	fmt.Printf("computed %v: %v\n", fileDate, c)
 	err = json.NewEncoder(digestFile).Encode(digest)
 	return digest, err
 }
