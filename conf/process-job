@@ -2,6 +2,7 @@
 MAILTO="liambowen@gmail.com"
 WORKING_PATH="/github-contributions"
 PROCESSOR="/github-contributions/util/archive-processor"
+EVENT_DIGEST="/srv/bin/event-digest"
 PYTHON="/srv/venv/bin/python3"
 
 export GHC_LOCKFILE_PATH="/tmp/archive-processor.lock"
@@ -40,5 +41,9 @@ fi
 cd "${WORKING_PATH}"
 
 ${PYTHON} ${PROCESSOR} 'process'
+
+echo "digesting events"
+
+${EVENT_DIGEST}
 
 /usr/bin/uptime

@@ -231,9 +231,14 @@
             src=/github-contributions/app
             state=link
 
-    - name: gopath trick
+    - name: gopath trick for ghc-app
       file: path=/home/ghc/go/src/ghc-app
             src=/github-contributions/ghc-app
+            state=link
+
+    - name: gopath trick for event-digest
+      file: path=/home/ghc/go/src/event-digest
+            src=/github-contributions/event-digest
             state=link
 
     - name: build ghc-app
