@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import print_function
 import os, sys
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -30,7 +31,8 @@ def usernames():
     import json
 
     users = set()
-    files = list(glob.glob(r'D:\\github-archive\\transformed\\*.json.gz'))
+    files = list(glob.glob(os.path.join(
+        os.environ['GHC_TRANSFORMED_PATH'], '*.json.gz')))
     print("looking in", len(files), "files")
     for ix, path in enumerate(files):
         with gzip.open(path, 'rt', encoding='utf-8') as f:
@@ -41,8 +43,7 @@ def usernames():
     users = sorted(users)
 
     with open('users.txt', 'wt') as f:
-        for u in users:
-            print(u, file=f)
+        for u in users: print(u, file=f)
 
     print("there are", len(users), "users")
 
