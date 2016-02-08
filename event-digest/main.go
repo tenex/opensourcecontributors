@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -49,8 +50,12 @@ func doDigestFile(eventFilePath string, digestFile *os.File) (*Digest, error) {
 		return nil, err
 	}
 	defer f.Close()
+	reader, err := gzip.NewReader(f)
+	if err != nil {
+		return nil, err
+	}
 
-	c, err := lineCounter(f)
+	c, err := lineCounter(reader)
 	dateParts := eventFilenameRE.FindStringSubmatch(
 		filepath.Base(eventFilePath))
 
