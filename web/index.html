@@ -54,7 +54,8 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">GitHub Contributions Archive</a>
+          <a class="navbar-brand" href="/">GitHub Contributions
+            <span class="hidden-xs">Archive</span></a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
@@ -111,12 +112,13 @@
     </div> <!-- /container -->
 
     <nav class="navbar navbar-inverse navbar-fixed-bottom"
-         ng-controller="StatisticsController"  ng-cloak>
+         ng-controller="StatisticsController"
+         ng-cloak>
       <div class="container" ng-show="retrieved">
         <p class="navbar-text">
           Tracking {{ stats.eventCount | number }} events
         </p>
-        <p class="navbar-text navbar-right">
+        <p class="navbar-text navbar-right hidden-xs">
             Latest GitHub event indexed was on
             {{ stats.latestEvent | date : 'longDate' }} at
             {{ stats.latestEvent | date : 'mediumTime' }}
