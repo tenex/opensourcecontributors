@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"syscall"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -73,12 +74,33 @@ func logHandler(h http.Handler) http.Handler {
 	})
 }
 
+// Stops panics with no panic-worthy cause
+// Stops:
+//   - EPIPE, which occurs when a client stops loading a page
+func xanax(v interface{}) error {
+	if v == nil {
+		return nil
+	}
+	var err error
+	switch cause := v.(type) {
+	case error:
+		err = cause
+		if err == syscall.EPIPE {
+			err = nil
+		}
+	default:
+		err = fmt.Errorf("%v", v)
+	}
+	return err
+}
+
 func recoverHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if err := recover(); err != nil {
-				log.WithField("error", err).Error("panic")
-				http.Error(rw, fmt.Sprintf("%#v", err), 500)
+			if err := xanax(recover()); err != nil {
+				rawStr := fmt.Sprintf("%#v", err)
+				log.WithField("raw", rawStr).Error(err.Error())
+				http.Error(rw, rawStr, 500)
 			}
 		}()
 		h.ServeHTTP(rw, r)
