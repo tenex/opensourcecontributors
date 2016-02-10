@@ -82,5 +82,6 @@ gulp.task('connect', function () {
 gulp.task('default', [
   'scripts',
   'static',
-  'stylesheets'
+  'stylesheets',
+  'fonts'
 ]);
