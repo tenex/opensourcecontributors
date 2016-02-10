@@ -5,3 +5,5 @@ ghc-app/ghc-app
 *.pyc
 venv
 /web/node_modules
+/web/public
+!/web/public/.gitkeep
