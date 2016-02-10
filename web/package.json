@@ -1,0 +1,28 @@
+{
+  "name": "github-contributions-www",
+  "private": true,
+  "version": "0.0.1",
+  "description": "GitHub Contributions Archive",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/tenex/github-contributions"
+  },
+  "keywords": [
+    "github",
+    "git"
+  ],
+  "author": "Tenex Developers",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-angular-templatecache": "^1.8.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-imagemin": "^2.4.0",
+    "gulp-uglify": "^1.5.2",
+    "gulp-util": "^3.0.7"
+  }
+}
