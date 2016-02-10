@@ -20,7 +20,6 @@ var paths = {
 };
 
 gulp.task('browserify', function() {
-  // Grabs the app.js file
   return browserify('js/app.js')
     .bundle()
     .pipe(source('main.js'))
