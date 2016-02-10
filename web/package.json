@@ -33,6 +33,10 @@
     "vinyl-source-stream": "^1.1.0"
   },
   "dependencies": {
-    "angular": "^1.5.0"
+    "angular": "^1.5.0",
+    "angular-moment": "^1.0.0-beta.4",
+    "angular-resource": "^1.5.0",
+    "angular-ui-bootstrap": "^1.1.2",
+    "angular-ui-router": "^0.2.18"
   }
 }
