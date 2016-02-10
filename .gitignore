@@ -4,3 +4,4 @@ ghc-app/ghc-app
 *.exe
 *.pyc
 venv
+/web/node_modules
