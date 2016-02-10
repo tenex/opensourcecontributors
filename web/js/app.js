@@ -4,6 +4,7 @@
         'angularMoment',
         'truncate',
         'ui.bootstrap',
-        'ui.router'
+        'ui.router',
+        'templates'
     ]);
 })();
