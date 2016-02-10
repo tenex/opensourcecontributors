@@ -45,7 +45,6 @@ gulp.task('fonts', function() {
     .pipe(gulp.dest('public/fonts'));
 });
 
-
 gulp.task('clean', function() {
   return del(['public/**/*']);
 });
@@ -58,13 +57,7 @@ gulp.task('templates', function() {
     .pipe(gulp.dest('js/'));
 });
 
-gulp.task('scripts', ['templates', 'browserify'], function() {
-  // return gulp.src(paths.scripts)
-  //     .pipe(sourcemaps.init())
-  //     .pipe(concat('app.min.js'))
-  //     .pipe(sourcemaps.write())
-  //     .pipe(gulp.dest('public'));
-});
+gulp.task('scripts', ['templates', 'browserify']);
 
 gulp.task('watch', function() {
   gulp.watch([paths.templates, paths.scripts], ['scripts']);
