@@ -11,68 +11,76 @@ var templateCache = require('gulp-angular-templatecache');
 var del = require('del');
 
 var paths = {
-    //fonts: ['fonts/*', 'octicons/*']
-    static: ['index.html', 'octicons/**/*'],
-    scripts: 'js/*.js',
-    stylesheets: 'css/*.css',
-    templates: 'templates/**/*.html',
-    images: 'img/**/*'
+  static: ['index.html', 'octicons/**/*'],
+  fonts: ['fonts/*'],
+  scripts: 'js/*.js',
+  stylesheets: 'css/*.css',
+  templates: 'templates/**/*.html',
+  images: 'img/**/*'
 };
 
 gulp.task('browserify', function() {
-    // Grabs the app.js file
-    return browserify('js/app.js')
-        .bundle()
-        .pipe(source('main.js'))
-        .pipe(gulp.dest('public/'));
+  // Grabs the app.js file
+  return browserify('js/app.js')
+    .bundle()
+    .pipe(source('main.js'))
+    .pipe(gulp.dest('public/'));
 });
 
 gulp.task('stylesheets', function() {
-    return gulp.src(paths.stylesheets)
-        .pipe(sourcemaps.init())
-        .pipe(minifyCss())
-        .pipe(sourcemaps.write())
-        .pipe(gulp.dest('public'));
+  return gulp.src(paths.stylesheets)
+    .pipe(sourcemaps.init())
+    .pipe(minifyCss())
+    .pipe(sourcemaps.write())
+    .pipe(gulp.dest('public'));
 });
 
 gulp.task('static', function() {
-    return gulp.src(paths.static)
-        .pipe(gulp.dest('public'));
+  return gulp.src(paths.static)
+    .pipe(gulp.dest('public'));
 });
 
+gulp.task('fonts', function() {
+  return gulp.src(paths.fonts)
+    .pipe(gulp.dest('public/fonts'));
+});
+
+
 gulp.task('clean', function() {
-    return del(['public/**/*']);
+  return del(['public/**/*']);
 });
 
 gulp.task('templates', function() {
-    return gulp.src(paths.templates)
-        .pipe(templateCache())
-        .pipe(gulp.dest('js/'));
+  return gulp.src(paths.templates)
+    .pipe(templateCache('templates.js', {
+      standalone: true
+    }))
+    .pipe(gulp.dest('js/'));
 });
 
-gulp.task('scripts', ['templates'], function() {
-    return gulp.src(paths.scripts)
-        .pipe(sourcemaps.init())
-        .pipe(concat('app.min.js'))
-        .pipe(sourcemaps.write())
-        .pipe(gulp.dest('public'));
+gulp.task('scripts', ['templates', 'browserify'], function() {
+  // return gulp.src(paths.scripts)
+  //     .pipe(sourcemaps.init())
+  //     .pipe(concat('app.min.js'))
+  //     .pipe(sourcemaps.write())
+  //     .pipe(gulp.dest('public'));
 });
 
 gulp.task('watch', function() {
-    gulp.watch([paths.templates, paths.scripts], ['scripts']);
-    gulp.watch(paths.static, ['static']);
-    gulp.watch(paths.stylesheets, ['stylesheets']);
+  gulp.watch([paths.templates, paths.scripts], ['scripts']);
+  gulp.watch(paths.static, ['static']);
+  gulp.watch(paths.stylesheets, ['stylesheets']);
 });
 
 gulp.task('connect', function () {
-    connect.server({
-        root: 'public',
-        port: 4000
-    });
+  connect.server({
+    root: 'public',
+    port: 4000
+  });
 });
 
 gulp.task('default', [
-    'scripts',
-    'static',
-    'stylesheets'
+  'scripts',
+  'static',
+  'stylesheets'
 ]);
