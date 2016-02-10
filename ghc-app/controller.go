@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -26,47 +25,19 @@ type GHCController struct {
 
 // NewGHCController is the constructor for GHCController
 func NewGHCController(contributions *mgo.Collection) *GHCController {
-	controller := &GHCController{
+	c := &GHCController{
 		userContributions: UserContributionsFactory(contributions),
 		userSummary:       UserSummaryFactory(contributions),
 		ghcStats:          GHCStatsFactory(contributions),
 		Router:            mux.NewRouter(),
 	}
-	controller.HandleFunc("/", controller.serveRoot)
-
-	controller.PathPrefix("/static/").Handler(
-		http.StripPrefix("/static/",
-			http.HandlerFunc(controller.serveStatic)))
-	controller.HandleFunc("/user/{username}",
-		controller.UserSummary)
-	controller.HandleFunc("/user/{username}/events",
-		controller.UserEvents)
-	controller.HandleFunc("/user/{username}/events/{page:[0-9]+}",
-		controller.UserEvents)
-	controller.HandleFunc("/stats",
-		controller.Stats)
-	controller.HandleFunc("/error",
-		controller.Error)
-	controller.HandleFunc("/aggregates",
-		controller.Aggregates)
-	return controller
-}
-
-func (c *GHCController) serveRoot(rw http.ResponseWriter, _ *http.Request) {
-	content, _ := Asset("index.html")
-	rw.Write(content)
-}
-
-func (c *GHCController) serveStatic(rw http.ResponseWriter, r *http.Request) {
-	fi, err := AssetInfo(r.URL.Path)
-	if err != nil {
-		panic(err)
-	}
-	assetReader := bytes.NewReader(MustAsset(r.URL.Path))
-	http.ServeContent(rw, r,
-		fi.Name(),
-		fi.ModTime(),
-		assetReader)
+	c.HandleFunc("/user/{username}", c.UserSummary)
+	c.HandleFunc("/user/{username}/events", c.UserEvents)
+	c.HandleFunc("/user/{username}/events/{page:[0-9]+}", c.UserEvents)
+	c.HandleFunc("/stats", c.Stats)
+	c.HandleFunc("/error", c.Error)
+	c.HandleFunc("/aggregates", c.Aggregates)
+	return c
 }
 
 func (c *GHCController) Error(_ http.ResponseWriter, _ *http.Request) {

@@ -17,7 +17,7 @@
                 abstract: true,
                 controller: 'UserController',
                 controllerAs: 'userVm',
-                templateUrl: '/static/user.common.html',
+                templateUrl: 'user.common.html',
                 resolve: {
                     "username": function($stateParams) {
                         return $stateParams.username;
@@ -26,14 +26,11 @@
             })
             .state('user.repositories', {
                 url: '/',
-                templateUrl: '/static/user.repositories.html'
+                templateUrl: 'user.repositories.html'
             })
             .state('user.events', {
                 url: '/events/{page:int}',
-                templateUrl: '/static/user.events.html'
+                templateUrl: 'user.events.html'
             });
-            // .state('wtf', {
-
-            // });
     }
 })();
