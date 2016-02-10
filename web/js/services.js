@@ -3,12 +3,12 @@
     require('angular-resource')
   ]);
   app.factory('User', ['$resource', function($resource) {
-    return $resource('/user/:username');
+    return $resource('/api/user/:username');
   }]);
   app.factory('Event', ['$resource', function($resource) {
-    return $resource('/user/:username/events/:page');
+    return $resource('/api/user/:username/events/:page');
   }]);
   app.factory('Statistics', ['$resource', function($resource) {
-    return $resource('/stats');
+    return $resource('/api/stats');
   }]);
 })();
