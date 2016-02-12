@@ -31,9 +31,6 @@
         - mailutils
         - mc
         - ncdu
-        - nodejs
-        - nodejs-legacy
-        - npm
         - ntp
         - pcregrep
         - python-dev
@@ -132,6 +129,12 @@
       template: src=github-contributions.nginx.conf
                 dest=/etc/nginx/sites-enabled/github-contributions.nginx.conf
       notify: restart nginx
+
+    - name: install node repo
+      shell: curl -sL https://deb.nodesource.com/setup_5.x | bash -
+
+    - name: install node + npm
+      apt: name=nodejs state=latest update_cache=yes
 
     - name: install gulp-cli
       npm: name=gulp-cli global=yes state=latest
