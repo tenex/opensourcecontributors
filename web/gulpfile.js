@@ -19,7 +19,7 @@ var paths = {
   images: 'img/**/*'
 };
 
-gulp.task('browserify', function() {
+gulp.task('browserify', ['templates'], function() {
   return browserify('js/app.js')
     .bundle()
     .pipe(source('main.js'))
@@ -56,7 +56,7 @@ gulp.task('templates', function() {
     .pipe(gulp.dest('js/'));
 });
 
-gulp.task('scripts', ['templates', 'browserify']);
+gulp.task('scripts', ['browserify']);
 
 gulp.task('watch', function() {
   gulp.watch([paths.templates, paths.scripts], ['scripts']);
