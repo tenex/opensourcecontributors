@@ -1,7 +1,5 @@
 package main
 
-//go:generate go-bindata -prefix static/ static/...
-
 import (
 	"fmt"
 	"math/rand"

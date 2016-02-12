@@ -31,7 +31,6 @@
         - mailutils
         - mc
         - ncdu
-        - nodejs
         - ntp
         - pcregrep
         - python-dev
@@ -113,7 +112,7 @@
     - name: restart mongodb
       service: name=mongod state=restarted
 
-- name: install and configure nginx
+- name: install and configure nginx and frontend utilities
   user: root
   hosts: web
   tags:
@@ -130,6 +129,17 @@
       template: src=github-contributions.nginx.conf
                 dest=/etc/nginx/sites-enabled/github-contributions.nginx.conf
       notify: restart nginx
+
+    - name: install node repo
+      shell: curl -sL https://deb.nodesource.com/setup_5.x | bash -
+
+    - name: install node + npm
+      apt: name=nodejs state=latest update_cache=yes
+
+    - name: install gulp-cli
+      command: npm install -g gulp-cli
+      # DO NOT USE -- THIS DOESN'T INSTALL IT ?!
+      # npm: name=gulp-cli global=yes state=latest
 
   handlers:
     - name: restart nginx
@@ -243,6 +253,16 @@
 
     - name: build ghc-app
       script: build-ghc-app.sh
+
+    - name: install dependencies
+      shell: npm install
+      args:
+        chdir: /github-contributions/web
+
+    - name: build assets
+      shell: gulp
+      args:
+        chdir: /github-contributions/web
 
 - name: set service states
   user: root

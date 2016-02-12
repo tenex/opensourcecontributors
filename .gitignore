@@ -4,3 +4,7 @@ ghc-app/ghc-app
 *.exe
 *.pyc
 venv
+/web/node_modules
+/web/public
+!/web/public/.gitkeep
+/web/js/templates.js

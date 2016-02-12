@@ -12,7 +12,7 @@
                      $log.debug(rejection);
                      $rootScope.errorDescription = rejection.data.error;
                      $injector.get('$uibModal').open({
-                         templateUrl: '/static/bsod.html',
+                         templateUrl: 'bsod.html',
                          controller: 'BsodInstanceCtrl',
                          keyboard: true,
                          windowClass: 'bsod',
