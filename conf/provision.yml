@@ -246,6 +246,11 @@
     - name: build ghc-app
       script: build-ghc-app.sh
 
+    - name: build assets
+      shell: npm install --dev && gulp
+      args:
+        chdir: /github-contributions/web
+
 - name: set service states
   user: root
   hosts: web
