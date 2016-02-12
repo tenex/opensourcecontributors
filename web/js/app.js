@@ -12,7 +12,9 @@ require('./templates.js');
     require('angular-moment'),
     require('angular-ui-bootstrap'),
     require('angular-ui-router')
-  ]);
+  ]).config(function($locationProvider) {
+    $locationProvider.html5Mode(true).hashPrefix('!');
+  });
 })();
 
 require('./routes.js');
