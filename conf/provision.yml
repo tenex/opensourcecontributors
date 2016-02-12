@@ -252,8 +252,13 @@
     - name: build ghc-app
       script: build-ghc-app.sh
 
+    - name: install dependencies
+      shell: npm install
+      args:
+        chdir: /github-contributions/web
+
     - name: build assets
-      shell: npm install && gulp
+      shell: /usr/local/bin/gulp
       args:
         chdir: /github-contributions/web
 
