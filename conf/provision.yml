@@ -115,7 +115,7 @@
     - name: restart mongodb
       service: name=mongod state=restarted
 
-- name: install and configure nginx
+- name: install and configure nginx and frontend utilities
   user: root
   hosts: web
   tags:
@@ -132,6 +132,9 @@
       template: src=github-contributions.nginx.conf
                 dest=/etc/nginx/sites-enabled/github-contributions.nginx.conf
       notify: restart nginx
+
+    - name: install gulp-cli
+      npm: name=gulp-cli global=yes state=latest
 
   handlers:
     - name: restart nginx
