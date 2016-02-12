@@ -137,7 +137,9 @@
       apt: name=nodejs state=latest update_cache=yes
 
     - name: install gulp-cli
-      npm: name=gulp-cli global=yes state=latest
+      command: npm install -g gulp-cli
+      # DO NOT USE -- THIS DOESN'T INSTALL IT ?!
+      # npm: name=gulp-cli global=yes state=latest
 
   handlers:
     - name: restart nginx
@@ -258,7 +260,7 @@
         chdir: /github-contributions/web
 
     - name: build assets
-      shell: /usr/local/bin/gulp
+      shell: gulp
       args:
         chdir: /github-contributions/web
 
