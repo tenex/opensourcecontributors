@@ -32,6 +32,8 @@
         - mc
         - ncdu
         - nodejs
+        - nodejs-legacy
+        - npm
         - ntp
         - pcregrep
         - python-dev
