@@ -70,7 +70,7 @@ gulp.task('connect', function () {
 });
 
 gulp.task('default', [
-  'scripts',
+  'browserify',
   'static',
   'stylesheets',
   'fonts'
