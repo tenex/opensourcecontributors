@@ -1,0 +1,15 @@
+<form class="navbar-form navbar-right"
+      ng-controller="SearchController as search"
+      ng-submit="search.doSearch()">
+  <div class="form-group">
+    <label for="query" class="sr-only">GitHub Username</label>
+    <input type="text"
+           ng-model="search.username"
+           class="form-control" id="query"
+           placeholder="GitHub User">
+  </div>
+  <button id="submit-button" type="submit"
+          class="btn btn-primary">
+    Search
+  </button>
+</form>
