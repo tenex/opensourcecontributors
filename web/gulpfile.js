@@ -56,10 +56,8 @@ gulp.task('templates', function() {
     .pipe(gulp.dest('js/'));
 });
 
-gulp.task('scripts', ['browserify']);
-
-gulp.task('watch', function() {
-  gulp.watch([paths.templates, paths.scripts], ['scripts']);
+gulp.task('watch', ['browserify', 'static', 'stylesheets'], function() {
+  gulp.watch([paths.templates, paths.scripts], ['browserify']);
   gulp.watch(paths.static, ['static']);
   gulp.watch(paths.stylesheets, ['stylesheets']);
 });
