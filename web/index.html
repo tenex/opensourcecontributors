@@ -85,6 +85,10 @@
               </ul>
             </li>
           </ul>
+          <ui-view
+              name="search"
+              class="hidden-xs hidden-sm navbar-right navbar-form">
+          </ui-view>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
@@ -92,7 +96,10 @@
     <div class="container"
          role="main"
          ng-cloak>
-      <div ui-view="search"></div>
+      <div ui-view="search"
+           class="visible-xs visible-sm"
+           style="margin-bottom:10px">
+      </div>
       <div ui-view></div>
     </div> <!-- /container -->
 
