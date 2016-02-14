@@ -1,23 +1,22 @@
 (function() {
-    angular
-        .module('ghca')
-        .controller('SearchController', SearchController);
+  angular
+    .module('ghca')
+    .controller('SearchController', SearchController);
 
-    SearchController.$inject = ['$scope', '$state', '$log'];
+  SearchController.$inject = ['$scope', '$state'];
 
-    function SearchController($scope, $state, $log) {
-        var vm = this;
+  function SearchController($scope, $state) {
+    var vm = this;
 
-        vm.username = '';
+    vm.username = '';
+    vm.doSearch = doSearch;
 
-        vm.doSearch = doSearch;
+    //////////
 
-        //////////
-
-        function doSearch() {
-            $state.go('user.repositories', {
-                username: vm.username
-            });
-        }
+    function doSearch() {
+      $state.go('root.user.repositories', {
+        username: vm.username
+      });
     }
+  }
 })();
