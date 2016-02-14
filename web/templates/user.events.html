@@ -41,12 +41,12 @@
           <time am-time-ago="event.created_at"></time>
         </td>
         <td style="white-space:nowrap">
-          <a href="https://github.com/{{event.repo}}">
+          <a ng-href="https://github.com/{{event.repo}}">
             {{ event.repo }}
           </a>
         </td>
         <td>
-          <a href="{{userUrl}}">{{processedUsername}}</a>
+          <a ng-href="{{userUrl}}">{{processedUsername}}</a>
         </td>
         <td ng-switch on="event.type">
 
@@ -56,8 +56,8 @@
               <ul>
                 <li ng-repeat="page in event.pages">
                   {{ page.action }} the page
-                  <a href="{{page.html_url}}">{{page.title}}</a>
-                  (<a href="{{page.html_url}}/_history">history</a>)
+                  <a ng-href="{{page.html_url}}">{{page.title}}</a>
+                  (<a ng-href="{{page.html_url}}/_history">history</a>)
                 </li>
               </ul>
             </span>
