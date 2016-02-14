@@ -1,15 +1,15 @@
-<form class="navbar-form navbar-right"
-      ng-controller="SearchController as search"
-      ng-submit="search.doSearch()">
-  <div class="form-group">
-    <label for="query" class="sr-only">GitHub Username</label>
+<form ng-submit="search.doSearch()">
+  <div class="input-group">
     <input type="text"
            ng-model="search.username"
-           class="form-control" id="query"
+           class="form-control"
            placeholder="GitHub User">
+    <span class="input-group-btn">
+      <button id="submit-button"
+              type="submit"
+              class="btn btn-primary">
+        <span class="glyphicon glyphicon-search"></span>
+      </button>
+    </span>
   </div>
-  <button id="submit-button" type="submit"
-          class="btn btn-primary">
-    Search
-  </button>
 </form>
