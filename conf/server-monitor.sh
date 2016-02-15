@@ -1,5 +1,5 @@
 #!/bin/bash
-HOST="githubcontributions.io/stats"
+HOST="https://githubcontributions.io/api/stats"
 MAX_AGE="7500" # seconds
 SCAPEGOAT="engineers@tenex.tech"
 
