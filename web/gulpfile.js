@@ -11,12 +11,11 @@ var templateCache = require('gulp-angular-templatecache');
 var del = require('del');
 
 var paths = {
-  static: ['index.html', 'octicons/**/*'],
+  static: ['index.html', 'octicons/**/*', 'img/**/*'],
   fonts: ['fonts/*'],
   scripts: 'js/*.js',
   stylesheets: 'css/*.css',
-  templates: 'templates/**/*.html',
-  images: 'img/**/*'
+  templates: 'templates/**/*.html'
 };
 
 gulp.task('browserify', ['templates'], function() {
