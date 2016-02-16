@@ -118,5 +118,6 @@ func (c *GHCController) Stats(rw http.ResponseWriter, r *http.Request) {
 }
 
 func serveJSON(rw http.ResponseWriter, obj interface{}) error {
+	rw.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(rw).Encode(obj)
 }
