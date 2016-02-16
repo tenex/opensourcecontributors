@@ -19,7 +19,7 @@
         }
       })
       .state('root.user', {
-        url: '/user/{username}',
+        url: 'user/{username}',
         abstract: true,
         views: {
           "@": {
@@ -35,11 +35,11 @@
         }
       })
       .state('root.user.repositories', {
-        url: '/',
+        url: '',
         templateUrl: 'user.repositories.html'
       })
       .state('root.user.events', {
-        url: '/events/{page:int}',
+        url: 'events/{page:int}',
         templateUrl: 'user.events.html'
       });
   }
