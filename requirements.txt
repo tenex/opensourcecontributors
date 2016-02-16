@@ -2,14 +2,10 @@ filelock==1.0.3
 Flask==0.10.1
 Flask-PyMongo==0.4.0
 Flask-Script==2.0.5
-itsdangerous==0.24
-Jinja2==2.7.3
-MarkupSafe==0.23
 pymongo==3.1.1
 python-dateutil==2.4.2
 python-rapidjson==0.0.6
 requests==2.7.0
 six==1.9.0
 termcolor==1.1.0
-Werkzeug==0.10.4
 rollbar==0.11.2
