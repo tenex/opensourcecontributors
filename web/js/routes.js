@@ -39,7 +39,7 @@
         templateUrl: 'user.repositories.html'
       })
       .state('root.user.events', {
-        url: 'events/{page:int}',
+        url: '/events/{page:int}',
         templateUrl: 'user.events.html'
       });
   }
