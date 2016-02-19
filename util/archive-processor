@@ -128,7 +128,10 @@ class MongoDBEventLoader(EventLoader):
 
     def __init__(self, transformed_path, loaded_path):
         super().__init__(transformed_path, loaded_path)
-        self.db = pymongo.MongoClient().contributions
+        mongo_addr = '127.0.0.1'
+        if platform.system() == 'Windows':
+            mongo_addr = '[::1]'
+        self.db = pymongo.MongoClient(mongo_addr).contributions
         log.info("connected to MongoDB")
 
     def load_file(self, events_file):
