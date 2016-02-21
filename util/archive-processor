@@ -28,9 +28,12 @@ import urllib.parse
 __version__ = '0.3.1'
 
 NODENAME = platform.uname().node
-
-invocation_id = "ghc-{}-{}.log".format(NODENAME,
+ENVIRONMENT = os.getenv('GHC_ENVIRONMENT') or 'development'
+invocation_id = "ghc-{}-{}.log".format(
+    NODENAME,
     datetime.now().strftime('%Y%m%d-%H%M%S'))
+
+rollbar.initialize(os.getenv('ROLLBAR_TOKEN'), ENVIRONMENT)
 
 # Setup logging
 def make_logger(file_dir='.'):
