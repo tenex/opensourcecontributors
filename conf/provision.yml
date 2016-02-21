@@ -183,6 +183,10 @@
   tasks:
     - include_vars: secrets.yml
 
+    - name: write environment variables
+      template: src=ghc-env.sh
+                dest=/etc/ghc-env.sh
+
     - name: install ghc upstart script
       template: src=github-contributions.conf
                 dest=/etc/init/github-contributions.conf
