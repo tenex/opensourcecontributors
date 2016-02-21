@@ -1,3 +1,4 @@
+export GHC_ENVIRONMENT="production"
 export GHC_LOCKFILE_PATH="/tmp/archive-processor.lock"
 export GHC_EVENTS_PATH="/github-archive/events"
 export GHC_TIMELINE_PATH="/github-archive/timeline"
