@@ -741,4 +741,5 @@ if __name__=='__main__':
             args.func(args)
         except Exception as e:
             log.error("unhandled fatal error: {}".format(e))
+            rollbar.report_exc_info()
             raise e
