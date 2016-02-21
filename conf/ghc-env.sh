@@ -1,0 +1,7 @@
+export GHC_LOCKFILE_PATH="/tmp/archive-processor.lock"
+export GHC_EVENTS_PATH="/github-archive/events"
+export GHC_TIMELINE_PATH="/github-archive/timeline"
+export GHC_TRANSFORMED_PATH="/github-archive/transformed"
+export GHC_LOADED_PATH="/github-archive/loaded"
+export GHC_LOG_PATH="/github-archive/logs"
+export ROLLBAR_TOKEN="{{ rollbar_token }}"
