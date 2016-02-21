@@ -739,6 +739,7 @@ if __name__=='__main__':
     with lock:
         try:
             args.func(args)
+            rollbar.report_message('archives processed', 'info')
         except Exception as e:
             log.error("unhandled fatal error: {}".format(e))
             rollbar.report_exc_info()
