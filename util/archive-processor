@@ -21,6 +21,7 @@ import platform
 import pymongo
 import re
 import requests
+import rollbar
 import sys
 import urllib.parse
 
