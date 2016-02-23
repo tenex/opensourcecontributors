@@ -319,9 +319,13 @@
   user: ghc
   hosts: web
   tasks:
+    - name: figure out who i am
+      local_action: command whoami
+      register: local_user
+
     - name: rollbar notification
       run_once: true
       rollbar_deployment: environment=production
                           revision={{ git_status.after }}
                           token={{ rollbar_token }}
-                          user={{ ansible_user_id }}
+                          user={{ local_user.stdout }}
