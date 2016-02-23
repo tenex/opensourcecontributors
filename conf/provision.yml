@@ -221,6 +221,7 @@
            dest=/github-contributions
            accept_hostkey=yes
            version="{{ git_branch }}"
+      register: git_status
 
     - name: identify release
       command: git rev-parse --short HEAD
@@ -313,3 +314,12 @@
       cron: job=/github-contributions/conf/lets-encrypt-renew-certificate.sh
             special_time=weekly
             name=renew-certificate
+
+- name: tell rollbar we deployed
+  user: ghc
+  hosts: web
+  tasks:
+    - name: rollbar notification
+      run_once: true
+      rollbar_deployment: environment=production
+                          revision={{ git_status.after }}
