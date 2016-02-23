@@ -323,3 +323,5 @@
       run_once: true
       rollbar_deployment: environment=production
                           revision={{ git_status.after }}
+                          token={{ rollbar_token }}
+                          user={{ ansible_user_id }}
