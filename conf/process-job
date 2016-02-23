@@ -1,16 +1,10 @@
 #!/bin/bash
-MAILTO="liambowen@gmail.com"
+MAILTO="engineers@tenex.tech"
 WORKING_PATH="/github-contributions"
 PROCESSOR="/github-contributions/util/archive-processor"
 EVENT_DIGEST="/srv/bin/event-digest"
 PYTHON="/srv/venv/bin/python3"
-
-export GHC_LOCKFILE_PATH="/tmp/archive-processor.lock"
-export GHC_EVENTS_PATH="/github-archive/events"
-export GHC_TIMELINE_PATH="/github-archive/timeline"
-export GHC_TRANSFORMED_PATH="/github-archive/transformed"
-export GHC_LOADED_PATH="/github-archive/loaded"
-export GHC_LOG_PATH="/github-archive/logs"
+source /etc/ghc-env.sh
 
 echo "GHCA Archive Processor"
 /usr/bin/uptime

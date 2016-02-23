@@ -21,15 +21,19 @@ import platform
 import pymongo
 import re
 import requests
+import rollbar
 import sys
 import urllib.parse
 
 __version__ = '0.3.1'
 
 NODENAME = platform.uname().node
-
-invocation_id = "ghc-{}-{}.log".format(NODENAME,
+ENVIRONMENT = os.getenv('GHC_ENV') or 'development'
+invocation_id = "ghc-{}-{}.log".format(
+    NODENAME,
     datetime.now().strftime('%Y%m%d-%H%M%S'))
+
+rollbar.initialize(os.getenv('GHC_ROLLBAR_TOKEN'), ENVIRONMENT)
 
 # Setup logging
 def make_logger(file_dir='.'):
@@ -735,6 +739,8 @@ if __name__=='__main__':
     with lock:
         try:
             args.func(args)
+            rollbar.report_message('archives processed', 'info')
         except Exception as e:
             log.error("unhandled fatal error: {}".format(e))
+            rollbar.report_exc_info()
             raise e
