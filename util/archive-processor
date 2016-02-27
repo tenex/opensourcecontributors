@@ -33,7 +33,7 @@ invocation_id = "ghc-{}-{}.log".format(
     NODENAME,
     datetime.now().strftime('%Y%m%d-%H%M%S'))
 
-rollbar.initialize(os.getenv('GHC_ROLLBAR_TOKEN'), ENVIRONMENT)
+rollbar.init(os.getenv('GHC_ROLLBAR_TOKEN'), ENVIRONMENT)
 
 # Setup logging
 def make_logger(file_dir='.'):
