@@ -223,22 +223,16 @@
            version="{{ git_branch }}"
       register: git_status
 
-    - name: identify release
-      command: git rev-parse --short HEAD
-      register: current_commit
-      args:
-        chdir: /github-contributions
-
-    - debug: msg="deploying ghc at {{ current_commit.stdout }}"
+    - debug: msg="deploying ghc at {{ git_status.after }}"
 
     - name: install python dependencies
       pip: requirements=/github-contributions/requirements.txt
-           virtualenv=/srv/venv-{{ current_commit.stdout }}
+           virtualenv=/srv/venv-{{ git_status.after }}
            virtualenv_command="virtualenv --python=/usr/bin/python3"
 
     - name: commit python venv
       file: path=/srv/venv
-            src=/srv/venv-{{ current_commit.stdout }}
+            src=/srv/venv-{{ git_status.after }}
             state=link
 
     - name: commit archive-processor
