@@ -21,9 +21,19 @@ var (
 // Digest contains all aggregate data for specific hour
 // +gen * slice:"SortBy"
 type Digest struct {
-	Count int       `json:"count"`
-	Date  time.Time `json:"date"`
+	Count int        `json:"count"`
+	Date  time.Time  `json:"date"`
+	Users []Username `json:"users"`
 }
+
+// EventRecord is one transformed event
+type EventRecord struct {
+	Username Username `json:"_user_lower"`
+}
+
+// Username implements set methods
+// +gen set
+type Username string
 
 // DigestFile will return a valid Digest instance based on a file,
 // using a cached digest if available
@@ -55,9 +65,16 @@ func doDigestFile(eventFilePath string, digestFile *os.File) (*Digest, error) {
 	}
 
 	c, err := lineCounter(reader)
+	f.Seek(0, os.SEEK_SET)
+	reader.Reset(f)
+
+	usernames, err := usernameExtractor(reader)
+	if err != nil {
+		return nil, err
+	}
+
 	dateParts := eventFilenameRE.FindStringSubmatch(
 		filepath.Base(eventFilePath))
-
 	year, _ := strconv.Atoi(dateParts[1])
 	month, _ := strconv.Atoi(dateParts[2])
 	day, _ := strconv.Atoi(dateParts[3])
@@ -68,6 +85,7 @@ func doDigestFile(eventFilePath string, digestFile *os.File) (*Digest, error) {
 	digest := &Digest{
 		Count: c,
 		Date:  fileDate,
+		Users: usernames.ToSlice(),
 	}
 	if err != nil {
 		return nil, err
@@ -109,6 +127,10 @@ func lineCounter(r io.Reader) (int, error) {
 	}
 
 	return count, nil
+}
+
+func usernameExtractor(r io.Reader) (UsernameSet, error) {
+	return nil, nil
 }
 
 func makePath(basename string) string {
