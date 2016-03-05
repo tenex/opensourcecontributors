@@ -112,9 +112,8 @@
           Tracking {{ stats.eventCount | number }} events
         </p>
         <p class="navbar-text navbar-right hidden-xs">
-            Latest GitHub event indexed was on
-            {{ stats.latestEvent | date : 'longDate' }} at
-            {{ stats.latestEvent | date : 'mediumTime' }}
+            GitHub events last updated
+            <span am-time-ago="stats.latestEvent"></span>
         </p>
       </div>
     </nav>
