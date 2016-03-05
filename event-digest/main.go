@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -21,14 +23,18 @@ var (
 // Digest contains all aggregate data for specific hour
 // +gen * slice:"SortBy"
 type Digest struct {
-	Count int        `json:"count"`
-	Date  time.Time  `json:"date"`
-	Users []Username `json:"users"`
+	Count int       `json:"count"`
+	Date  time.Time `json:"date"`
 }
 
 // EventRecord is one transformed event
 type EventRecord struct {
-	Username Username `json:"_user_lower"`
+	Actor ActorRecord `json:"actor"`
+}
+
+// ActorRecord is often nested in EventRecord
+type ActorRecord struct {
+	Username string `json:"login"`
 }
 
 // Username implements set methods
@@ -37,7 +43,7 @@ type Username string
 
 // DigestFile will return a valid Digest instance based on a file,
 // using a cached digest if available
-func DigestFile(eventFilePath string) (*Digest, error) {
+func DigestFile(eventFilePath string, users UsernameSet) (*Digest, error) {
 	digestFilePath := fmt.Sprintf("%v.digest.json", eventFilePath)
 	df, err := os.OpenFile(digestFilePath,
 		os.O_EXCL|os.O_CREATE|os.O_RDWR,
@@ -50,27 +56,35 @@ func DigestFile(eventFilePath string) (*Digest, error) {
 	}
 	defer df.Close()
 
-	return doDigestFile(eventFilePath, df)
+	return doDigestFile(eventFilePath, df, users)
 }
 
-func doDigestFile(eventFilePath string, digestFile *os.File) (*Digest, error) {
+func doDigestFile(eventFilePath string, digestFile *os.File,
+	users UsernameSet) (*Digest, error) {
 	f, err := os.Open(eventFilePath)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
+
 	reader, err := gzip.NewReader(f)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	c, err := lineCounter(reader)
-	f.Seek(0, os.SEEK_SET)
+	if err != nil {
+		panic(err)
+	}
+	if _, err := f.Seek(0, 0); err != nil {
+		panic(err)
+	}
+
 	reader.Reset(f)
 
-	usernames, err := usernameExtractor(reader)
+	err = usernameExtractor(reader, users)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	dateParts := eventFilenameRE.FindStringSubmatch(
@@ -85,7 +99,6 @@ func doDigestFile(eventFilePath string, digestFile *os.File) (*Digest, error) {
 	digest := &Digest{
 		Count: c,
 		Date:  fileDate,
-		Users: usernames.ToSlice(),
 	}
 	if err != nil {
 		return nil, err
@@ -129,8 +142,21 @@ func lineCounter(r io.Reader) (int, error) {
 	return count, nil
 }
 
-func usernameExtractor(r io.Reader) (UsernameSet, error) {
-	return nil, nil
+func usernameExtractor(r io.Reader, users UsernameSet) error {
+	decoder := json.NewDecoder(r)
+	for {
+		if !decoder.More() {
+			break
+		}
+		event := EventRecord{}
+		err := decoder.Decode(&event)
+		if err != nil {
+			return err
+		}
+		event.Actor.Username = strings.ToLower(event.Actor.Username)
+		users.Add(Username(event.Actor.Username))
+	}
+	return nil
 }
 
 func makePath(basename string) string {
@@ -139,39 +165,77 @@ func makePath(basename string) string {
 		basename)
 }
 
-func makeSummary(digests DigestSlice) {
+func makeSummary(digests DigestSlice, newUsers UsernameSet) {
 	digests = DigestSlice(digests).SortBy(func(x, y *Digest) bool {
 		return x.Date.Unix() < y.Date.Unix()
 	})
 
-	digestSummary, err := os.Create(
-		makePath("summary.json"))
+	digestSummary, err := os.Create(makePath("summary.json"))
 	if err != nil {
 		panic(err)
 	}
+	defer digestSummary.Close()
 
 	err = json.NewEncoder(digestSummary).Encode(digests)
 	if err != nil {
 		panic(err)
 	}
+
+	usersSummary, err := os.OpenFile(
+		makePath("users.txt"),
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0664)
+	if err != nil {
+		panic(err)
+	}
+	defer usersSummary.Close()
+
+	fmt.Printf("writing %v users\n", len(newUsers))
+	for u := range newUsers {
+		_, err = fmt.Fprintln(usersSummary, u)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func readKnownUsers() UsernameSet {
+	users := UsernameSet{}
+	usersBuf, err := ioutil.ReadFile(makePath("users.txt"))
+	if err == nil {
+		userStrings := strings.Split(string(usersBuf), "\n")
+		for _, u := range userStrings {
+			users.Add(Username(u))
+		}
+	} else {
+		fmt.Printf("warning: could not read users.txt: %v\n", err)
+	}
+	return users
 }
 
 func main() {
-	eventFiles, err := filepath.Glob(
-		makePath("*.json.gz"))
+	fmt.Println("reading users...")
+	users := readKnownUsers()
+	existingUsers := users.Clone()
+	fmt.Printf("found %v existing users\n", len(existingUsers))
+
+	eventFiles, err := filepath.Glob(makePath("*.json.gz"))
 	if err != nil {
 		panic(err)
 	}
 
 	digests := make([]*Digest, 0, len(eventFiles))
-
 	for _, f := range eventFiles {
-		d, err := DigestFile(f)
+		d, err := DigestFile(f, users)
 		if err != nil {
 			panic(err)
 		}
+		fmt.Printf("now have %v users\n", len(users))
 		digests = append(digests, d)
 	}
 
-	makeSummary(digests)
+	fmt.Println("computing difference in users")
+	newUsers := users.Difference(existingUsers)
+	fmt.Printf("done (found %v)\n", len(newUsers))
+	makeSummary(digests, newUsers)
 }
