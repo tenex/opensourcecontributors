@@ -31,9 +31,9 @@ func init() {
 	if AppEnv == "" {
 		AppEnv = "development"
 	}
-	logDest := os.Getenv("GHC_APP_LOG_PATH")
+	logDest := os.Getenv("GHC_EVENT_DIGEST_LOG_PATH")
 	if logDest == "" {
-		logDest = "/var/log/ghc/ghc.log"
+		logDest = "/var/log/ghc/event-digest.log"
 	}
 	log.SetOutput(&lumberjack.Logger{
 		Filename: logDest,
