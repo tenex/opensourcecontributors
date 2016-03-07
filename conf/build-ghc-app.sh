@@ -13,5 +13,6 @@ popd
 
 export EVENT_DIGEST_PATH="${GOPATH}/src/event-digest"
 pushd "${EVENT_DIGEST_PATH}" > /dev/null
+go get -d ./...
 go install event-digest
 popd
