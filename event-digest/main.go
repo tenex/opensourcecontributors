@@ -253,7 +253,10 @@ func main() {
 	digests := make([]*Digest, 0, len(eventFiles))
 	for _, f := range eventFiles {
 		d, err := DigestFile(f, users)
-		log.WithError(err).Errorf("could not digest events file")
+		if err != nil {
+			log.WithError(err).Errorf(
+				"could not digest events file")
+		}
 		log.Debugf("now have %v users", len(users))
 		digests = append(digests, d)
 	}
