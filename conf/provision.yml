@@ -291,7 +291,7 @@
     - deploy
   tasks:
     - name: github archive archive processor monitor cron job
-      cron: job=/github-contributions/conf/server-monitor.sh
+      cron: job=/github-contributions/conf/server-monitor
             name=server-monitor
             minute=55
             user=ghc
