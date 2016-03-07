@@ -111,7 +111,9 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 
 	err = usernameExtractor(reader, users)
 	if err != nil {
-		panic(err)
+		log.WithError(err).Errorf(
+			"could not extract users from %v",
+			eventFilePath)
 	}
 
 	dateParts := eventFilenameRE.FindStringSubmatch(
@@ -251,9 +253,7 @@ func main() {
 	digests := make([]*Digest, 0, len(eventFiles))
 	for _, f := range eventFiles {
 		d, err := DigestFile(f, users)
-		if err != nil {
-			panic(err)
-		}
+		log.WithError(err).Errorf("could not digest file %v", f)
 		log.Debugf("now have %v users", len(users))
 		digests = append(digests, d)
 	}
