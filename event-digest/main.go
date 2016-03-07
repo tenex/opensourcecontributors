@@ -130,7 +130,7 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 		return nil, err
 	}
 
-	fmt.Printf("computed %v: %v\n", fileDate, c)
+	log.Debugf("computed %v: %v events\n", fileDate, c)
 	err = json.NewEncoder(digestFile).Encode(digest)
 	return digest, err
 }
@@ -213,7 +213,7 @@ func makeSummary(digests DigestSlice, newUsers UsernameSet) {
 	}
 	defer usersSummary.Close()
 
-	fmt.Printf("writing %v users\n", len(newUsers))
+	log.Debugf("writing %v users\n", len(newUsers))
 	for u := range newUsers {
 		_, err = fmt.Fprintln(usersSummary, u)
 		if err != nil {
@@ -231,16 +231,16 @@ func readKnownUsers() UsernameSet {
 			users.Add(Username(u))
 		}
 	} else {
-		fmt.Printf("warning: could not read users.txt: %v\n", err)
+		log.WithError(err).Warn("warning: could not read users.txt")
 	}
 	return users
 }
 
 func main() {
-	fmt.Println("reading users...")
+	log.Debugf("event digest started")
 	users := readKnownUsers()
 	existingUsers := users.Clone()
-	fmt.Printf("found %v existing users\n", len(existingUsers))
+	log.Debugf("found %v existing users", len(existingUsers))
 
 	eventFiles, err := filepath.Glob(makePath("*.json.gz"))
 	if err != nil {
@@ -253,12 +253,12 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("now have %v users\n", len(users))
+		log.Debugf("now have %v users", len(users))
 		digests = append(digests, d)
 	}
 
-	fmt.Println("computing difference in users")
+	log.Debug("computing difference in users")
 	newUsers := users.Difference(existingUsers)
-	fmt.Printf("done (found %v)\n", len(newUsers))
+	log.Debugf("done (found %v)\n", len(newUsers))
 	makeSummary(digests, newUsers)
 }
