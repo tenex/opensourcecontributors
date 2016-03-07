@@ -144,10 +144,7 @@ func lineCounter(r io.Reader) (int, error) {
 
 func usernameExtractor(r io.Reader, users UsernameSet) error {
 	decoder := json.NewDecoder(r)
-	for {
-		if !decoder.More() {
-			break
-		}
+	for decoder.More() {
 		event := EventRecord{}
 		err := decoder.Decode(&event)
 		if err != nil {
