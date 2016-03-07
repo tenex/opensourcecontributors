@@ -5,6 +5,9 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/heroku/rollrus"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -18,7 +21,30 @@ import (
 var (
 	eventFilenameRE = regexp.MustCompile(
 		`(\d{4})-(\d{2})-(\d{2})-(\d{1,2})`)
+	// AppEnv is: production, staging, development
+	AppEnv string
 )
+
+func init() {
+	AppEnv = os.Getenv("GHC_ENV")
+	if AppEnv == "" {
+		AppEnv = "development"
+	}
+	logDest := os.Getenv("GHC_APP_LOG_PATH")
+	if logDest == "" {
+		logDest = "/var/log/ghc/ghc.log"
+	}
+	log.SetOutput(&lumberjack.Logger{
+		Filename: logDest,
+		MaxSize:  100, // MB
+	})
+	if AppEnv == "production" {
+		rollrus.SetupLogging(os.Getenv("GHC_ROLLBAR_TOKEN"), AppEnv)
+	}
+	// PUT THIS AFTER ROLLRUS!
+	// https://github.com/heroku/rollrus/issues/4
+	log.SetFormatter(&log.JSONFormatter{})
+}
 
 // Digest contains all aggregate data for specific hour
 // +gen * slice:"SortBy"
