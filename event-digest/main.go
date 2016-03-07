@@ -5,6 +5,10 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/go-errors/errors"
+	"github.com/heroku/rollrus"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -18,7 +22,30 @@ import (
 var (
 	eventFilenameRE = regexp.MustCompile(
 		`(\d{4})-(\d{2})-(\d{2})-(\d{1,2})`)
+	// AppEnv is: production, staging, development
+	AppEnv string
 )
+
+func init() {
+	AppEnv = os.Getenv("GHC_ENV")
+	if AppEnv == "" {
+		AppEnv = "development"
+	}
+	logDest := os.Getenv("GHC_EVENT_DIGEST_LOG_PATH")
+	if logDest == "" {
+		logDest = "/var/log/ghc/event-digest.log"
+	}
+	log.SetOutput(&lumberjack.Logger{
+		Filename: logDest,
+		MaxSize:  100, // MB
+	})
+	if AppEnv == "production" {
+		rollrus.SetupLogging(os.Getenv("GHC_ROLLBAR_TOKEN"), AppEnv)
+	}
+	// PUT THIS AFTER ROLLRUS!
+	// https://github.com/heroku/rollrus/issues/4
+	log.SetFormatter(&log.JSONFormatter{})
+}
 
 // Digest contains all aggregate data for specific hour
 // +gen * slice:"SortBy"
@@ -84,7 +111,9 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 
 	err = usernameExtractor(reader, users)
 	if err != nil {
-		panic(err)
+		log.WithError(err).Errorf(
+			"could not extract users from %v",
+			eventFilePath)
 	}
 
 	dateParts := eventFilenameRE.FindStringSubmatch(
@@ -104,7 +133,7 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 		return nil, err
 	}
 
-	fmt.Printf("computed %v: %v\n", fileDate, c)
+	log.Debugf("computed %v: %v events\n", fileDate, c)
 	err = json.NewEncoder(digestFile).Encode(digest)
 	return digest, err
 }
@@ -129,7 +158,7 @@ func lineCounter(r io.Reader) (int, error) {
 	for {
 		c, err := r.Read(buf)
 		if err != nil && err != io.EOF {
-			return count, err
+			return count, errors.New(err)
 		}
 
 		count += bytes.Count(buf[:c], lineSep)
@@ -187,7 +216,7 @@ func makeSummary(digests DigestSlice, newUsers UsernameSet) {
 	}
 	defer usersSummary.Close()
 
-	fmt.Printf("writing %v users\n", len(newUsers))
+	log.Debugf("writing %v users\n", len(newUsers))
 	for u := range newUsers {
 		_, err = fmt.Fprintln(usersSummary, u)
 		if err != nil {
@@ -205,16 +234,16 @@ func readKnownUsers() UsernameSet {
 			users.Add(Username(u))
 		}
 	} else {
-		fmt.Printf("warning: could not read users.txt: %v\n", err)
+		log.WithError(err).Warn("warning: could not read users.txt")
 	}
 	return users
 }
 
 func main() {
-	fmt.Println("reading users...")
+	log.Debugf("event digest started")
 	users := readKnownUsers()
 	existingUsers := users.Clone()
-	fmt.Printf("found %v existing users\n", len(existingUsers))
+	log.Debugf("found %v existing users", len(existingUsers))
 
 	eventFiles, err := filepath.Glob(makePath("*.json.gz"))
 	if err != nil {
@@ -224,15 +253,13 @@ func main() {
 	digests := make([]*Digest, 0, len(eventFiles))
 	for _, f := range eventFiles {
 		d, err := DigestFile(f, users)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("now have %v users\n", len(users))
+		log.WithError(err).Errorf("could not digest file %v", f)
+		log.Debugf("now have %v users", len(users))
 		digests = append(digests, d)
 	}
 
-	fmt.Println("computing difference in users")
+	log.Debug("computing difference in users")
 	newUsers := users.Difference(existingUsers)
-	fmt.Printf("done (found %v)\n", len(newUsers))
+	log.Debugf("done (found %v)\n", len(newUsers))
 	makeSummary(digests, newUsers)
 }
