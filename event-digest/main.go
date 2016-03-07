@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/go-errors/errors"
 	"github.com/heroku/rollrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
@@ -155,7 +156,7 @@ func lineCounter(r io.Reader) (int, error) {
 	for {
 		c, err := r.Read(buf)
 		if err != nil && err != io.EOF {
-			return count, err
+			return count, errors.New(err)
 		}
 
 		count += bytes.Count(buf[:c], lineSep)
