@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
@@ -96,24 +95,17 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 
 	reader, err := gzip.NewReader(f)
 	if err != nil {
-		panic(err)
-	}
-
-	c, err := lineCounter(reader)
-	if err != nil {
-		panic(err)
-	}
-	if _, err := f.Seek(0, 0); err != nil {
-		panic(err)
+		return nil, errors.New(err)
 	}
 
 	reader.Reset(f)
+	eventReader := NewNullReplacer(f, ' ')
 
-	err = usernameExtractor(reader, users)
+	c, err := digestStream(eventReader, users)
 	if err != nil {
-		log.WithError(err).Errorf(
-			"could not extract users from %v",
-			eventFilePath)
+		entry := log.WithError(err)
+		entry = entry.WithField("eventFilePath", eventFilePath)
+		entry.Error("could not extract users")
 	}
 
 	dateParts := eventFilenameRE.FindStringSubmatch(
@@ -150,39 +142,21 @@ func readDigest(digestFilePath string) (*Digest, error) {
 	return d, err
 }
 
-func lineCounter(r io.Reader) (int, error) {
-	buf := make([]byte, 1024*1024)
-	count := 0
-	lineSep := []byte{'\n'}
-
-	for {
-		c, err := r.Read(buf)
-		if err != nil && err != io.EOF {
-			return count, errors.New(err)
-		}
-
-		count += bytes.Count(buf[:c], lineSep)
-
-		if err == io.EOF {
-			break
-		}
-	}
-
-	return count, nil
-}
-
-func usernameExtractor(r io.Reader, users UsernameSet) error {
+func digestStream(r io.Reader, users UsernameSet) (int, error) {
+	records := 0
 	decoder := json.NewDecoder(r)
-	for decoder.More() {
+	for {
 		event := EventRecord{}
-		err := decoder.Decode(&event)
-		if err != nil {
-			return err
+		if err := decoder.Decode(&event); err == io.EOF {
+			break
+		} else if err != nil {
+			return records, err
 		}
+		records++
 		event.Actor.Username = strings.ToLower(event.Actor.Username)
 		users.Add(Username(event.Actor.Username))
 	}
-	return nil
+	return records, nil
 }
 
 func makePath(basename string) string {
