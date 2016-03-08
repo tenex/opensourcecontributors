@@ -8,3 +8,4 @@ venv
 /web/public
 !/web/public/.gitkeep
 /web/js/templates.js
+/*.test
