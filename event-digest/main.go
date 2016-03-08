@@ -35,6 +35,9 @@ func init() {
 	if logDest == "" {
 		logDest = "/var/log/ghc/event-digest.log"
 	}
+	if AppEnv == "development" {
+		log.SetLevel(log.DebugLevel)
+	}
 	if AppEnv == "production" {
 		log.SetOutput(&lumberjack.Logger{
 			Filename: logDest,
