@@ -146,7 +146,13 @@ func readDigest(digestFilePath string) (*Digest, error) {
 	return d, err
 }
 
+// ErrNoNullBytes indicates that null bytes were expected but not found
+var ErrNoNullBytes = errors.New("no null bytes found to skip")
+
+// skipMysteriousNulls provides workaround for:
+// https://github.com/igrigorik/githubarchive.org/issues/135
 func skipMysteriousNulls(r *bufio.Reader) error {
+	skippedBytes := false
 	for {
 		c, err := r.ReadByte()
 		if err != nil {
@@ -154,11 +160,13 @@ func skipMysteriousNulls(r *bufio.Reader) error {
 		}
 		if c != 0x00 {
 			r.UnreadByte()
-			break
+			if !skippedBytes {
+				return ErrNoNullBytes
+			}
+			return nil
 		}
+		skippedBytes = true
 	}
-	log.Warn("encountered error while parsing events and skipped nulls")
-	return nil
 }
 
 func digestStream(r io.Reader, users UsernameSet) (int, error) {
