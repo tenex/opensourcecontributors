@@ -129,7 +129,7 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 		Date:  fileDate,
 	}
 
-	log.Debugf("computed %v: %v events\n", fileDate, c)
+	log.Debugf("computed %v: %v events", fileDate, c)
 	err = json.NewEncoder(digestFile).Encode(digest)
 	return digest, err
 }
@@ -228,7 +228,7 @@ func makeSummary(digests DigestSlice, newUsers UsernameSet) {
 	}
 	defer usersSummary.Close()
 
-	log.Debugf("writing %v users\n", len(newUsers))
+	log.Debugf("writing %v users", len(newUsers))
 	for u := range newUsers {
 		_, err = fmt.Fprintln(usersSummary, u)
 		if err != nil {
@@ -269,12 +269,11 @@ func main() {
 			log.WithError(err).Errorf(
 				"could not digest events file")
 		}
-		log.Debugf("now have %v users", len(users))
 		digests = append(digests, d)
 	}
 
 	log.Debug("computing difference in users")
 	newUsers := users.Difference(existingUsers)
-	log.Debugf("done (found %v)\n", len(newUsers))
+	log.Debugf("done (found %v new users)", len(newUsers))
 	makeSummary(digests, newUsers)
 }
