@@ -76,7 +76,12 @@ func DigestFile(eventFilePath string, users UsernameSet) (*Digest, error) {
 		0664)
 	if err != nil {
 		if os.IsExist(err) {
-			return readDigest(digestFilePath)
+			digest, readErr := readDigest(digestFilePath)
+			if readErr == nil {
+				return digest, nil
+			}
+			evt := log.WithField("eventFile", eventFilePath)
+			evt.Warn("could not read existing digest")
 		}
 		return nil, err
 	}
