@@ -98,10 +98,7 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 		return nil, errors.New(err)
 	}
 
-	reader.Reset(f)
-	eventReader := NewNullReplacer(f, ' ')
-
-	c, err := digestStream(eventReader, users)
+	c, err := digestStream(reader, users)
 	if err != nil {
 		entry := log.WithError(err)
 		entry = entry.WithField("eventFilePath", eventFilePath)
