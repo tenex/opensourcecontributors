@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
@@ -142,15 +143,37 @@ func readDigest(digestFilePath string) (*Digest, error) {
 	return d, err
 }
 
+func skipMysteriousNulls(r *bufio.Reader) error {
+	for {
+		c, err := r.ReadByte()
+		if err != nil {
+			return err
+		}
+		if c != 0x00 {
+			r.UnreadByte()
+			break
+		}
+	}
+	log.Warn("encountered error while parsing events and skipped nulls")
+	return nil
+}
+
 func digestStream(r io.Reader, users UsernameSet) (int, error) {
 	records := 0
-	decoder := json.NewDecoder(r)
+	bufReader := bufio.NewReader(r)
+	decoder := json.NewDecoder(bufReader)
 	for {
 		event := EventRecord{}
 		if err := decoder.Decode(&event); err == io.EOF {
 			break
 		} else if err != nil {
-			return records, err
+			// Could be because of mysterious nulls...
+			nullErr := skipMysteriousNulls(bufReader)
+			if nullErr != nil {
+				return records, err
+			}
+			// try again
+			continue
 		}
 		records++
 		event.Actor.Username = strings.ToLower(event.Actor.Username)
