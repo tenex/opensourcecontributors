@@ -181,8 +181,12 @@ func digestStream(r io.Reader, users UsernameSet) (int, error) {
 			// Could be because of mysterious nulls...
 			nullErr := skipMysteriousNulls(bufReader)
 			if nullErr != nil {
+				entry := log.WithError(nullErr)
+				entry.Warn("encounterd error while skipping nulls")
 				return records, err
 			}
+			// json.Decoder stores its own buffer
+			decoder = json.NewDecoder(bufReader)
 			// try again
 			continue
 		}
