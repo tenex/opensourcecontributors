@@ -34,16 +34,16 @@ func init() {
 	if logDest == "" {
 		logDest = "/var/log/ghc/event-digest.log"
 	}
-	log.SetOutput(&lumberjack.Logger{
-		Filename: logDest,
-		MaxSize:  100, // MB
-	})
 	if AppEnv == "production" {
+		log.SetOutput(&lumberjack.Logger{
+			Filename: logDest,
+			MaxSize:  100, // MB
+		})
 		rollrus.SetupLogging(os.Getenv("GHC_ROLLBAR_TOKEN"), AppEnv)
+		// PUT THIS AFTER ROLLRUS!
+		// https://github.com/heroku/rollrus/issues/4
+		log.SetFormatter(&log.JSONFormatter{})
 	}
-	// PUT THIS AFTER ROLLRUS!
-	// https://github.com/heroku/rollrus/issues/4
-	log.SetFormatter(&log.JSONFormatter{})
 }
 
 // Digest contains all aggregate data for specific hour
