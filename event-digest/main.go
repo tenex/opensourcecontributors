@@ -102,7 +102,8 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 	if err != nil {
 		entry := log.WithError(err)
 		entry = entry.WithField("eventFilePath", eventFilePath)
-		entry.Error("could not extract users")
+		entry.Error("could not digest stream")
+		return nil, err
 	}
 
 	dateParts := eventFilenameRE.FindStringSubmatch(
@@ -117,9 +118,6 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 	digest := &Digest{
 		Count: c,
 		Date:  fileDate,
-	}
-	if err != nil {
-		return nil, err
 	}
 
 	log.Debugf("computed %v: %v events\n", fileDate, c)
