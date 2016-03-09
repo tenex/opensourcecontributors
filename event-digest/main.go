@@ -205,6 +205,11 @@ func makePath(basename string) string {
 
 func makeSummary(digests DigestSlice, newUsers UsernameSet) {
 	digests = DigestSlice(digests).SortBy(func(x, y *Digest) bool {
+		if x == nil || y == nil {
+			ent := log.WithField("x", x).WithField("y", y)
+			ent.Warn("encountered nil digest during sort")
+			return false
+		}
 		return x.Date.Unix() < y.Date.Unix()
 	})
 
