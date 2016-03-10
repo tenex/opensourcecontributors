@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	"bufio"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
@@ -35,16 +35,19 @@ func init() {
 	if logDest == "" {
 		logDest = "/var/log/ghc/event-digest.log"
 	}
-	log.SetOutput(&lumberjack.Logger{
-		Filename: logDest,
-		MaxSize:  100, // MB
-	})
-	if AppEnv == "production" {
-		rollrus.SetupLogging(os.Getenv("GHC_ROLLBAR_TOKEN"), AppEnv)
+	if AppEnv == "development" {
+		log.SetLevel(log.DebugLevel)
 	}
-	// PUT THIS AFTER ROLLRUS!
-	// https://github.com/heroku/rollrus/issues/4
-	log.SetFormatter(&log.JSONFormatter{})
+	if AppEnv == "production" {
+		log.SetOutput(&lumberjack.Logger{
+			Filename: logDest,
+			MaxSize:  100, // MB
+		})
+		rollrus.SetupLogging(os.Getenv("GHC_ROLLBAR_TOKEN"), AppEnv)
+		// PUT THIS AFTER ROLLRUS!
+		// https://github.com/heroku/rollrus/issues/4
+		log.SetFormatter(&log.JSONFormatter{})
+	}
 }
 
 // Digest contains all aggregate data for specific hour
@@ -77,7 +80,12 @@ func DigestFile(eventFilePath string, users UsernameSet) (*Digest, error) {
 		0664)
 	if err != nil {
 		if os.IsExist(err) {
-			return readDigest(digestFilePath)
+			digest, readErr := readDigest(digestFilePath)
+			if readErr == nil {
+				return digest, nil
+			}
+			evt := log.WithField("eventFile", eventFilePath)
+			evt.Warn("could not read existing digest")
 		}
 		return nil, err
 	}
@@ -96,24 +104,15 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 
 	reader, err := gzip.NewReader(f)
 	if err != nil {
-		panic(err)
+		return nil, errors.New(err)
 	}
 
-	c, err := lineCounter(reader)
+	c, err := digestStream(reader, users)
 	if err != nil {
-		panic(err)
-	}
-	if _, err := f.Seek(0, 0); err != nil {
-		panic(err)
-	}
-
-	reader.Reset(f)
-
-	err = usernameExtractor(reader, users)
-	if err != nil {
-		log.WithError(err).Errorf(
-			"could not extract users from %v",
-			eventFilePath)
+		entry := log.WithError(err)
+		entry = entry.WithField("eventFilePath", eventFilePath)
+		entry.Error("could not digest stream")
+		return nil, err
 	}
 
 	dateParts := eventFilenameRE.FindStringSubmatch(
@@ -129,11 +128,8 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 		Count: c,
 		Date:  fileDate,
 	}
-	if err != nil {
-		return nil, err
-	}
 
-	log.Debugf("computed %v: %v events\n", fileDate, c)
+	log.Debugf("computed %v: %v events", fileDate, c)
 	err = json.NewEncoder(digestFile).Encode(digest)
 	return digest, err
 }
@@ -150,39 +146,55 @@ func readDigest(digestFilePath string) (*Digest, error) {
 	return d, err
 }
 
-func lineCounter(r io.Reader) (int, error) {
-	buf := make([]byte, 1024*1024)
-	count := 0
-	lineSep := []byte{'\n'}
+// ErrNoNullBytes indicates that null bytes were expected but not found
+var ErrNoNullBytes = errors.New("no null bytes found to skip")
 
+// skipMysteriousNulls provides workaround for:
+// https://github.com/igrigorik/githubarchive.org/issues/135
+func skipMysteriousNulls(r *bufio.Reader) error {
+	skippedBytes := false
 	for {
-		c, err := r.Read(buf)
-		if err != nil && err != io.EOF {
-			return count, errors.New(err)
-		}
-
-		count += bytes.Count(buf[:c], lineSep)
-
-		if err == io.EOF {
-			break
-		}
-	}
-
-	return count, nil
-}
-
-func usernameExtractor(r io.Reader, users UsernameSet) error {
-	decoder := json.NewDecoder(r)
-	for decoder.More() {
-		event := EventRecord{}
-		err := decoder.Decode(&event)
+		c, err := r.ReadByte()
 		if err != nil {
 			return err
 		}
+		if c != 0x00 {
+			r.UnreadByte()
+			if !skippedBytes {
+				return ErrNoNullBytes
+			}
+			return nil
+		}
+		skippedBytes = true
+	}
+}
+
+func digestStream(r io.Reader, users UsernameSet) (int, error) {
+	records := 0
+	bufReader := bufio.NewReader(r)
+	decoder := json.NewDecoder(bufReader)
+	for {
+		event := EventRecord{}
+		if err := decoder.Decode(&event); err == io.EOF {
+			break
+		} else if err != nil {
+			// Could be because of mysterious nulls...
+			nullErr := skipMysteriousNulls(bufReader)
+			if nullErr != nil {
+				entry := log.WithError(nullErr)
+				entry.Warn("encounterd error while skipping nulls")
+				return records, err
+			}
+			// json.Decoder stores its own buffer
+			decoder = json.NewDecoder(bufReader)
+			// try again
+			continue
+		}
+		records++
 		event.Actor.Username = strings.ToLower(event.Actor.Username)
 		users.Add(Username(event.Actor.Username))
 	}
-	return nil
+	return records, nil
 }
 
 func makePath(basename string) string {
@@ -193,6 +205,11 @@ func makePath(basename string) string {
 
 func makeSummary(digests DigestSlice, newUsers UsernameSet) {
 	digests = DigestSlice(digests).SortBy(func(x, y *Digest) bool {
+		if x == nil || y == nil {
+			ent := log.WithField("x", x).WithField("y", y)
+			ent.Warn("encountered nil digest during sort")
+			return false
+		}
 		return x.Date.Unix() < y.Date.Unix()
 	})
 
@@ -216,7 +233,7 @@ func makeSummary(digests DigestSlice, newUsers UsernameSet) {
 	}
 	defer usersSummary.Close()
 
-	log.Debugf("writing %v users\n", len(newUsers))
+	log.Debugf("writing %v users", len(newUsers))
 	for u := range newUsers {
 		_, err = fmt.Fprintln(usersSummary, u)
 		if err != nil {
@@ -257,12 +274,11 @@ func main() {
 			log.WithError(err).Errorf(
 				"could not digest events file")
 		}
-		log.Debugf("now have %v users", len(users))
 		digests = append(digests, d)
 	}
 
 	log.Debug("computing difference in users")
 	newUsers := users.Difference(existingUsers)
-	log.Debugf("done (found %v)\n", len(newUsers))
+	log.Debugf("done (found %v new users)", len(newUsers))
 	makeSummary(digests, newUsers)
 }
