@@ -36,7 +36,7 @@ cd "${WORKING_PATH}"
 
 ${PYTHON} ${PROCESSOR} 'process'
 
-# echo "digesting events"
-# ${EVENT_DIGEST}
+echo "digesting events"
+${EVENT_DIGEST}
 
 /usr/bin/uptime

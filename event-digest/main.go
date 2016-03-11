@@ -5,10 +5,6 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/go-errors/errors"
-	"github.com/heroku/rollrus"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -17,6 +13,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/go-errors/errors"
+	"github.com/heroku/rollrus"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var (
@@ -271,8 +272,11 @@ func main() {
 	for _, f := range eventFiles {
 		d, err := DigestFile(f, users)
 		if err != nil {
+			// if a file can't be digested, then many problably
+			// can't, so we should investigate
 			log.WithError(err).Errorf(
 				"could not digest events file")
+			break
 		}
 		digests = append(digests, d)
 	}
