@@ -87,6 +87,7 @@ func DigestFile(eventFilePath string, users UsernameSet) (*Digest, error) {
 			}
 			evt := log.WithField("eventFile", eventFilePath)
 			evt.Warn("could not read existing digest")
+			return nil, readErr
 		}
 		return nil, err
 	}
