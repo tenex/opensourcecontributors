@@ -275,7 +275,7 @@ func main() {
 		if err != nil {
 			// if a file can't be digested, then many problably
 			// can't, so we should investigate
-			log.WithError(err).Errorf(
+			log.WithError(err).WithField("path", f).Errorf(
 				"could not digest events file")
 			break
 		}
