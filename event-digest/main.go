@@ -113,8 +113,7 @@ func doDigestFile(eventFilePath string, digestFile *os.File,
 	if err != nil {
 		entry := log.WithError(err)
 		entry = entry.WithField("eventFilePath", eventFilePath)
-		entry.Error("could not digest stream")
-		return nil, err
+		entry.Error("could not digest stream; continuing")
 	}
 
 	dateParts := eventFilenameRE.FindStringSubmatch(
