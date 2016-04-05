@@ -18,7 +18,6 @@ do
     echo -e '\t<sitemap>'
     chunk_basename="$(basename $chunk_file)"
     echo -e "\t\t<loc>https://githubcontributions.io/sitemap/${chunk_basename}</loc>"
-    echo -e "\t\t<lastmod>$(date -Iseconds)</lastmod>"
     echo -e '\t</sitemap>'
 done
 
