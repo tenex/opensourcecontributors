@@ -1,14 +1,15 @@
 #!/bin/bash
 FULL_FILE=/tmp/sitemap-full.txt
 SITEMAP_TMP=/tmp/ghc-sitemap
+
+
 mkdir -p $SITEMAP_TMP
-
 awk '{print "https://githubcontributions.io/user/" $0}' < $1 > $FULL_FILE
-pushd $SITEMAP_TMP
+pushd $SITEMAP_TMP >/dev/null
 split --lines 50000 --additional-suffix '.txt' /tmp/sitemap-full.txt 'sitemap-'
-popd
+popd >/dev/null
 
-echo <<EOF
+cat <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 EOF
