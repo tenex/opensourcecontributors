@@ -1,0 +1,25 @@
+#!/bin/bash
+FULL_FILE=/tmp/sitemap-full.txt
+SITEMAP_TMP=/tmp/ghc-sitemap
+mkdir -p $SITEMAP_TMP
+
+awk '{print "https://githubcontributions.io/user/" $0}' < $1 > $FULL_FILE
+pushd $SITEMAP_TMP
+split --lines 50000 --additional-suffix '.txt' /tmp/sitemap-full.txt 'sitemap-'
+popd
+
+echo <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+EOF
+
+for chunk_file in $SITEMAP_TMP/sitemap-*.txt;
+do
+    echo -e '\t<sitemap>'
+    chunk_basename="$(basename $chunk_file)"
+    echo -e "\t\t<loc>https://githubcontributions.io/sitemap/${chunk_basename}</loc>"
+    echo -e "\t\t<lastmod>$(date -Iseconds)</lastmod>"
+    echo -e '\t</sitemap>'
+done
+
+echo '</sitemapindex>'
