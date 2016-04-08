@@ -80,12 +80,14 @@ func xanax(v interface{}) error {
 		return nil
 	}
 	var err error
-	// FIXME: This does not actually filter net.OpError
+
 	switch cause := v.(type) {
 	case *net.OpError:
 		err = cause
-		if cause.Err == syscall.EPIPE {
-			err = nil
+		if opErrorCause, ok := cause.Err.(*os.SyscallError); ok {
+			if opErrorCause.Err == syscall.EPIPE {
+				err = nil
+			}
 		}
 	case error:
 		err = cause
