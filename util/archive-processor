@@ -223,7 +223,7 @@ class GithubArchiveFetcher(object):
         if os.path.isfile(sink_path):
             raise RuntimeError('will not overwrite file already present')
 
-        source = requests.get(url, stream=True)
+        source = requests.get(url, stream=True, timeout=30.0)
         # Caught by fetch. 404 is expected for the last couple of hours' data.
         source.raise_for_status()
         sz = 0
