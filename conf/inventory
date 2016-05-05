@@ -1,0 +1,10 @@
+[github-contributions]
+[github-contributions:children]
+web
+database
+
+[web]
+univac.githubcontributions.io
+
+[database]
+univac.githubcontributions.io
