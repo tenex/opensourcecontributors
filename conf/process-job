@@ -1,7 +1,7 @@
 #!/bin/bash
 MAILTO="engineers@tenex.tech"
-WORKING_PATH="/github-contributions"
-PROCESSOR="/github-contributions/util/archive-processor"
+WORKING_PATH="/srv/github-contributions"
+PROCESSOR="/srv/github-contributions/util/archive-processor"
 EVENT_DIGEST="/srv/bin/event-digest"
 PYTHON="/srv/venv/bin/python3"
 source /etc/ghc-env.sh

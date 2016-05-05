@@ -31,6 +31,7 @@
         - mailutils
         - mc
         - ncdu
+        - ncurses-term
         - ntp
         - pcregrep
         - python-dev
@@ -88,11 +89,11 @@
   user: root
   hosts: database
   tasks:
-    - name: add mongodb key
-      apt_key: keyserver=keyserver.ubuntu.com id=7F0CEB10
+    - apt_key: keyserver=keyserver.ubuntu.com id=EA312927
 
-    - name: add mongodb repo
-      apt_repository: repo='deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.0 multiverse' state=present
+    - name: add mongodb repo (debian wheezy has better package for systemd)
+      apt_repository: repo='deb http://repo.mongodb.org/apt/debian wheezy/mongodb-org/3.2 main'
+                      state=present
 
     - name: install mongodb
       apt: name=mongodb-org state=latest update_cache=yes
@@ -145,19 +146,6 @@
     - name: restart nginx
       service: name=nginx state=restarted
 
-- name: make archive directory structures
-  user: root
-  hosts: database
-  tasks:
-    - name: archive directories
-      file: path={{ item }} state=directory owner=ghc group=ghc
-      with_items:
-        - /github-archive
-        - /github-archive/events
-        - /github-archive/loaded
-        - /github-archive/logs
-        - /github-archive/timeline
-        - /github-archive/transformed
 
 - name: make common directory structures
   user: root
@@ -168,12 +156,27 @@
     - name: archive directories
       file: path={{ item }} state=directory owner=ghc group=ghc
       with_items:
-        - /github-contributions
+        - /srv/github-contributions
         - /srv
         - /srv/bin
         - /home/ghc/go
         - /home/ghc/go/src
         - /var/log/ghc
+
+- name: make archive directory structures
+  user: root
+  hosts: database
+  tasks:
+    - name: archive directories
+      file: path={{ item }} state=directory owner=ghc group=ghc
+      with_items:
+        - /srv/github-archive
+        - /srv/github-archive/events
+        - /srv/github-archive/loaded
+        - /srv/github-archive/logs
+        - /srv/github-archive/timeline
+        - /srv/github-archive/transformed
+
 
 - name: install ghc server configuration
   user: root
@@ -187,14 +190,14 @@
       template: src=ghc-env.sh
                 dest=/etc/ghc-env.sh
 
-    - name: install ghc upstart script
-      template: src=github-contributions.conf
-                dest=/etc/init/github-contributions.conf
-      notify: reload upstart
+    - name: install ghc app systemd script
+      template: src=github-contributions-app.service
+                dest=/etc/systemd/system/github-contributions-app.service
+      notify: enable systemd service
 
   handlers:
-    - name: reload upstart
-      shell: initctl reload-configuration
+    - name: enable systemd service
+      shell: systemctl daemon-reload && systemctl enable github-contributions-app.service
 
 - name: configure ssmtp
   user: root
@@ -218,7 +221,7 @@
   tasks:
     - name: pull ghc repository
       git: repo=ssh://git@github.com/tenex/github-contributions.git
-           dest=/github-contributions
+           dest=/srv/github-contributions
            accept_hostkey=yes
            version="{{ git_branch }}"
       register: git_status
@@ -226,7 +229,7 @@
     - debug: msg="deploying ghc at {{ git_status.after }}"
 
     - name: install python dependencies
-      pip: requirements=/github-contributions/requirements.txt
+      pip: requirements=/srv/github-contributions/requirements.txt
            virtualenv=/srv/venv-{{ git_status.after }}
            virtualenv_command="virtualenv --python=/usr/bin/python3"
 
@@ -237,17 +240,17 @@
 
     - name: commit archive-processor
       file: path=/srv/app
-            src=/github-contributions/app
+            src=/srv/github-contributions/app
             state=link
 
     - name: gopath trick for ghc-app
       file: path=/home/ghc/go/src/ghc-app
-            src=/github-contributions/ghc-app
+            src=/srv/github-contributions/ghc-app
             state=link
 
     - name: gopath trick for event-digest
       file: path=/home/ghc/go/src/event-digest
-            src=/github-contributions/event-digest
+            src=/srv/github-contributions/event-digest
             state=link
 
     - name: build ghc-app
@@ -256,12 +259,12 @@
     - name: install dependencies
       shell: npm install
       args:
-        chdir: /github-contributions/web
+        chdir: /srv/github-contributions/web
 
     - name: build assets
       shell: gulp
       args:
-        chdir: /github-contributions/web
+        chdir: /srv/github-contributions/web
 
 - name: set service states
   user: root
@@ -270,7 +273,7 @@
     - deploy
   tasks:
     - name: ensure server is running
-      service: name=github-contributions state=restarted
+      service: name=github-contributions-app state=restarted
 
 - name: install cron job
   user: root
@@ -279,7 +282,7 @@
     - deploy
   tasks:
     - name: github archive processor cron job
-      cron: job=/github-contributions/conf/process-job
+      cron: job=/srv/github-contributions/conf/process-job
             name=archive-processor
             minute=5
             user=ghc
@@ -291,7 +294,7 @@
     - deploy
   tasks:
     - name: github archive archive processor monitor cron job
-      cron: job=/github-contributions/conf/server-monitor
+      cron: job=/srv/github-contributions/conf/server-monitor
             name=server-monitor
             minute=55
             user=ghc
@@ -305,7 +308,7 @@
            dest=/opt/letsencrypt
            update=no # It updates itself without Git apparently?
     - name: lets-encrypt certificate renewal cron job
-      cron: job=/github-contributions/conf/lets-encrypt-renew-certificate.sh
+      cron: job=/srv/github-contributions/conf/lets-encrypt-renew-certificate.sh
             special_time=weekly
             name=renew-certificate
 

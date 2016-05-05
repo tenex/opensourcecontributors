@@ -2,4 +2,4 @@
 Description=GitHub Contributions Process Task
 
 [Service]
-ExecStart=/github-contributions/conf/process-job
+ExecStart=/srv/github-contributions/conf/process-job

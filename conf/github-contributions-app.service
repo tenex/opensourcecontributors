@@ -1,0 +1,15 @@
+[Unit]
+Description=GitHub Contributions Application Server
+
+[Service]
+Type=simple
+User=ghc
+Group=ghc
+Environment=GHC_ENV=production
+Environment=GHC_ROLLBAR_TOKEN={{ rollbar_token }}
+Environment=GHC_EVENTS_PATH=/github-archive/events
+ExecStart=/srv/bin/ghc-app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
