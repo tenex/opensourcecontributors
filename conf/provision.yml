@@ -31,6 +31,7 @@
         - mailutils
         - mc
         - ncdu
+        - ncurses-term
         - ntp
         - pcregrep
         - python-dev
@@ -88,11 +89,11 @@
   user: root
   hosts: database
   tasks:
-    - name: add mongodb key
-      apt_key: keyserver=keyserver.ubuntu.com id=7F0CEB10
+    - apt_key: keyserver=keyserver.ubuntu.com id=EA312927
 
-    - name: add mongodb repo
-      apt_repository: repo='deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.0 multiverse' state=present
+    - name: add mongodb repo (debian wheezy has better package for systemd)
+      apt_repository: repo='deb http://repo.mongodb.org/apt/debian wheezy/mongodb-org/3.2 main'
+                      state=present
 
     - name: install mongodb
       apt: name=mongodb-org state=latest update_cache=yes
