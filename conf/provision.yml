@@ -248,11 +248,6 @@
             src=/srv/github-contributions/ghc-app
             state=link
 
-    - name: gopath trick for event-digest
-      file: path=/home/ghc/go/src/event-digest
-            src=/srv/github-contributions/event-digest
-            state=link
-
     - name: build ghc-app
       script: build-ghc-app.sh
 
