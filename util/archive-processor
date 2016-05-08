@@ -23,6 +23,7 @@ import re
 import requests
 import rollbar
 import sys
+import time
 import urllib.parse
 
 __version__ = '0.3.1'
@@ -667,6 +668,76 @@ class EventSink(object):
         output = json.dumps(event.__dict__).strip() + '\n'
         self.out_stream.write(output.encode())
 
+# 2016-05-08-0.json.gz -> (2016,5,8,0)
+def extract_time(filename):
+    base = os.path.basename(filename)
+    match = re.match(r'(\d{4})\-(\d{2})\-(\d{2})\-(\d{1,2})[\.\-].+', base)
+    return tuple([int(g) for g in match.groups()])
+
+class UsernameExtractor(object):
+    """Extracts usernames from events files
+    """
+    def __init__(self, events_path):
+        self.events_path = events_path
+        self.scratch_path = "/tmp/ghc-usernames.txt"
+        self.time_fmt = '%Y-%m-%d-%-H'
+
+    def find_extractions(self):
+        all_events = glob.glob(
+            os.path.join(self.events_path, "*.json.gz"))
+        processed_events = glob.glob(
+            os.path.join(self.events_path, "*.users.txt"))
+        all_event_hours = set([
+            extract_time(f) for f in all_events
+        ])
+        processed_hours = set([
+            extract_time(f) for f in processed_events
+        ])
+        return all_event_hours - processed_hours
+
+    def build_user_file(self):
+        user_files = glob.glob(os.path.join(self.events_path, "*.users.txt"))
+        with open(self.scratch_path, 'w') as user_file:
+            for user_path in user_files:
+                with open(user_path, 'rt') as f:
+                    users = f.read()
+                    user_file.write(users)
+        users_file = os.path.join(self.events_path, "users.txt")
+        from subprocess import call
+        call(["sort", "--unique",
+              "--output", users_file,
+              self.scratch_path])
+
+    def struct_time(self, t):
+        t = t + tuple([0] * 5)
+        return time.struct_time(t)
+
+    def extract_file(self, t):
+        struct_time = self.struct_time(t)
+        inpath = os.path.join(
+            self.events_path,
+            "{}.json.gz".format(time.strftime(self.time_fmt, struct_time)))
+        outpath = os.path.join(
+            self.events_path,
+            "{}.users.txt".format(time.strftime(self.time_fmt, struct_time)))
+        with gzip.open(inpath, 'rt') as infile:
+            lines = (json.loads(line) for line in infile)
+            users = set((line['actor']['login'].lower() for line in lines))
+            users = sorted(users)
+        with open(outpath, 'w') as outfile:
+            for u in users:
+                print(u, file=outfile)
+
+    def extract(self):
+        extractions = self.find_extractions()
+        for extract in extractions:
+            self.extract_file(extract)
+        self.build_user_file()
+
+def extract_usernames(args):
+    extractor = UsernameExtractor(args.events_path)
+    extractor.extract()
+
 def fetch(args):
     fetcher = GithubArchiveFetcher(args.events_path)
     fetcher.fetch()
@@ -699,6 +770,7 @@ def process(args):
     fetch(args)
     transform(args)
     load(args)
+    extract_usernames(args)
 
 if __name__=='__main__':
 
@@ -725,6 +797,9 @@ if __name__=='__main__':
 
     transform_parser = subparsers.add_parser('transform')
     transform_parser.set_defaults(func=transform)
+
+    username_parser = subparsers.add_parser('extract-usernames')
+    username_parser.set_defaults(func=extract_usernames)
 
     load_parser = subparsers.add_parser('load')
     load_parser.set_defaults(func=load)
