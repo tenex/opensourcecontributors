@@ -731,7 +731,10 @@ class UsernameExtractor(object):
     def extract(self):
         extractions = self.find_extractions()
         for extract in extractions:
-            self.extract_file(extract)
+            try:
+                self.extract_file(extract)
+            except json.JSONDecodeError as e:
+                log.warning("json decode error on {}".format(extract))
         self.build_user_file()
 
 def extract_usernames(args):
