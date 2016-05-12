@@ -714,16 +714,19 @@ class UsernameExtractor(object):
 
     def extract_file(self, t):
         struct_time = self.struct_time(t)
-        inpath = os.path.join(
-            self.events_path,
-            "{}.json.gz".format(time.strftime(self.time_fmt, struct_time)))
+        inpath = "{}.json.gz".format(time.strftime(self.time_fmt, struct_time))
+        log.info("extracting usernames from {}".format(inpath))
+        inpath = os.path.join(self.events_path, inpath)
         outpath = os.path.join(
             self.events_path,
             "{}.users.txt".format(time.strftime(self.time_fmt, struct_time)))
         with gzip.open(inpath, 'rt') as infile:
             lines = (json.loads(line) for line in infile)
-            users = set((line['actor']['login'].lower() for line in lines))
-            users = sorted(users)
+            users = (line['actor']['login'].lower()
+                     for line in lines
+                     if 'actor' in line
+                     and 'login' in line['actor'])
+            users = sorted(set(users))
         with open(outpath, 'w') as outfile:
             for u in users:
                 print(u, file=outfile)
