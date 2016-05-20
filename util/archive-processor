@@ -757,7 +757,7 @@ class EventSummarizer(object):
     def summarize(self):
         for day in self.generate_days():
             log.info("summarizer: summarizing {}".format(day.isoformat()))
-            summary = self.db.contributions.find_one({
+            summary = self.db.summaries.find_one({
                 'date': day.isoformat()
             })
             if not summary: self.summarize_day(day)
