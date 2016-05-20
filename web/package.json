@@ -37,6 +37,7 @@
     "angular-moment": "^1.0.0-beta.4",
     "angular-resource": "^1.5.0",
     "angular-ui-bootstrap": "^1.1.2",
-    "angular-ui-router": "^0.2.18"
+    "angular-ui-router": "^0.2.18",
+    "chart.js": "^2.1.3"
   }
 }
