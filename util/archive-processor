@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # -*-mode: python-*-
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from pprint import pprint
 from requests.exceptions import HTTPError
 import argparse
@@ -740,9 +740,50 @@ class UsernameExtractor(object):
                 log.warning("json decode error on {}".format(extract))
         self.build_user_file()
 
+class EventSummarizer(object):
+    START_DATE = date(2015, 1, 1)
+
+    def __init__(self, events_path):
+        self.events_path = events_path
+        self.end_date = date.today() - timedelta(days=1)
+        self.db = pymongo.MongoClient().contributions
+
+    def generate_days(self):
+        process_date = self.START_DATE
+        while process_date < date.today():
+            yield process_date
+            process_date += timedelta(days=1)
+
+    def summarize(self):
+        for day in self.generate_days():
+            log.info("summarizer: summarizing {}".format(day.isoformat()))
+            summary = self.db.contributions.find_one({
+                'date': day.isoformat()
+            })
+            if not summary: self.summarize_day(day)
+
+    def summarize_day(self, day):
+        next_day = day + timedelta(days=1)
+        contributions = self.db.contributions
+        count = contributions.find({
+            'created_at': {"$gt": day.isoformat(),
+                           "$lt": next_day.isoformat()}
+        }).count()
+        log.info("summarizer: counted {} events on {}".format(
+            count, day.isoformat()))
+
+        self.db.summaries.insert_one({
+            'date': day.isoformat(),
+            'count': count
+        })
+
 def extract_usernames(args):
     extractor = UsernameExtractor(args.events_path)
     extractor.extract()
+
+def summarize(args):
+    summarizer = EventSummarizer(args.events_path)
+    summarizer.summarize()
 
 def fetch(args):
     fetcher = GithubArchiveFetcher(args.events_path)
@@ -777,6 +818,7 @@ def process(args):
     transform(args)
     load(args)
     extract_usernames(args)
+    summarize(args)
 
 if __name__=='__main__':
 
@@ -806,6 +848,9 @@ if __name__=='__main__':
 
     username_parser = subparsers.add_parser('extract-usernames')
     username_parser.set_defaults(func=extract_usernames)
+
+    summary_parser = subparsers.add_parser('summarize')
+    summary_parser.set_defaults(func=summarize)
 
     load_parser = subparsers.add_parser('load')
     load_parser.set_defaults(func=load)
