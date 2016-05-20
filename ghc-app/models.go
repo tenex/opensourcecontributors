@@ -117,3 +117,33 @@ func GHCStatsFactory(c *mgo.Collection) GHCStatsFunc {
 	}
 
 }
+
+/////////////
+// Summary //
+/////////////
+
+// GHCSummary respresents a collection of daily summaries
+type GHCSummary struct {
+	DailySummary []GHCDailySummary `json:"dailySummary"`
+}
+
+// GHCDailySummary represents one day's counts of data
+type GHCDailySummary struct {
+	Date  string `bson:"date" json:"date"`
+	Count int64  `bson:"count" json:"count"`
+}
+
+// GHCSummaryFunc returns daily summaries of events
+type GHCSummaryFunc func() (*GHCSummary, error)
+
+// GHCSummaryFactory is great
+func GHCSummaryFactory(c *mgo.Collection) GHCSummaryFunc {
+	return func() (*GHCSummary, error) {
+		summary := GHCSummary{}
+		err := c.Find(nil).Sort("-date").All(&summary.DailySummary)
+		if err != nil {
+			return nil, err
+		}
+		return &summary, nil
+	}
+}
