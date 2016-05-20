@@ -42,17 +42,14 @@ def make_logger(file_dir='.'):
     logging.Formatter.default_msec_format = '%s.%03d'
     log_formatter = logging.Formatter(
         fmt='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
-    file_log_handler = logging.FileHandler(os.path.join(file_dir,
-                                                        invocation_id))
-    console_log_handler = logging.StreamHandler()
+    file_log_handler = logging.FileHandler(
+        os.path.join(file_dir, invocation_id))
     file_log_handler.setFormatter(log_formatter)
-    console_log_handler.setFormatter(log_formatter)
     logger.addHandler(file_log_handler)
-    logger.addHandler(console_log_handler)
     logger.setLevel(logging.INFO)
     return logger
 
-log = make_logger(os.getenv('GHC_LOG_PATH'))
+log = make_logger(os.getenv('GHC_LOG_PATH', None))
 
 class EventLoader(object):
     """Loads transformed .json.gz files into a database (must be subclassed)
