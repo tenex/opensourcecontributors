@@ -20,15 +20,19 @@ type GHCController struct {
 
 	userContributions UserContributionsFunc
 	userSummary       UserSummaryFunc
+	ghcSummary        GHCSummaryFunc
 	ghcStats          GHCStatsFunc
 }
 
 // NewGHCController is the constructor for GHCController
-func NewGHCController(contributions *mgo.Collection) *GHCController {
+func NewGHCController(
+	contributions *mgo.Collection,
+	summaries *mgo.Collection) *GHCController {
 	c := &GHCController{
 		userContributions: UserContributionsFactory(contributions),
 		userSummary:       UserSummaryFactory(contributions),
 		ghcStats:          GHCStatsFactory(contributions),
+		ghcSummary:        GHCSummaryFactory(summaries),
 		Router:            mux.NewRouter(),
 	}
 	c.HandleFunc("/user/{username}", c.UserSummary)
@@ -37,6 +41,7 @@ func NewGHCController(contributions *mgo.Collection) *GHCController {
 	c.HandleFunc("/stats", c.Stats)
 	c.HandleFunc("/error", c.Error)
 	c.HandleFunc("/aggregates", c.Aggregates)
+	c.HandleFunc("/summaries", c.Summaries)
 	return c
 }
 
@@ -55,6 +60,19 @@ func (c *GHCController) Aggregates(rw http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 	rw.WriteHeader(http.StatusOK)
 	_, err = io.Copy(rw, f)
+}
+
+// Summaries serves /summaries
+func (c *GHCController) Summaries(rw http.ResponseWriter, r *http.Request) {
+	summary, err := c.ghcSummary()
+	if err != nil {
+		panic(err)
+	}
+	err = serveJSON(rw, summary)
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 // UserEventsPage includes <= PageSize number of events and metadata about
