@@ -15,6 +15,11 @@
             templateUrl: 'search-form.html',
             controller: 'SearchController',
             controllerAs: 'search'
+          },
+          "@": {
+            templateUrl: "chart.html",
+            controller: "ChartController",
+            controllerAs: "vm"
           }
         }
       })

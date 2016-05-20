@@ -11,4 +11,7 @@
   app.factory('Statistics', ['$resource', function($resource) {
     return $resource('/api/stats');
   }]);
+  app.factory('Summary', ['$resource', function($resource) {
+    return $resource('/api/summaries');
+  }]);
 })();
