@@ -124,8 +124,10 @@ func mainHandler(globalSession *mgo.Session) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		session := globalSession.Copy()
 		defer session.Close()
-		collection := session.DB("contributions").C("contributions")
-		NewGHCController(collection).ServeHTTP(rw, r)
+		contribsDB := session.DB("contributions")
+		contributions := contribsDB.C("contributions")
+		summaries := contribsDB.C("summaries")
+		NewGHCController(contributions, summaries).ServeHTTP(rw, r)
 	})
 }
 
