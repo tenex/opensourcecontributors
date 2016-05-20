@@ -1,6 +1,5 @@
 var gulp = require('gulp');
 var browserify = require('browserify');
-var connect = require('connect');
 var source = require('vinyl-source-stream');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
@@ -59,13 +58,6 @@ gulp.task('watch', ['browserify', 'static', 'stylesheets'], function() {
   gulp.watch([paths.templates, paths.scripts], ['browserify']);
   gulp.watch(paths.static, ['static']);
   gulp.watch(paths.stylesheets, ['stylesheets']);
-});
-
-gulp.task('connect', function () {
-  connect.server({
-    root: 'public',
-    port: 4000
-  });
 });
 
 gulp.task('default', [
