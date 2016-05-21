@@ -30,6 +30,7 @@
         - jq
         - mailutils
         - mc
+        - moreutils # for chronic
         - ncdu
         - ncurses-term
         - ntp
@@ -277,7 +278,7 @@
     - deploy
   tasks:
     - name: github archive processor cron job
-      cron: job=/srv/github-contributions/conf/process-job
+      cron: job="chronic /srv/github-contributions/conf/process-job"
             name=archive-processor
             minute=5
             user=ghc

@@ -1,4 +1,6 @@
 #!/bin/bash
+set -eu
+
 MAILTO="engineers@tenex.tech"
 WORKING_PATH="/srv/github-contributions"
 PROCESSOR="/srv/github-contributions/util/archive-processor"
