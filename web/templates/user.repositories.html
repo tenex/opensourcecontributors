@@ -1,5 +1,5 @@
 <ul class="list-group">
-  <li class="list-group-item" ng-repeat="repo in userVm.user.repos">
+  <li class="list-group-item" ng-repeat="repo in userVm.user.repos | orderBy: 'repo'">
     <a href="https://github.com/{{repo}}">{{ repo }}</a>
   </li>
 </ul>
