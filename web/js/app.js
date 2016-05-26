@@ -1,5 +1,6 @@
 var angular = require('angular');
-var chart = require('angular-chart.js');
+//var chart = require('angular-chart.js');
+require("n3-charts/build/LineChart.js");
 
 require('./services.js');
 require('./truncate.js');
@@ -10,7 +11,8 @@ require('./templates.js');
     'ghca.services',
     'truncate',
     'templates',
-    'chart.js',
+    //'chart.js',
+    'n3-line-chart',
     require('angular-moment'),
     require('angular-ui-bootstrap'),
     require('angular-ui-router')
