@@ -153,4 +153,4 @@ https://github.com/Jiyambi/WoW-Pro-Guides but I only know that by reading the co
 
 ## Credits
 
-Created by [@hut8](http://github.com/hut8) and maintained by [Tenex Developers](https://tenex.tech) [@tenex](http://github.com/tenex).
+Created by [@hut8](http://github.com/hut8) and maintained by [Tenex Developers](https://tenex.tech) ([@tenex](http://github.com/tenex)).
