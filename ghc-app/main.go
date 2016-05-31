@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -72,6 +73,14 @@ func logHandler(h http.Handler) http.Handler {
 	})
 }
 
+// Wipes out unnecessary uniqueness in error messages so that
+// tools like Rollbar aggregate them properly.
+func aggregateError(err error) error {
+	mongoPortRegexp := regexp.MustCompile(`(127.0.0.1):\d+(->)`)
+	aggregatedMessage := mongoPortRegexp.ReplaceAllString(err.Error(), "$1$2")
+	return fmt.Errorf(aggregatedMessage)
+}
+
 // Stops panics with no panic-worthy cause
 // Stops:
 //   - EPIPE, which occurs when a client stops loading a page
@@ -93,6 +102,9 @@ func xanax(v interface{}) error {
 		err = cause
 	default:
 		err = fmt.Errorf("%v", v)
+	}
+	if err != nil {
+		err = aggregateError(err)
 	}
 	return err
 }
