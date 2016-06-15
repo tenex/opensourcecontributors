@@ -1,0 +1,41 @@
+#!/bin/bash
+
+#####################
+# Sitemap Generator #
+#####################
+# Usage: generate-sitemap > /srv/github-contributions/web/public/sitemap.xml
+
+set -eu -o pipefail
+
+source /etc/ghc-env.sh
+
+users_path="$GHC_EVENTS_PATH/users.txt"
+full_file=/tmp/sitemap-full.txt
+sitemap_tmp=/tmp/ghc-sitemap
+sitemap_dir=/srv/sitemap
+
+mkdir -p $sitemap_tmp
+awk '{print "https://githubcontributions.io/user/" $0}' < $users_path > $full_file
+pushd $sitemap_tmp >/dev/null
+split \
+    --lines 50000 \
+    --additional-suffix '.txt' \
+    /tmp/sitemap-full.txt 'sitemap-'
+popd >/dev/null
+
+rm $full_file
+
+cat <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+EOF
+
+for chunk_file in $sitemap_tmp/sitemap-*.txt;
+do
+    echo -e '\t<sitemap>'
+    chunk_basename="$(basename $chunk_file)"
+    echo -e "\t\t<loc>https://githubcontributions.io/sitemap/${chunk_basename}</loc>"
+    echo -e '\t</sitemap>'
+done
+
+echo '</sitemapindex>'
