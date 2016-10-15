@@ -2,6 +2,8 @@
 
 [OpenSourceContributo.rs](http://opensourcecontributo.rs)
 
+**Note about name change: This project was formerly known as githubcontributions.io. GitHub requested that the name of the project be changed in order to avoid confusion about who owns and maintains this project.**
+
 This is a utility to find a list of all contributions a user has made to any public repository on GitHub from 2011-01-01 through yesterday.
 
 The data from 2015-01-01 - present is found on [GitHub Archive](https://www.githubarchive.org). The data from before this uses a different schema and was obtained from Google's BigQuery (see below)
