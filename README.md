@@ -1,6 +1,6 @@
-# GitHub Contributions
+# OpenSourceContributo.rs
 
-[GitHubContributions.io](http://githubcontributions.io)
+[OpenSourceContributo.rs](http://opensourcecontributo.rs)
 
 This is a utility to find a list of all contributions a user has made to any public repository on GitHub from 2011-01-01 through yesterday.
 
