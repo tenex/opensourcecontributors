@@ -128,10 +128,14 @@
       file: path=/etc/nginx/sites-enabled/default
             state=absent
 
-    - name: install nginx.conf
-      template: src=github-contributions.nginx.conf
-                dest=/etc/nginx/sites-enabled/github-contributions.nginx.conf
+    - name: install nginx config files
+      template:
+        src: "{{ item }}"
+        dest: "/etc/nginx/sites-enabled/"
       notify: restart nginx
+      with_items:
+        - github-contributions.nginx.conf
+        - opensourcecontributo.rs.nginx.conf
 
     - name: install node repo
       shell: curl -sL https://deb.nodesource.com/setup_5.x | bash -
