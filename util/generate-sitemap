@@ -14,7 +14,11 @@ full_file=/tmp/sitemap-full.txt
 sitemap_tmp=/tmp/ghc-sitemap
 sitemap_dir=/srv/sitemap
 
+mkdir -p $sitemap_dir
 mkdir -p $sitemap_tmp
+
+# Generate the full list of URLs into a large file in /tmp,
+# then split it into sitemap-xx.txt files in /srv/sitemap
 awk '{print "https://githubcontributions.io/user/" $0}' < $users_path > $full_file
 pushd $sitemap_tmp >/dev/null
 split \
