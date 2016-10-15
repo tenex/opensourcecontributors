@@ -305,9 +305,10 @@
   hosts: web
   tasks:
     - name: lets-encrypt certificate renewal cron job
-      cron: job=letsencrypt renew
-            special_time=daily
-            name=renew-certificate
+      cron:
+        job: letsencrypt renew
+        special_time: daily
+        name: renew-certificate
 
 - name: tell rollbar we deployed
   user: ghc
