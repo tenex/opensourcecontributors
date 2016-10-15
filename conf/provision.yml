@@ -28,6 +28,7 @@
         - iftop
         - iotop
         - jq
+        - letsencrypt
         - mailutils
         - mc
         - moreutils # for chronic
