@@ -320,7 +320,8 @@
 
     - name: rollbar notification
       run_once: true
-      rollbar_deployment: environment=production
-                          revision={{ git_status.after }}
-                          token={{ rollbar_token }}
-                          user={{ local_user.stdout }}
+      rollbar_deployment:
+        environment: production
+        revision: "{{ git_status.after }}"
+        token: "{{ rollbar_token }}"
+        user: "{{ local_user.stdout }}"

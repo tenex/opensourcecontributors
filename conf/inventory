@@ -1,10 +1,5 @@
-[github-contributions]
-[github-contributions:children]
-web
-database
-
 [web]
-univac.githubcontributions.io
+ibm704.opensourcecontributo.rs
 
 [database]
-univac.githubcontributions.io
+ibm704.opensourcecontributo.rs
