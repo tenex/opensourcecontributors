@@ -178,6 +178,10 @@ class GithubArchiveFetcher(object):
     TIME_FMT_W32 = '%Y-%m-%d-%#H'
     BUFFER_SIZE = 1024 * 1024
     URL_TEMPLATE = "http://data.githubarchive.org/{}"
+    MISSING = [
+        (2016, 1, 28, 1),
+        (2016, 10, 21, 18)
+    ]
 
     def __init__(self, events_directory):
         if not events_directory:
@@ -191,7 +195,10 @@ class GithubArchiveFetcher(object):
         return t.strftime(time_fmt)
 
     def is_known_missing(self, t):
-        return (t.year, t.month, t.day, t.hour) == (2016, 1, 28, 1)
+        for missing in self.MISSING:
+            if (t.year, t.month, t.day, t.hour) == missing:
+                return True
+        return False
 
     def fetch(self):
         t = self.START
