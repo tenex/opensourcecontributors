@@ -155,7 +155,7 @@
 
 - name: make common directory structures
   user: root
-  hosts: github-contributions
+  hosts: all
   tags:
     - deploy
   tasks:
@@ -207,7 +207,7 @@
 
 - name: configure ssmtp
   user: root
-  hosts: github-contributions
+  hosts: all
   tasks:
     - include_vars: secrets.yml
 
@@ -219,7 +219,7 @@
 
 - name: build and deploy app and archive-processor
   user: ghc
-  hosts: github-contributions
+  hosts: all
   tags:
     - deploy
   vars:
