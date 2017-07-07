@@ -746,7 +746,7 @@ class UsernameExtractor(object):
                 self.extract_file(extract)
             except json.JSONDecodeError as e:
                 log.warning("json decode error on {}".format(extract))
-        self.build_user_file()
+        # self.build_user_file()
 
 def extract_usernames(args):
     extractor = UsernameExtractor(args.events_path)
@@ -784,7 +784,7 @@ def process(args):
     fetch(args)
     transform(args)
     load(args)
-    extract_usernames(args)
+    # extract_usernames(args)
 
 if __name__=='__main__':
 
