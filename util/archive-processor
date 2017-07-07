@@ -180,7 +180,8 @@ class GithubArchiveFetcher(object):
     URL_TEMPLATE = "http://data.githubarchive.org/{}"
     MISSING = [
         (2016, 1, 28, 1),
-        (2016, 10, 21, 18)
+        (2016, 10, 21, 18),
+        (2017, 7, 6, 23)
     ]
 
     def __init__(self, events_directory):
